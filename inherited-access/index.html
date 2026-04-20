@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inherited Access: The Vercel April 2026 Incident</title>
+<meta name="description" content="An architectural autopsy of the April 2026 Vercel security incident and the unmanaged fourth plane of enterprise identity.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0c;
+  --bg-raised: #111114;
+  --bg-card: #141418;
+  --bg-hover: #1c1c22;
+  --border: #24242d;
+  --border-hover: #3a3a47;
+  --border-soft: #1d1d25;
+  --danger: #ff3355;
+  --danger-soft: rgba(255, 51, 85, 0.12);
+  --danger-glow: rgba(255, 51, 85, 0.35);
+  --defense: #14e0a8;
+  --defense-soft: rgba(20, 224, 168, 0.12);
+  --defense-glow: rgba(20, 224, 168, 0.3);
+  --inflection: #ffb020;
+  --inflection-soft: rgba(255, 176, 32, 0.12);
+  --inflection-glow: rgba(255, 176, 32, 0.3);
+  --text: #f2f2f4;
+  --text-muted: #a0a0aa;
+  --text-dim: #626268;
+  --title-gradient: linear-gradient(135deg, #ffffff 0%, #ffd9df 35%, #ff5577 70%, #ffb020 100%);
+  --body-gradient: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 51, 85, 0.08), transparent),
+    radial-gradient(ellipse 60% 50% at 100% 50%, rgba(255, 176, 32, 0.04), transparent),
+    radial-gradient(ellipse 60% 50% at 0% 80%, rgba(20, 224, 168, 0.04), transparent);
+  --grid-line: rgba(36, 36, 45, 0.35);
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
+}
+
+[data-theme="light"] {
+  --bg: #faf8f3;
+  --bg-raised: #f2efe8;
+  --bg-card: #ffffff;
+  --bg-hover: #f5f2ea;
+  --border: #dcd6c8;
+  --border-hover: #a8a292;
+  --border-soft: #e8e3d6;
+  --danger: #c41f3d;
+  --danger-soft: rgba(196, 31, 61, 0.06);
+  --danger-glow: rgba(196, 31, 61, 0.2);
+  --defense: #0a7a5a;
+  --defense-soft: rgba(10, 122, 90, 0.06);
+  --defense-glow: rgba(10, 122, 90, 0.18);
+  --inflection: #a16207;
+  --inflection-soft: rgba(161, 98, 7, 0.06);
+  --inflection-glow: rgba(161, 98, 7, 0.18);
+  --text: #1a1a1c;
+  --text-muted: #52525a;
+  --text-dim: #8a8478;
+  --title-gradient: linear-gradient(135deg, #1a1a1c 0%, #c41f3d 55%, #a16207 100%);
+  --body-gradient: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(196, 31, 61, 0.05), transparent),
+    radial-gradient(ellipse 60% 50% at 100% 50%, rgba(161, 98, 7, 0.03), transparent),
+    radial-gradient(ellipse 60% 50% at 0% 80%, rgba(10, 122, 90, 0.03), transparent);
+  --grid-line: rgba(168, 162, 146, 0.25);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+::selection { background: var(--danger); color: var(--bg); }
+
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.65;
+  overflow-x: hidden;
+  background-image: var(--body-gradient);
+  background-attachment: fixed;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* ============ THEME TOGGLE ============ */
+.theme-toggle {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 1001;
+  width: 44px;
+  height: 44px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.3s;
+  padding: 0;
+}
+
+.theme-toggle:hover {
+  border-color: var(--inflection);
+  color: var(--inflection);
+  box-shadow: 0 0 20px var(--inflection-glow);
+}
+
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.icon-sun { display: none; }
+[data-theme="light"] .icon-moon { display: none; }
+[data-theme="light"] .icon-sun { display: block; }
+
+.progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--danger), var(--inflection), var(--defense));
+  z-index: 1000;
+  width: 0;
+  transition: width 0.1s;
+  box-shadow: 0 0 12px var(--danger-glow);
+}
+
+/* =============================================================== */
+/*  HERO                                                            */
+/* =============================================================== */
+.hero {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 2rem 7rem;
+  overflow: hidden;
+}
+
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image: 
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse at center, black 10%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 10%, transparent 75%);
+  pointer-events: none;
+}
+
+.hero-scanline {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 51, 85, 0.8), transparent);
+  filter: blur(1px);
+  animation: scanline 9s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.5;
+}
+
+@keyframes scanline {
+  0% { top: -5%; opacity: 0; }
+  5% { opacity: 0.6; }
+  95% { opacity: 0.6; }
+  100% { top: 105%; opacity: 0; }
+}
+
+.hero-visual {
+  position: relative;
+  width: min(85vw, 540px);
+  aspect-ratio: 1;
+  margin-bottom: 3rem;
+  z-index: 3;
+}
+
+.hero-visual svg { width: 100%; height: 100%; overflow: visible; }
+
+@keyframes rotate-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes rotate-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+@keyframes pulse-core {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+@keyframes pulse-danger {
+  0%, 100% { stroke-opacity: 0.3; }
+  50% { stroke-opacity: 1; }
+}
+@keyframes traverse {
+  0% { stroke-dashoffset: 400; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+@keyframes node-pulse {
+  0%, 100% { r: 6; fill-opacity: 1; }
+  50% { r: 9; fill-opacity: 0.6; }
+}
+
+.ring-outer { animation: rotate-slow 60s linear infinite; transform-origin: 300px 300px; }
+.ring-middle { animation: rotate-reverse 45s linear infinite; transform-origin: 300px 300px; }
+.ring-inner { animation: rotate-slow 30s linear infinite; transform-origin: 300px 300px; }
+.core { animation: pulse-core 3s ease-in-out infinite; transform-origin: 300px 300px; }
+.attack-line { 
+  stroke-dasharray: 400;
+  animation: traverse 4s ease-in-out infinite;
+}
+.attack-node { animation: node-pulse 2s ease-in-out infinite; }
+.attack-node-1 { animation-delay: 0s; }
+.attack-node-2 { animation-delay: 0.8s; }
+.attack-node-3 { animation-delay: 1.6s; }
+.attack-node-4 { animation-delay: 2.4s; }
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--danger);
+  margin-bottom: 2rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 12px var(--danger);
+  animation: blink 1.8s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 13vw, 10rem);
+  font-weight: 300;
+  font-style: italic;
+  line-height: 0.88;
+  letter-spacing: -0.035em;
+  text-align: center;
+  background: var(--title-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1.75rem;
+  z-index: 3;
+  filter: drop-shadow(0 0 40px rgba(255, 51, 85, 0.15));
+}
+
+[data-theme="light"] .title {
+  filter: none;
+}
+
+.subtitle {
+  font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+  font-weight: 300;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 680px;
+  line-height: 1.55;
+  z-index: 3;
+  padding: 0 1rem;
+}
+
+.subtitle em {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--inflection);
+}
+
+.hero-meta {
+  margin-top: 3rem;
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  z-index: 3;
+}
+
+.hero-meta-item {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero-meta-item::before {
+  content: '';
+  width: 3px; height: 3px;
+  background: var(--text-dim);
+  border-radius: 50%;
+}
+
+.scroll-prompt {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.scroll-prompt .line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(180deg, var(--text-dim), transparent);
+  animation: drip 2.5s ease-in-out infinite;
+}
+
+@keyframes drip {
+  0% { height: 0; opacity: 0; }
+  30% { opacity: 1; }
+  100% { height: 40px; opacity: 0; }
+}
+
+/* =============================================================== */
+/*  SECTIONS                                                        */
+/* =============================================================== */
+section {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 7rem 2rem;
+  position: relative;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 1s cubic-bezier(0.22, 1, 0.36, 1), transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--danger);
+  margin-bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.section-eyebrow::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--danger);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 5.5vw, 4rem);
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin-bottom: 2rem;
+  max-width: 860px;
+}
+
+.section-lede {
+  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+  font-weight: 300;
+  color: var(--text-muted);
+  max-width: 680px;
+  line-height: 1.6;
+}
+
+/* =============================================================== */
+/*  PROLOGUE                                                        */
+/* =============================================================== */
+.prologue p {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.6vw, 1.875rem);
+  font-weight: 300;
+  line-height: 1.45;
+  color: var(--text);
+  max-width: 860px;
+  letter-spacing: -0.01em;
+}
+
+.prologue p + p { margin-top: 1.25rem; }
+
+.prologue em {
+  font-style: italic;
+  color: var(--inflection);
+  font-weight: 400;
+}
+
+.prologue .accent {
+  color: var(--danger);
+  font-style: italic;
+}
+
+/* =============================================================== */
+/*  STATS                                                           */
+/* =============================================================== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-top: 3rem;
+}
+
+.stat {
+  position: relative;
+  padding: 2.25rem 1.75rem 1.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: border-color 0.4s, transform 0.4s, background 0.4s;
+}
+
+.stat::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--danger);
+  transition: height 0.3s, box-shadow 0.3s;
+}
+
+.stat:hover {
+  border-color: var(--danger);
+  background: var(--bg-hover);
+  transform: translateY(-3px);
+}
+
+.stat:hover::before {
+  height: 2px;
+  box-shadow: 0 0 15px var(--danger-glow);
+}
+
+.stat-number {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(2.75rem, 5vw, 4rem);
+  font-weight: 300;
+  line-height: 1;
+  color: var(--danger);
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+/* =============================================================== */
+/*  PULLQUOTE                                                       */
+/* =============================================================== */
+.pullquote {
+  max-width: 1080px;
+  margin: 4rem auto;
+  padding: 5rem 2rem;
+  position: relative;
+  text-align: center;
+}
+
+.pullquote::before {
+  content: '"';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(10rem, 20vw, 16rem);
+  line-height: 0.8;
+  color: var(--danger);
+  opacity: 0.15;
+  pointer-events: none;
+  font-weight: 300;
+}
+
+.pullquote-text {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.85rem, 4.5vw, 3.25rem);
+  font-weight: 300;
+  line-height: 1.15;
+  color: var(--text);
+  letter-spacing: -0.015em;
+  margin-bottom: 1.75rem;
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pullquote-text strong {
+  font-weight: 400;
+  color: var(--danger);
+  font-style: italic;
+}
+
+.pullquote-attr {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  position: relative;
+  z-index: 2;
+}
+
+/* =============================================================== */
+/*  ATTACK CHAIN TIMELINE                                           */
+/* =============================================================== */
+.chain {
+  position: relative;
+  margin-top: 4.5rem;
+}
+
+.chain::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    var(--danger) 8%, 
+    var(--danger) 92%, 
+    transparent 100%);
+  transform: translateX(-0.5px);
+  box-shadow: 0 0 20px var(--danger-glow);
+}
+
+.chain-layer {
+  position: relative;
+  width: 50%;
+  padding: 1rem 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.chain-layer:nth-child(odd) {
+  padding-right: 2.5rem;
+  padding-left: 0;
+}
+
+.chain-layer:nth-child(even) {
+  margin-left: 50%;
+  padding-left: 2.5rem;
+  padding-right: 0;
+}
+
+.chain-node {
+  position: absolute;
+  top: 2.25rem;
+  width: 14px;
+  height: 14px;
+  background: var(--bg);
+  border: 2px solid var(--danger);
+  border-radius: 50%;
+  box-shadow: 0 0 15px var(--danger-glow), inset 0 0 6px var(--danger-glow);
+  z-index: 2;
+}
+
+.chain-layer:nth-child(odd) .chain-node { right: -7px; }
+.chain-layer:nth-child(even) .chain-node { left: -7px; }
+
+.chain-connector {
+  position: absolute;
+  top: 2.75rem;
+  height: 1px;
+  background: linear-gradient(90deg, var(--danger), rgba(255, 51, 85, 0.2));
+  width: 1.5rem;
+}
+
+.chain-layer:nth-child(odd) .chain-connector { right: 1rem; }
+.chain-layer:nth-child(even) .chain-connector {
+  left: 1rem;
+  background: linear-gradient(270deg, var(--danger), rgba(255, 51, 85, 0.2));
+}
+
+.chain-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 1.75rem 1.75rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.chain-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--danger);
+}
+
+.chain-card:hover {
+  border-color: var(--danger);
+  background: var(--bg-hover);
+  box-shadow: 0 0 40px rgba(255, 51, 85, 0.08);
+}
+
+.chain-card.expanded {
+  background: var(--bg-hover);
+  border-color: var(--danger);
+  box-shadow: 0 0 40px rgba(255, 51, 85, 0.1);
+}
+
+.chain-layer-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.chain-layer-num {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--danger);
+}
+
+.chain-layer-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--border);
+}
+
+.chain-card-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text);
+  margin-bottom: 0.85rem;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+.chain-card-summary {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.chain-card-expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--inflection);
+  margin-top: 1.25rem;
+  transition: gap 0.3s;
+}
+
+.chain-card:hover .chain-card-expand { gap: 0.75rem; }
+
+.chain-card-expand .arrow { transition: transform 0.3s; }
+.chain-card.expanded .chain-card-expand .arrow { transform: rotate(90deg); }
+
+.chain-card-details {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.6s ease, opacity 0.5s ease, margin-top 0.4s ease, padding-top 0.4s ease;
+}
+
+.chain-card.expanded .chain-card-details {
+  max-height: 3000px;
+  opacity: 1;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--border);
+}
+
+.chain-detail-block { margin-bottom: 1.5rem; }
+.chain-detail-block:last-child { margin-bottom: 0; }
+
+.chain-detail-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chain-detail-label::before {
+  content: '';
+  width: 14px;
+  height: 1px;
+  display: inline-block;
+}
+
+.chain-detail-label.danger { color: var(--danger); }
+.chain-detail-label.danger::before { background: var(--danger); }
+
+.chain-detail-label.inflection { color: var(--inflection); }
+.chain-detail-label.inflection::before { background: var(--inflection); }
+
+.chain-detail-label.defense { color: var(--defense); }
+.chain-detail-label.defense::before { background: var(--defense); }
+
+.chain-detail-text {
+  font-size: 0.93rem;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.chain-detail-text p + p { margin-top: 0.8rem; }
+
+.chain-detail-text ul {
+  margin-top: 0.65rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.chain-detail-text ul li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.55rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.chain-detail-text ul li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--defense);
+  font-family: var(--font-mono);
+}
+
+.chain-detail-text code {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  background: var(--bg);
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--border);
+  color: var(--inflection);
+}
+
+.chain-detail-text strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* =============================================================== */
+/*  DATA VIZ                                                        */
+/* =============================================================== */
+.viz-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 2.5rem 2rem 2rem;
+  margin-top: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.viz-container::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--danger) 0%, var(--inflection) 50%, var(--defense) 100%);
+}
+
+.viz-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.viz-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 2rem;
+}
+
+.viz-svg { width: 100%; height: auto; overflow: visible; }
+
+.viz-caption {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-top: 2rem;
+  line-height: 1.7;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--border);
+}
+
+.viz-caption strong { color: var(--text-muted); font-weight: 500; }
+
+/* =============================================================== */
+/*  TRUTHS GRID                                                     */
+/* =============================================================== */
+.truths {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.25rem;
+  margin-top: 3.5rem;
+}
+
+.truth {
+  position: relative;
+  padding: 2rem 1.85rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+}
+
+.truth::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--inflection);
+}
+
+.truth:hover {
+  border-color: var(--inflection);
+  background: var(--bg-hover);
+  box-shadow: 0 0 40px rgba(255, 176, 32, 0.07);
+  transform: translateY(-2px);
+}
+
+.truth.expanded {
+  border-color: var(--inflection);
+  background: var(--bg-hover);
+}
+
+.truth-num {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  color: var(--inflection);
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.truth-num .arrow { transition: transform 0.3s; font-size: 0.85rem; }
+.truth.expanded .truth-num .arrow { transform: rotate(90deg); }
+
+.truth-statement {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.15rem, 1.8vw, 1.35rem);
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--text);
+  margin-bottom: 0;
+  letter-spacing: -0.01em;
+}
+
+.truth-explanation {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.5s ease, opacity 0.4s ease, margin-top 0.4s ease, padding-top 0.4s ease;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+.truth.expanded .truth-explanation {
+  max-height: 800px;
+  opacity: 1;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--border);
+}
+
+/* =============================================================== */
+/*  HORIZONS                                                        */
+/* =============================================================== */
+.horizons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-top: 3rem;
+}
+
+.horizon {
+  position: relative;
+  padding: 2rem 1.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+}
+
+.horizon::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--defense);
+}
+
+.horizon:hover {
+  border-color: var(--defense);
+  background: var(--bg-hover);
+  box-shadow: 0 0 40px rgba(20, 224, 168, 0.07);
+  transform: translateY(-2px);
+}
+
+.horizon-num {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.25em;
+  color: var(--defense);
+  margin-bottom: 0.5rem;
+}
+
+.horizon-time {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.horizon-name {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 1.5rem;
+}
+
+.horizon ul {
+  list-style: none;
+  padding: 0;
+}
+
+.horizon li {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  padding-left: 1.2rem;
+  margin-bottom: 0.7rem;
+  position: relative;
+}
+
+.horizon li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--defense);
+  font-family: var(--font-mono);
+}
+
+/* =============================================================== */
+/*  CALLOUT                                                         */
+/* =============================================================== */
+.callout {
+  max-width: 920px;
+  margin: 6rem auto 4rem;
+  padding: 3.5rem 3rem;
+  border: 1px solid var(--inflection);
+  position: relative;
+  background: var(--bg-card);
+  box-shadow: 0 0 80px rgba(255, 176, 32, 0.08);
+}
+
+.callout::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: -1px; right: -1px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--danger), var(--inflection), var(--defense));
+}
+
+.callout-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--inflection);
+  margin-bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.callout-eyebrow::before {
+  content: '';
+  width: 24px; height: 1px;
+  background: var(--inflection);
+}
+
+.callout-text {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+  font-weight: 300;
+  line-height: 1.45;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.callout-text p + p { margin-top: 1.25rem; }
+.callout-text em { color: var(--inflection); }
+.callout-text strong { color: var(--danger); font-weight: 400; font-style: italic; }
+
+/* =============================================================== */
+/*  FOOTER                                                          */
+/* =============================================================== */
+footer {
+  padding: 4rem 2rem 5rem;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  margin-top: 2rem;
+}
+
+.footer-mark {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.footer-text {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+  line-height: 1.8;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.footer-credit {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+  margin-top: 2.5rem;
+  text-transform: uppercase;
+}
+
+.footer-credit a {
+  color: var(--inflection);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s, color 0.3s;
+}
+
+.footer-credit a:hover {
+  border-bottom-color: var(--inflection);
+  color: var(--inflection);
+  text-shadow: 0 0 12px var(--inflection-glow);
+}
+
+/* =============================================================== */
+/*  MOBILE                                                          */
+/* =============================================================== */
+@media (max-width: 768px) {
+  section { padding: 5rem 1.25rem; }
+  .chain::before { left: 14px; transform: none; }
+  .chain-layer {
+    width: 100%;
+    padding-left: 2.25rem !important;
+    padding-right: 0.5rem !important;
+    margin-left: 0 !important;
+    margin-bottom: 2rem;
+  }
+  .chain-layer .chain-node {
+    left: 7px !important;
+    right: auto !important;
+  }
+  .chain-connector { display: none; }
+  .pullquote { padding: 3rem 1.5rem; margin: 2rem auto; }
+  .pullquote::before { font-size: 9rem; }
+  .callout { padding: 2.5rem 1.75rem; margin: 4rem 1rem 3rem; }
+  .hero { padding: 5rem 1.25rem 5.5rem; }
+  .hero-meta { gap: 1rem; }
+  .theme-toggle { top: 1rem; right: 1rem; width: 40px; height: 40px; }
+  .horizons { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .stat { padding: 1.5rem 1.25rem 1.25rem; }
+  .truths { grid-template-columns: 1fr; }
+  .horizons { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme">
+  <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="4"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+  </svg>
+</button>
+
+<!-- =============================================================== -->
+<!--  HERO                                                            -->
+<!-- =============================================================== -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-scanline"></div>
+  
+  <div class="hero-visual">
+    <svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="coreGlow" cx="50%" cy="50%">
+          <stop offset="0%" stop-color="var(--danger)" stop-opacity="0.8"/>
+          <stop offset="50%" stop-color="var(--danger)" stop-opacity="0.2"/>
+          <stop offset="100%" stop-color="var(--danger)" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="nodeGlow" cx="50%" cy="50%">
+          <stop offset="0%" stop-color="var(--inflection)" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="var(--inflection)" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="softGlow">
+          <feGaussianBlur stdDeviation="3"/>
+          <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      
+      <!-- Outer atmospheric glow -->
+      <circle cx="300" cy="300" r="280" fill="url(#coreGlow)" opacity="0.4"/>
+      
+      <!-- Ring systems -->
+      <g class="ring-outer" fill="none" stroke="var(--border)" stroke-width="1">
+        <circle cx="300" cy="300" r="260" stroke-dasharray="2 8" opacity="0.6"/>
+        <circle cx="300" cy="300" r="245" stroke-dasharray="1 3" opacity="0.3"/>
+      </g>
+      
+      <g class="ring-middle" fill="none" stroke="var(--border-hover)" stroke-width="1">
+        <circle cx="300" cy="300" r="190" stroke-dasharray="4 12" opacity="0.7"/>
+      </g>
+      
+      <g class="ring-inner" fill="none" stroke="var(--danger)" stroke-width="0.5" opacity="0.4">
+        <circle cx="300" cy="300" r="130" stroke-dasharray="3 6"/>
+      </g>
+      
+      <!-- Orbital nodes - other OAuth grants the user could have authorized -->
+      <g opacity="0.5">
+        <circle cx="300" cy="70" r="5" fill="var(--text-dim)"/>
+        <circle cx="495" cy="180" r="5" fill="var(--text-dim)"/>
+        <circle cx="495" cy="420" r="5" fill="var(--text-dim)"/>
+        <circle cx="300" cy="530" r="5" fill="var(--text-dim)"/>
+        <circle cx="105" cy="420" r="5" fill="var(--text-dim)"/>
+      </g>
+      <g opacity="0.3" stroke="var(--border-hover)" stroke-width="0.5" fill="none">
+        <line x1="300" y1="300" x2="300" y2="70"/>
+        <line x1="300" y1="300" x2="495" y2="180"/>
+        <line x1="300" y1="300" x2="495" y2="420"/>
+        <line x1="300" y1="300" x2="300" y2="530"/>
+        <line x1="300" y1="300" x2="105" y2="420"/>
+      </g>
+      
+      <!-- The compromised vendor - Context.ai -->
+      <g>
+        <circle cx="105" cy="180" r="14" fill="url(#nodeGlow)"/>
+        <circle cx="105" cy="180" r="7" fill="var(--danger)" class="attack-node attack-node-1" filter="url(#softGlow)"/>
+        <text x="105" y="150" fill="var(--danger)" font-family="JetBrains Mono, monospace" font-size="9" text-anchor="middle" letter-spacing="2" opacity="0.8">CONTEXT.AI</text>
+      </g>
+      
+      <!-- Attack path from Context.ai -->
+      <g fill="none" stroke="var(--danger)" stroke-width="1.5" filter="url(#softGlow)">
+        <path class="attack-line" d="M 105 180 Q 200 240 300 300" opacity="0" stroke-linecap="round"/>
+        <path class="attack-line" d="M 300 300 L 300 300" opacity="0"/>
+      </g>
+      
+      <!-- Core: Google Workspace / Identity Plane -->
+      <g class="core">
+        <circle cx="300" cy="300" r="55" fill="var(--bg-card)" stroke="var(--danger)" stroke-width="1.5"/>
+        <circle cx="300" cy="300" r="55" fill="none" stroke="var(--danger)" stroke-width="3" opacity="0.4" class="attack-node attack-node-2" filter="url(#softGlow)"/>
+        
+        <!-- Hexagon icon -->
+        <polygon points="300,275 322,288 322,312 300,325 278,312 278,288" 
+                 fill="none" stroke="var(--inflection)" stroke-width="1.5" opacity="0.9"/>
+        <circle cx="300" cy="300" r="4" fill="var(--inflection)"/>
+      </g>
+      
+      <!-- Vercel (downstream victim) - right side -->
+      <g>
+        <g class="attack-node attack-node-3">
+          <circle cx="460" cy="300" r="10" fill="url(#nodeGlow)"/>
+          <rect x="452" y="292" width="16" height="16" fill="var(--danger)" opacity="0.8" filter="url(#softGlow)" transform="rotate(45 460 300)"/>
+        </g>
+        <text x="460" y="270" fill="var(--danger)" font-family="JetBrains Mono, monospace" font-size="9" text-anchor="middle" letter-spacing="2" opacity="0.8">VERCEL</text>
+      </g>
+      
+      <!-- Attack path continues -->
+      <g fill="none" stroke="var(--danger)" stroke-width="1.5" filter="url(#softGlow)">
+        <path class="attack-line" d="M 355 300 L 450 300" opacity="0" stroke-dasharray="400" style="animation-delay: 1s"/>
+      </g>
+      
+      <!-- Terminal data exfil point -->
+      <g class="attack-node attack-node-4">
+        <circle cx="530" cy="370" r="8" fill="var(--danger)" opacity="0.6"/>
+        <circle cx="530" cy="370" r="4" fill="var(--danger)"/>
+      </g>
+      <g fill="none" stroke="var(--danger)" stroke-width="1" opacity="0.6" stroke-dasharray="2 3">
+        <line x1="460" y1="310" x2="525" y2="365"/>
+      </g>
+      
+      <!-- Label elements -->
+      <text x="300" y="355" fill="var(--inflection)" font-family="JetBrains Mono, monospace" font-size="8" text-anchor="middle" letter-spacing="3" opacity="0.7">IDENTITY PLANE</text>
+      
+      <!-- Corner markers (cinematic) -->
+      <g stroke="var(--danger)" stroke-width="1" fill="none" opacity="0.4">
+        <path d="M 30 30 L 30 50 M 30 30 L 50 30"/>
+        <path d="M 570 30 L 570 50 M 570 30 L 550 30"/>
+        <path d="M 30 570 L 30 550 M 30 570 L 50 570"/>
+        <path d="M 570 570 L 570 550 M 570 570 L 550 570"/>
+      </g>
+    </svg>
+  </div>
+  
+  <div class="eyebrow">Security Architecture · Post-Incident Analysis</div>
+  <h1 class="title">Inherited<br>Access</h1>
+  <p class="subtitle">How an AI tool nobody audited walked into Vercel wearing a lanyard — and what it reveals about the <em>unmanaged fourth plane</em> of enterprise identity.</p>
+  
+  <div class="hero-meta">
+    <div class="hero-meta-item">Vercel · April 2026</div>
+    <div class="hero-meta-item">Architectural RCA</div>
+    <div class="hero-meta-item">CSA Perspective</div>
+  </div>
+  
+  <div class="scroll-prompt">
+    Scroll to descend
+    <div class="line"></div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!--  PROLOGUE                                                        -->
+<!-- =============================================================== -->
+<section class="prologue">
+  <div class="reveal">
+    <p>The attack was <em>trivial</em> once you accept the premise.</p>
+    <p>A third-party AI agent platform was compromised. A Vercel employee had authorized it against their corporate Google Workspace. The stolen OAuth tokens walked into that employee's mailbox, pivoted through SSO into Vercel, and read every secret that wasn't marked <em>sensitive</em>.</p>
+    <p>No zero-day. No exotic tradecraft. No exploit chain.</p>
+    <p>The premise — that every SaaS vendor you ever authorized is a <span class="accent">silent, persistent, MFA-bypassing foothold</span> into your identity plane — is the unfixed architectural vulnerability every enterprise is still exposed to.</p>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!--  STATS                                                           -->
+<!-- =============================================================== -->
+<section>
+  <div class="reveal">
+    <div class="section-eyebrow">By the numbers</div>
+    <h2 class="section-title">The math of inheritance</h2>
+    <p class="section-lede">The metrics that should make every CISO running a SaaS-first identity stack stop scrolling.</p>
+  </div>
+  
+  <div class="stats-grid reveal">
+    <div class="stat">
+      <div class="stat-number">0</div>
+      <div class="stat-label">Zero-days exploited in the chain</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">6</div>
+      <div class="stat-label">Architectural layers crossed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">580</div>
+      <div class="stat-label">Employee records posted as proof</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">$2M</div>
+      <div class="stat-label">Ransom demanded on BreachForums</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">700+</div>
+      <div class="stat-label">Orgs hit by same pattern in 2025</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">8mo</div>
+      <div class="stat-label">Since the industry got this lesson</div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!--  PULLQUOTE 1                                                     -->
+<!-- =============================================================== -->
+<div class="pullquote reveal">
+  <p class="pullquote-text">The moat is deep.<br/><strong>The side doors are unlocked.</strong></p>
+  <div class="pullquote-attr">The architectural problem, in eight words</div>
+</div>
+
+<!-- =============================================================== -->
+<!--  THE CHAIN                                                       -->
+<!-- =============================================================== -->
+<section>
+  <div class="reveal">
+    <div class="section-eyebrow">The attack chain</div>
+    <h2 class="section-title">Six layers.<br/>No magic.</h2>
+    <p class="section-lede">Every step used authorized, expected, documented behavior. The compromise did not exploit any of these systems — it <em>moved through them</em>. Click any layer to expand the full architectural analysis.</p>
+  </div>
+  
+  <div class="chain">
+    <!-- LAYER 0 -->
+    <div class="chain-layer reveal">
+      <div class="chain-node"></div>
+      <div class="chain-connector"></div>
+      <div class="chain-card" onclick="this.classList.toggle('expanded')">
+        <div class="chain-layer-meta">
+          <span class="chain-layer-num">Layer 00 · Entry</span>
+          <span class="chain-layer-tag">Consent</span>
+        </div>
+        <h3 class="chain-card-title">Vendor selection &amp; OAuth consent</h3>
+        <p class="chain-card-summary">A Vercel employee authorized Context.ai against their corporate Google Workspace. Likely no central security review. The attack surface was created at this moment — quietly, legitimately, years before the compromise.</p>
+        <span class="chain-card-expand"><span class="arrow">›</span> Expand full analysis</span>
+        
+        <div class="chain-card-details">
+          <div class="chain-detail-block">
+            <div class="chain-detail-label danger">What happened</div>
+            <div class="chain-detail-text">
+              <p>An employee granted OAuth scopes to a third-party AI agent platform — almost certainly including <code>gmail.readonly</code> and <code>drive.readonly</code>. Given industry baselines, the grant almost certainly bypassed central security review; most Workspace tenants still allow users to authorize arbitrary OAuth apps by default.</p>
+              <p>The moment the grant existed, Context.ai held a long-lived OAuth refresh token into the employee's Workspace account. <strong>Refresh tokens are silent</strong> (no user interaction required to mint access tokens), <strong>persistent</strong> (they survive password changes unless explicitly revoked), and <strong>MFA-bypassing</strong> (they don't re-prompt for the second factor).</p>
+            </div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label danger">Why it enabled the next layer</div>
+            <div class="chain-detail-text">The moment Context.ai was compromised upstream, that refresh token became functionally equivalent to the employee's Workspace credentials. No attack on Google was required — the credential was delegated legitimately, and the grant had no expiry.</div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label inflection">What could have prevented it</div>
+            <div class="chain-detail-text">
+              <ul>
+                <li>Admin-level restriction on third-party OAuth app authorization in Workspace — shift default from "any user can authorize" to "admin must approve sensitive scopes"</li>
+                <li>Mandatory vendor security review for any SaaS requesting Gmail, Drive, Calendar, or Admin SDK scopes</li>
+                <li>Scope minimization policy — push vendors toward resource-specific grants (single mailbox, single folder) over tenant-wide <code>.readonly</code></li>
+                <li>Periodic audit with automatic expiry for unused OAuth grants (default 90-day idle revocation)</li>
+                <li>Heightened scrutiny on AI tool authorizations — they typically request broader scopes than their stated function requires</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER 1 -->
+    <div class="chain-layer reveal">
+      <div class="chain-node"></div>
+      <div class="chain-connector"></div>
+      <div class="chain-card" onclick="this.classList.toggle('expanded')">
+        <div class="chain-layer-meta">
+          <span class="chain-layer-num">Layer 01 · Upstream</span>
+          <span class="chain-layer-tag">Ingress unknown</span>
+        </div>
+        <h3 class="chain-card-title">Context.ai compromise</h3>
+        <p class="chain-card-summary">Context.ai was breached — method not publicly disclosed, no post-mortem published. The attacker obtained OAuth refresh tokens for every tenant that had authorized Context.ai, including the Vercel employee's Workspace.</p>
+        <span class="chain-card-expand"><span class="arrow">›</span> Expand full analysis</span>
+        
+        <div class="chain-card-details">
+          <div class="chain-detail-block">
+            <div class="chain-detail-label danger">What happened</div>
+            <div class="chain-detail-text">
+              <p>Context.ai — an enterprise AI agent platform whose product deploys autonomous agents inside customer systems (Salesforce, Slack, Google Workspace, billing systems) — was compromised. The attacker obtained control of, or extracted tokens from, Context.ai's Workspace OAuth application. <strong>The ingress method has not been publicly disclosed.</strong></p>
+              <p>A relevant wrinkle: the domain <code>context.ai</code> was acquired by a different company (formerly known as <code>context.inc</code>) after the original Context.ai was acqui-hired by OpenAI in April 2025. <strong>Users' OAuth consents survived the ownership change.</strong> The company behind the domain today is not necessarily the company users decided to trust.</p>
+            </div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label inflection">Plausible ingress vectors (ranked by threat-landscape priors)</div>
+            <div class="chain-detail-text">
+              <ul>
+                <li><strong>Conventional SaaS compromise</strong> — credential theft via infostealer or phishing, cloud-infra misconfiguration, compromised CI/CD, or vulnerability in the token-storage layer. This is how Salesloft Drift was owned in August 2025.</li>
+                <li><strong>AI-agent-native compromise</strong> — indirect prompt injection via untrusted content the agents processed, instructing an agent to exfiltrate its own OAuth tokens. Confused-deputy attacks native to the agent era; already documented in MCP breach incidents (GitHub MCP, mcp-remote CVE-2025-6514, Anthropic Filesystem MCP).</li>
+                <li><strong>Credential storage weakness</strong> — industry anecdote suggests agent platforms not uncommonly store tokens in plaintext config files, <code>.md</code> files, or loosely-secured databases rather than HSMs or dedicated token vaults.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label danger">Why it enabled the next layer</div>
+            <div class="chain-detail-text">With valid refresh tokens, the attacker could mint fresh access tokens on demand for every tenant that had authorized Context.ai. This bypassed all MFA, password, and most anomaly-detection controls because the requests came through a legitimately-consented OAuth flow.</div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label defense">What could have prevented it</div>
+            <div class="chain-detail-text">
+              <ul>
+                <li>Context.ai side: HSM-backed token storage, per-tenant encryption, token custody isolated from general application infrastructure</li>
+                <li>Short-lived refresh tokens with proof-of-possession binding (DPoP or mTLS)</li>
+                <li>Prompt-injection hardening — tool-use authorization gates for any agent action touching credential material</li>
+                <li>Customer side: don't grant broad scopes to begin with; treat every authorized vendor as a pre-breached identity</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER 2 -->
+    <div class="chain-layer reveal">
+      <div class="chain-node"></div>
+      <div class="chain-connector"></div>
+      <div class="chain-card" onclick="this.classList.toggle('expanded')">
+        <div class="chain-layer-meta">
+          <span class="chain-layer-num">Layer 02 · Pivot</span>
+          <span class="chain-layer-tag">Identity takeover</span>
+        </div>
+        <h3 class="chain-card-title">OAuth token abuse &amp; Workspace account takeover</h3>
+        <p class="chain-card-summary">Using the stolen tokens, the attacker entered the employee's Google Workspace. Mailbox access was sufficient to execute full identity takeover through standard password-reset tradecraft.</p>
+        <span class="chain-card-expand"><span class="arrow">›</span> Expand full analysis</span>
+        
+        <div class="chain-card-details">
+          <div class="chain-detail-block">
+            <div class="chain-detail-label danger">What happened</div>
+            <div class="chain-detail-text">The attacker accessed the Vercel employee's Google Workspace using the stolen Context.ai OAuth refresh tokens. At minimum, this gave mailbox read access. From there, standard identity-takeover tradecraft applies: trigger password reset on ancillary accounts, intercept magic links, reset MFA, create app-specific passwords, export Drive content, read Calendar for organizational mapping.</div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label danger">Why it enabled the next layer</div>
+            <div class="chain-detail-text">Full control of the Google Workspace account is full control of the federated identity. Because Vercel federates workforce SSO through Google, the Google account <em>is</em> the Vercel account. No additional authentication boundary exists between them.</div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label defense">What could have prevented it</div>
+            <div class="chain-detail-text">
+              <ul>
+                <li>Phishing-resistant MFA (hardware keys, passkeys) on the Workspace IdP — no SMS or TOTP fallback</li>
+                <li>Google Advanced Protection Program enrollment for production-access roles</li>
+                <li>Session-level monitoring on OAuth access-token refresh events, not just login events</li>
+                <li>Device-bound sessions (Chrome DBSC or equivalent) that invalidate on unfamiliar device</li>
+                <li>Short refresh token lifetimes with automatic revocation on anomaly signals (new IP, ASN, UA)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER 3 -->
+    <div class="chain-layer reveal">
+      <div class="chain-node"></div>
+      <div class="chain-connector"></div>
+      <div class="chain-card" onclick="this.classList.toggle('expanded')">
+        <div class="chain-layer-meta">
+          <span class="chain-layer-num">Layer 03 · Federation</span>
+          <span class="chain-layer-tag">SSO inheritance</span>
+        </div>
+        <h3 class="chain-card-title">SSO pivot into Vercel</h3>
+        <p class="chain-card-summary">The attacker signed into Vercel via SSO. Not an exploit — the designed authentication path, invoked by an attacker who had become the legitimate principal.</p>
+        <span class="chain-card-expand"><span class="arrow">›</span> Expand full analysis</span>
+        
+        <div class="chain-card-details">
+          <div class="chain-detail-block">
+            <div class="chain-detail-label danger">What happened</div>
+            <div class="chain-detail-text">With control of the Google Workspace account, the attacker signed into Vercel via SSO federation. This was not an exploit — it was the designed authentication path. Per CEO Guillermo Rauch, the attacker then executed "a series of maneuvers that escalated" access — unspecified, but consistent with enumerating projects, listing environments, pulling integration configurations, and harvesting additional credentials discoverable from the initial authenticated position.</div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label danger">Why it enabled the next layer</div>
+            <div class="chain-detail-text">The attacker was now an authenticated Vercel user with the employee's full dashboard and API permissions. A single SSO session was sufficient to read every environment variable in every project the employee had access to — no step-up authentication required.</div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label defense">What could have prevented it</div>
+            <div class="chain-detail-text">
+              <ul>
+                <li>Step-up authentication for sensitive actions inside Vercel — reading env vars, modifying production deployments, managing integrations</li>
+                <li>Device trust / managed-device posture enforcement for SSO into production SaaS</li>
+                <li>Role segmentation — least-privilege scoping of internal access to shrink blast radius</li>
+                <li>Anomaly detection on first-seen-IP / first-seen-device per user, with forced re-authentication via out-of-band channel (not email — which the attacker controls)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER 4 -->
+    <div class="chain-layer reveal">
+      <div class="chain-node"></div>
+      <div class="chain-connector"></div>
+      <div class="chain-card" onclick="this.classList.toggle('expanded')">
+        <div class="chain-layer-meta">
+          <span class="chain-layer-num">Layer 04 · Harvest</span>
+          <span class="chain-layer-tag">Default-off</span>
+        </div>
+        <h3 class="chain-card-title">Environment variable enumeration</h3>
+        <p class="chain-card-summary">The attacker read every variable not flagged "sensitive." Encryption at rest was irrelevant — the attacker held an authenticated session. What mattered was read-back, and that was <em>not protected by default</em>.</p>
+        <span class="chain-card-expand"><span class="arrow">›</span> Expand full analysis</span>
+        
+        <div class="chain-card-details">
+          <div class="chain-detail-block">
+            <div class="chain-detail-label danger">What happened</div>
+            <div class="chain-detail-text">
+              <p>The attacker enumerated and read environment variables not flagged as sensitive. Per Rauch's April 20 update, <strong>all Vercel environment variables are encrypted at rest</strong> — the sensitive flag does not control encryption; it controls <em>read-back</em>. Non-sensitive variables can be decrypted and returned to authenticated principals through the UI and API; sensitive variables cannot be retrieved even by Vercel's own tooling once set.</p>
+              <p>The attacker had a legitimate authenticated session. Encryption-at-rest was irrelevant. <strong>What mattered was read-back — and that was not protected by default.</strong></p>
+            </div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label danger">Why it enabled the next layer</div>
+            <div class="chain-detail-text">Non-sensitive variables commonly contain exactly the secrets they should not: API keys, database credentials, signing keys, OAuth client secrets, third-party tokens. Per Vercel's bulletin and community reporting, tokens for Linear and GitHub integrations appear to have been among those exposed, enabling further lateral movement.</div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label inflection">The architectural finding</div>
+            <div class="chain-detail-text">
+              <p><strong>Secure-by-default is the only default that scales.</strong> The sensitive flag worked exactly as designed — it was also opt-in. Developers who knew and remembered were protected; everyone else was not.</p>
+              <p>This is the dominant failure mode of every opt-in security control: encrypted S3 buckets (historically opt-in until AWS flipped the default), private GitHub repos, Kubernetes RBAC defaults. Any control labeled "turn this on for better security" is an incident report waiting to be written.</p>
+            </div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label defense">What could have prevented it</div>
+            <div class="chain-detail-text">
+              <ul>
+                <li>Secure-by-default: the sensitive flag should default to ON, with opt-out requiring explicit justification</li>
+                <li>Elimination of long-lived secrets entirely — workload identity federation (OIDC to AWS/GCP/Azure/Vault) replaces static API keys with short-lived credentials</li>
+                <li>Automatic secret scanning on write — any string matching a known secret format auto-flagged as sensitive</li>
+                <li>Read-access audit logging with anomaly detection on bulk enumeration patterns</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER 5 -->
+    <div class="chain-layer reveal">
+      <div class="chain-node"></div>
+      <div class="chain-connector"></div>
+      <div class="chain-card" onclick="this.classList.toggle('expanded')">
+        <div class="chain-layer-meta">
+          <span class="chain-layer-num">Layer 05 · Lateral</span>
+          <span class="chain-layer-tag">Cross-SaaS</span>
+        </div>
+        <h3 class="chain-card-title">Lateral movement: Linear, GitHub, npm</h3>
+        <p class="chain-card-summary">Secrets harvested from env vars unlocked adjacent SaaS platforms. Not lateral movement across a network — across the SaaS mesh. Traditional segmentation provides zero defense.</p>
+        <span class="chain-card-expand"><span class="arrow">›</span> Expand full analysis</span>
+        
+        <div class="chain-card-details">
+          <div class="chain-detail-block">
+            <div class="chain-detail-label danger">What happened</div>
+            <div class="chain-detail-text">Per community reporting (not yet confirmed by Vercel), the attacker used secrets and integration tokens stored in Vercel to pivot into Linear and GitHub. The attacker-claimed haul on BreachForums includes source code, internal deployment access, NPM tokens, and GitHub tokens — offered for $2M. <strong>Vercel has explicitly confirmed that Next.js, Turbopack, and its open-source projects remain safe after a supply-chain audit</strong> — the most consequential defensive outcome of the incident, since a poisoned Next.js publish would have been an FBI-advisory-level event.</div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label danger">The architectural shift</div>
+            <div class="chain-detail-text">Tokens harvested from one SaaS unlock access to adjacent platforms in the same development pipeline. This is lateral movement across the SaaS mesh, not across a corporate network. <strong>Firewalls, network segmentation, and NIDS provide zero defense</strong> — nothing crossed a network boundary worth monitoring. The investment most orgs made in perimeter security does not apply to the attack paths that actually matter now.</div>
+          </div>
+          <div class="chain-detail-block">
+            <div class="chain-detail-label defense">What could have prevented it</div>
+            <div class="chain-detail-text">
+              <ul>
+                <li>Integration tokens scoped per-purpose, per-repository, per-environment — never org-wide</li>
+                <li>Automated supply-chain audits independent of the primary platform — anomalous publish detection in near-real-time</li>
+                <li>Write operations on critical publish pipelines gated by out-of-band approval (second human, hardware key, signed release artifact)</li>
+                <li>Monitoring npm and GitHub for anomalous publishes, token usage from new locations, new maintainer additions across org-critical packages</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!--  DATA VIZ                                                        -->
+<!-- =============================================================== -->
+<section>
+  <div class="reveal">
+    <div class="section-eyebrow">The fourth plane</div>
+    <h2 class="section-title">OAuth is a credential.<br/>We do not govern it like one.</h2>
+    <p class="section-lede">Enterprises conceptualize identity as three planes: passwords, MFA, SSO. OAuth consent is a fourth — and it has fundamentally different properties than the other three.</p>
+  </div>
+  
+  <div class="viz-container reveal">
+    <div class="viz-kicker">Figure 01 · Identity Plane Governance Matrix</div>
+    <div class="viz-title">The silent credential</div>
+    
+    <svg class="viz-svg" viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M2 1 L8 5 L2 9" fill="none" stroke="var(--inflection)" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+      </defs>
+      
+      <!-- Column headers -->
+      <g font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="2" fill="var(--text-muted)">
+        <text x="280" y="30" text-anchor="middle">PASSWORD</text>
+        <text x="430" y="30" text-anchor="middle">MFA</text>
+        <text x="580" y="30" text-anchor="middle">SSO</text>
+        <text x="750" y="30" text-anchor="middle" fill="var(--danger)">OAUTH GRANT</text>
+      </g>
+      
+      <!-- Underline under OAuth column to highlight -->
+      <line x1="700" y1="40" x2="800" y2="40" stroke="var(--danger)" stroke-width="1"/>
+      
+      <!-- Row separators -->
+      <g stroke="var(--border)" stroke-width="0.5">
+        <line x1="40" y1="75" x2="860" y2="75"/>
+        <line x1="40" y1="135" x2="860" y2="135"/>
+        <line x1="40" y1="195" x2="860" y2="195"/>
+        <line x1="40" y1="255" x2="860" y2="255"/>
+        <line x1="40" y1="315" x2="860" y2="315"/>
+      </g>
+      
+      <!-- Column dividers -->
+      <g stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2 4">
+        <line x1="350" y1="45" x2="350" y2="335"/>
+        <line x1="500" y1="45" x2="500" y2="335"/>
+        <line x1="650" y1="45" x2="650" y2="335"/>
+      </g>
+      
+      <!-- OAuth column highlight -->
+      <rect x="670" y="45" width="180" height="290" fill="var(--danger)" fill-opacity="0.04" stroke="var(--danger)" stroke-opacity="0.3" stroke-width="0.5"/>
+      
+      <!-- Row 1: User interaction on use -->
+      <text x="50" y="110" font-family="Space Grotesk, sans-serif" font-size="13" fill="var(--text)">User interaction on use</text>
+      <g font-family="JetBrains Mono, monospace" font-size="11" font-weight="500">
+        <text x="280" y="110" text-anchor="middle" fill="var(--defense)">YES</text>
+        <text x="430" y="110" text-anchor="middle" fill="var(--defense)">YES</text>
+        <text x="580" y="110" text-anchor="middle" fill="var(--defense)">YES</text>
+        <text x="750" y="110" text-anchor="middle" fill="var(--danger)">NO</text>
+      </g>
+      
+      <!-- Row 2: Survives password change -->
+      <text x="50" y="170" font-family="Space Grotesk, sans-serif" font-size="13" fill="var(--text)">Survives password change</text>
+      <g font-family="JetBrains Mono, monospace" font-size="11" font-weight="500">
+        <text x="280" y="170" text-anchor="middle" fill="var(--defense)">NO</text>
+        <text x="430" y="170" text-anchor="middle" fill="var(--text-muted)">N/A</text>
+        <text x="580" y="170" text-anchor="middle" fill="var(--defense)">NO</text>
+        <text x="750" y="170" text-anchor="middle" fill="var(--danger)">YES</text>
+      </g>
+      
+      <!-- Row 3: Bypasses MFA -->
+      <text x="50" y="230" font-family="Space Grotesk, sans-serif" font-size="13" fill="var(--text)">Bypasses MFA</text>
+      <g font-family="JetBrains Mono, monospace" font-size="11" font-weight="500">
+        <text x="280" y="230" text-anchor="middle" fill="var(--defense)">NO</text>
+        <text x="430" y="230" text-anchor="middle" fill="var(--text-muted)">N/A</text>
+        <text x="580" y="230" text-anchor="middle" fill="var(--defense)">NO</text>
+        <text x="750" y="230" text-anchor="middle" fill="var(--danger)">YES</text>
+      </g>
+      
+      <!-- Row 4: Centrally governed -->
+      <text x="50" y="290" font-family="Space Grotesk, sans-serif" font-size="13" fill="var(--text)">Centrally governed</text>
+      <g font-family="JetBrains Mono, monospace" font-size="11" font-weight="500">
+        <text x="280" y="290" text-anchor="middle" fill="var(--defense)">USUALLY</text>
+        <text x="430" y="290" text-anchor="middle" fill="var(--defense)">USUALLY</text>
+        <text x="580" y="290" text-anchor="middle" fill="var(--defense)">USUALLY</text>
+        <text x="750" y="290" text-anchor="middle" fill="var(--danger)">RARELY</text>
+      </g>
+      
+      <!-- Editorial callout -->
+      <g>
+        <rect x="40" y="355" width="820" height="50" fill="var(--inflection)" fill-opacity="0.08" stroke="var(--inflection)" stroke-opacity="0.4" stroke-width="0.5"/>
+        <text x="60" y="378" font-family="JetBrains Mono, monospace" font-size="9" letter-spacing="2" fill="var(--inflection)">INFLECTION POINT</text>
+        <text x="60" y="395" font-family="Space Grotesk, sans-serif" font-size="12" fill="var(--text)" font-style="italic">OAuth grants have the security-relevant properties of a password but almost none of the governance rigor.</text>
+      </g>
+      
+      <!-- Arrow highlighting the OAuth column -->
+      <g stroke="var(--inflection)" stroke-width="1" fill="none" opacity="0.7">
+        <path d="M 820 350 Q 770 345 770 315" stroke-dasharray="2 3" marker-end="url(#arrowhead)"/>
+      </g>
+    </svg>
+    
+    <div class="viz-caption">
+      <strong>SOURCE:</strong> Architectural analysis, CSA perspective · April 2026<br/>
+      The pattern holds across every modern SaaS-first enterprise. OAuth consent is a privileged credential issued silently, governed loosely, monitored rarely, and almost never revoked on schedule. Every authorized vendor in your tenant is a standing inheritance of trust that outlives the decision that created it.
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!--  PULLQUOTE 2                                                     -->
+<!-- =============================================================== -->
+<div class="pullquote reveal">
+  <p class="pullquote-text">Attackers do not move through networks anymore.<br/><strong>They move through identity graphs.</strong></p>
+  <div class="pullquote-attr">Architectural truth №6</div>
+</div>
+
+<!-- =============================================================== -->
+<!--  THE SEVEN TRUTHS                                                -->
+<!-- =============================================================== -->
+<section>
+  <div class="reveal">
+    <div class="section-eyebrow">What a veteran architect says</div>
+    <h2 class="section-title">Seven architectural truths</h2>
+    <p class="section-lede">Reframings — not recommendations. The test for each: does it make the reader reconsider an assumption they'd been operating on? Click any statement to expand the reasoning.</p>
+  </div>
+  
+  <div class="truths">
+    <div class="truth reveal" onclick="this.classList.toggle('expanded')">
+      <div class="truth-num">Truth 01 <span class="arrow">›</span></div>
+      <p class="truth-statement">OAuth consent is a credential issuance event. Govern it like one.</p>
+      <div class="truth-explanation">Most organizations have rigorous governance for passwords, SSH keys, API keys, and certificates. They treat OAuth authorization like app installation. An OAuth grant has the security-relevant properties of a password: it bypasses MFA on use, survives password rotation, rarely appears in any credential inventory, and is almost never monitored. Every grant your company has ever approved is a standing, silent, privileged identity you are still responsible for.</div>
+    </div>
+    
+    <div class="truth reveal" onclick="this.classList.toggle('expanded')">
+      <div class="truth-num">Truth 02 <span class="arrow">›</span></div>
+      <p class="truth-statement">Your security ceiling is set by the weakest vendor you authorized, not the strongest control you deployed.</p>
+      <div class="truth-explanation">The best lock on the front door is irrelevant if the building has two hundred side doors, each held open by a third party whose security program you have never audited. Vendor risk management is not a compliance exercise — it is the perimeter. The next major incident in your organization will almost certainly enter through a SaaS you granted access to three years ago and then stopped thinking about.</div>
+    </div>
+    
+    <div class="truth reveal" onclick="this.classList.toggle('expanded')">
+      <div class="truth-num">Truth 03 <span class="arrow">›</span></div>
+      <p class="truth-statement">Any security control that requires a human to remember to enable it has already failed.</p>
+      <div class="truth-explanation">Every opt-in security feature with a meaningful failure population proves this: encrypted S3 buckets, private GitHub repos, sensitive environment variables, MFA enforcement, secret scanning. The pattern is universal — the default is what gets used at scale. Secure-by-default, with opt-out friction and documented justification, is the only design that survives production.</div>
+    </div>
+    
+    <div class="truth reveal" onclick="this.classList.toggle('expanded')">
+      <div class="truth-num">Truth 04 <span class="arrow">›</span></div>
+      <p class="truth-statement">Trust is a decision. OAuth consent is a persistent artifact. They do not expire together.</p>
+      <div class="truth-explanation">When a user authorizes an application, they consent to an entity at a point in time. When the entity changes — through acquisition, domain transfer, product pivot, or wind-down — the grant remains. OAuth 2.0 has no mechanism for forced re-consent when the underlying entity changes hands. Your vendor inventory must track ownership history, not just current state. The Context.ai case made this concrete: the domain changed owners, the consents did not.</div>
+    </div>
+    
+    <div class="truth reveal" onclick="this.classList.toggle('expanded')">
+      <div class="truth-num">Truth 05 <span class="arrow">›</span></div>
+      <p class="truth-statement">AI agent platforms are token aggregators by design, not by accident.</p>
+      <div class="truth-explanation">The business model of an enterprise AI agent platform is holding broad-scope, long-lived credentials across many systems for many tenants. A single compromise is equivalent to a coordinated breach of every connected SaaS for every customer. This is not a flaw in their implementation — it is intrinsic to the product category. Agent platforms must therefore be evaluated against a <em>stricter</em> vendor-security bar than other SaaS, not a laxer one.</div>
+    </div>
+    
+    <div class="truth reveal" onclick="this.classList.toggle('expanded')">
+      <div class="truth-num">Truth 06 <span class="arrow">›</span></div>
+      <p class="truth-statement">Attackers do not move through networks anymore. They move through identity graphs.</p>
+      <div class="truth-explanation">The Context.ai → Workspace → Vercel → Linear → GitHub pivot crossed zero network boundaries. Every lateral movement was legitimately-federated authentication using valid credentials at every hop. Firewalls, network segmentation, and NIDS provided zero defense. Identity-graph mapping, OAuth-plane monitoring, and SSO anomaly detection are the new NIDS — and most organizations' maturity here is roughly where network security was in 2005.</div>
+    </div>
+    
+    <div class="truth reveal" onclick="this.classList.toggle('expanded')">
+      <div class="truth-num">Truth 07 <span class="arrow">›</span></div>
+      <p class="truth-statement">Post-compromise tempo is compressing from weeks to hours. Response built for the old tempo will not detect the new one.</p>
+      <div class="truth-explanation">The traditional SOC model — collect logs, investigate at human pace, escalate when certain — was built for an adversary constrained by human effort. AI-accelerated attackers are not. The window between initial foothold and complete objective may now be measured in hours. A response architecture that depends on an analyst triaging an alert the next morning is not a response architecture anymore — it is an incident disclosure process.</div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!--  PULLQUOTE 3                                                     -->
+<!-- =============================================================== -->
+<div class="pullquote reveal">
+  <p class="pullquote-text">The next incident is already being planned —<br/><strong>against a vendor you authorized years ago and stopped thinking about.</strong></p>
+  <div class="pullquote-attr">The unavoidable implication</div>
+</div>
+
+<!-- =============================================================== -->
+<!--  REMEDIATION HORIZONS                                            -->
+<!-- =============================================================== -->
+<section>
+  <div class="reveal">
+    <div class="section-eyebrow">A phased response</div>
+    <h2 class="section-title">What to do,<br/>in what order</h2>
+    <p class="section-lede">A mature program executes across all four horizons concurrently. An organization responding specifically to this incident should start at Horizon 0 today.</p>
+  </div>
+  
+  <div class="horizons">
+    <div class="horizon reveal">
+      <div class="horizon-num">Horizon 00</div>
+      <div class="horizon-time">0–48h</div>
+      <div class="horizon-name">Immediate</div>
+      <ul>
+        <li>Rotate every credential in non-sensitive Vercel env vars</li>
+        <li>Flip every remaining secret to the sensitive flag</li>
+        <li>Search Workspace audit logs for the published IOC</li>
+        <li>Review Vercel activity logs for anomalous IPs and deployments</li>
+        <li>Enforce Standard Deployment Protection; rotate its tokens</li>
+      </ul>
+    </div>
+    
+    <div class="horizon reveal">
+      <div class="horizon-num">Horizon 01</div>
+      <div class="horizon-time">1–4w</div>
+      <div class="horizon-name">Short-term</div>
+      <ul>
+        <li>Full third-party OAuth app inventory across Workspace/M365</li>
+        <li>Restrict OAuth authorization to admin-approved apps for sensitive scopes</li>
+        <li>Enforce phishing-resistant MFA on the IdP — no SMS/TOTP fallback</li>
+        <li>Enable Advanced Protection Program for production-access users</li>
+        <li>Deploy anomaly detection on OAuth refresh events</li>
+        <li>Publish internal policy for vendor OAuth authorization</li>
+      </ul>
+    </div>
+    
+    <div class="horizon reveal">
+      <div class="horizon-num">Horizon 02</div>
+      <div class="horizon-time">1–3m</div>
+      <div class="horizon-name">Medium-term</div>
+      <ul>
+        <li>Migrate from static secrets to workload identity federation (OIDC)</li>
+        <li>Deploy device trust / posture checks for SSO into production SaaS</li>
+        <li>Build an OAuth tripwire routed to the SOC, not just IT</li>
+        <li>Automate secret rotation for remaining long-lived credentials</li>
+        <li>Build vendor security review program gated on SOC 2, scope justification, token-storage architecture</li>
+        <li>Audit your own product's OAuth surface — you are someone else's Context.ai</li>
+      </ul>
+    </div>
+    
+    <div class="horizon reveal">
+      <div class="horizon-num">Horizon 03</div>
+      <div class="horizon-time">3–12m</div>
+      <div class="horizon-name">Long-term</div>
+      <ul>
+        <li>Zero standing privilege for all non-human identities</li>
+        <li>Investigate Macaroons, Biscuits, SPIFFE/SPIRE, AAuth for agent-first identity</li>
+        <li>Continuous credential exposure monitoring against breach datasets</li>
+        <li>Distinct incident playbooks for third-party OAuth compromise</li>
+        <li>AI agent platform governance with stricter vendor review and prompt-injection threat modeling</li>
+        <li>Move toward proof-of-possession credentials (mTLS, DPoP, signed requests) over bearer tokens</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!--  FINAL CALLOUT                                                   -->
+<!-- =============================================================== -->
+<div class="callout reveal">
+  <div class="callout-eyebrow">The thesis</div>
+  <div class="callout-text">
+    <p>The Vercel incident is not technically interesting. <strong>That is what makes it important.</strong></p>
+    <p>An attacker owned a third-party AI vendor, rode OAuth tokens into a federated identity, and read the secrets that were sitting in plaintext-readable form because the control that would have protected them <em>defaulted to off</em>.</p>
+    <p>The vendor that gets breached next will be different. The pattern will be identical.</p>
+  </div>
+</div>
+
+<!-- =============================================================== -->
+<!--  FOOTER                                                          -->
+<!-- =============================================================== -->
+<footer>
+  <div class="footer-mark">Inherited Access</div>
+  <p class="footer-text">
+    An architectural autopsy of the Vercel April 2026 security incident.<br/>
+    Prepared from a Chief Security Architect perspective using publicly disclosed information as of April 19, 2026.<br/>
+    Forensic details may evolve as Vercel, Context.ai, and Mandiant publish further findings.
+  </p>
+  <p class="footer-credit">
+    Built by <a href="https://github.com/kahalewai/security-reports/inherited-access" target="_blank" rel="noopener">Kahalewai</a> with Claude doing the heavy lifting
+  </p>
+</footer>
+
+<script>
+// Theme toggle
+(function() {
+  const root = document.documentElement;
+  const toggle = document.getElementById('themeToggle');
+  
+  // Load saved preference
+  try {
+    const saved = localStorage.getItem('ia-theme');
+    if (saved === 'light') root.setAttribute('data-theme', 'light');
+  } catch (e) {}
+  
+  toggle.addEventListener('click', () => {
+    const isLight = root.getAttribute('data-theme') === 'light';
+    if (isLight) {
+      root.removeAttribute('data-theme');
+      try { localStorage.setItem('ia-theme', 'dark'); } catch (e) {}
+    } else {
+      root.setAttribute('data-theme', 'light');
+      try { localStorage.setItem('ia-theme', 'light'); } catch (e) {}
+    }
+  });
+})();
+
+// Intersection Observer for reveal animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Scroll progress bar
+const progress = document.getElementById('progress');
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = (scrollTop / docHeight) * 100;
+  progress.style.width = pct + '%';
+}, { passive: true });
+</script>
+
+</body>
+</html>
