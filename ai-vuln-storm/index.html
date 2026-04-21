@@ -1,0 +1,2319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The AI Vulnerability Storm: An Interactive Briefing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   CSS RESET & VARIABLES
+   ============================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-deep: #06060b;
+  --bg-primary: #0a0a12;
+  --bg-card: #0f0f1a;
+  --bg-card-hover: #141424;
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-glow: rgba(255,255,255,0.12);
+  --text-primary: #e8e6e3;
+  --text-secondary: #8a8a9a;
+  --text-dim: #5a5a6a;
+  --red: #ff2d55;
+  --red-glow: rgba(255,45,85,0.3);
+  --red-deep: rgba(255,45,85,0.08);
+  --teal: #00d4aa;
+  --teal-glow: rgba(0,212,170,0.3);
+  --teal-deep: rgba(0,212,170,0.08);
+  --amber: #f5a623;
+  --amber-glow: rgba(245,166,35,0.3);
+  --amber-deep: rgba(245,166,35,0.08);
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Source Serif 4', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --max-width: 1200px;
+  --section-gap: 10rem;
+}
+
+html { scroll-behavior: smooth; }
+
+/* Light theme */
+[data-theme="light"] {
+  --bg-deep: #f2f1ee;
+  --bg-primary: #eae9e5;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f7f7f5;
+  --border-subtle: rgba(0,0,0,0.08);
+  --border-glow: rgba(0,0,0,0.15);
+  --text-primary: #1a1a1f;
+  --text-secondary: #555560;
+  --text-dim: #8a8a95;
+  --red: #d4213e;
+  --red-glow: rgba(212,33,62,0.25);
+  --red-deep: rgba(212,33,62,0.06);
+  --teal: #00a886;
+  --teal-glow: rgba(0,168,134,0.25);
+  --teal-deep: rgba(0,168,134,0.06);
+  --amber: #c98510;
+  --amber-glow: rgba(201,133,16,0.25);
+  --amber-deep: rgba(201,133,16,0.06);
+}
+[data-theme="light"] #hero {
+  background: radial-gradient(ellipse 80% 50% at 50% 40%, rgba(212,33,62,0.05), transparent 70%),
+              radial-gradient(ellipse 60% 60% at 30% 70%, rgba(0,168,134,0.03), transparent),
+              var(--bg-deep);
+}
+[data-theme="light"] .hero-title {
+  background: linear-gradient(135deg, #1a1a1f 0%, var(--red) 45%, var(--amber) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+[data-theme="light"] .exp-card,
+[data-theme="light"] .pa-card,
+[data-theme="light"] .briefing-card,
+[data-theme="light"] .chart-container {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+[data-theme="light"] .stat-card {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+[data-theme="light"] .stat-card:hover {
+  box-shadow: 0 8px 40px rgba(212,33,62,0.08);
+}
+[data-theme="light"] .stat-card.teal-accent:hover {
+  box-shadow: 0 8px 40px rgba(0,168,134,0.08);
+}
+[data-theme="light"] .stat-card.amber-accent:hover {
+  box-shadow: 0 8px 40px rgba(201,133,16,0.08);
+}
+[data-theme="light"] .final-callout {
+  background: linear-gradient(135deg, var(--red-deep), var(--bg-card));
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+[data-theme="light"] .final-callout::before {
+  background: var(--bg-deep);
+}
+[data-theme="light"] .contributor-name {
+  background: rgba(0,0,0,0.03);
+}
+[data-theme="light"] .framework-tag {
+  background: rgba(0,0,0,0.04);
+}
+[data-theme="light"] ::selection {
+  background: var(--red);
+  color: white;
+}
+[data-theme="light"] .shield-group {
+  filter: none;
+  animation: shieldPulseLight 3s ease-in-out infinite;
+}
+@keyframes shieldPulseLight {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(212,33,62,0.2)); }
+  50% { filter: drop-shadow(0 0 20px rgba(212,33,62,0.3)); }
+}
+
+[data-theme="light"] .chart-container::before {
+  background: radial-gradient(ellipse at 50% 0%, var(--red-deep), transparent);
+}
+[data-theme="light"] .timeline::before {
+  box-shadow: 0 0 10px var(--red-glow), 0 0 20px rgba(212,33,62,0.06);
+}
+[data-theme="light"] .pullquote {
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(212,33,62,0.03), transparent);
+}
+[data-theme="light"] .pullquote.teal-q {
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(0,168,134,0.03), transparent);
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 999;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.theme-toggle:hover {
+  border-color: var(--border-glow);
+  color: var(--text-primary);
+  transform: scale(1.08);
+}
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.4s ease;
+}
+.theme-toggle:hover svg {
+  transform: rotate(30deg);
+}
+.theme-toggle .icon-sun { display: none; }
+.theme-toggle .icon-moon { display: block; }
+[data-theme="light"] .theme-toggle .icon-sun { display: block; }
+[data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.7;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--red);
+  color: white;
+}
+
+/* ============================================
+   UTILITY
+   ============================================ */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-60px);
+  transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.reveal-left.visible { opacity: 1; transform: translateX(0); }
+.reveal-right {
+  opacity: 0;
+  transform: translateX(60px);
+  transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+/* ============================================
+   RADIAL GLOW BACKGROUNDS
+   ============================================ */
+.glow-red { background: radial-gradient(ellipse 600px 400px at 50% 0%, var(--red-deep), transparent); }
+.glow-teal { background: radial-gradient(ellipse 600px 400px at 50% 0%, var(--teal-deep), transparent); }
+.glow-amber { background: radial-gradient(ellipse 600px 400px at 50% 0%, var(--amber-deep), transparent); }
+
+/* ============================================
+   HERO SECTION
+   ============================================ */
+#hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  background: radial-gradient(ellipse 80% 50% at 50% 40%, rgba(255,45,85,0.06), transparent 70%),
+              radial-gradient(ellipse 60% 60% at 30% 70%, rgba(0,212,170,0.03), transparent),
+              var(--bg-deep);
+}
+
+#hero-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 2rem;
+  padding-bottom: 7rem;
+}
+
+.hero-svg-wrap {
+  width: 280px;
+  height: 280px;
+  margin: 0 auto 3rem;
+  position: relative;
+}
+.hero-svg-wrap svg {
+  width: 100%;
+  height: 100%;
+}
+
+.hero-overline {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  animation: fadeUp 1s 0.5s forwards;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 10vw, 8rem);
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #fff 0%, var(--red) 45%, var(--amber) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  animation: fadeUp 1s 0.7s forwards;
+}
+
+.hero-subtitle {
+  font-family: var(--font-body);
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+  color: var(--text-secondary);
+  max-width: 640px;
+  margin: 0 auto 1rem;
+  font-style: italic;
+  opacity: 0;
+  animation: fadeUp 1s 0.9s forwards;
+}
+
+.hero-meta {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+  margin-top: 0.5rem;
+  opacity: 0;
+  animation: fadeUp 1s 1.1s forwards;
+}
+
+.scroll-prompt {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  animation: fadeUp 1s 1.5s forwards;
+  z-index: 2;
+}
+.scroll-prompt span {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--red), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+  50% { opacity: 1; transform: scaleY(1); }
+}
+
+/* Hero SVG animations */
+@keyframes shieldPulse {
+  0%, 100% { filter: drop-shadow(0 0 8px var(--red-glow)); }
+  50% { filter: drop-shadow(0 0 30px var(--red-glow)) drop-shadow(0 0 60px rgba(255,45,85,0.15)); }
+}
+@keyframes scanLine {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(300%); }
+}
+@keyframes rotateRing {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.shield-group { animation: shieldPulse 3s ease-in-out infinite; }
+.scan-line { animation: scanLine 3s ease-in-out infinite; }
+.rotate-ring { animation: rotateRing 20s linear infinite; transform-origin: center; }
+.rotate-ring-reverse { animation: rotateRing 30s linear infinite reverse; transform-origin: center; }
+
+/* ============================================
+   SECTION HEADERS
+   ============================================ */
+.section { padding: var(--section-gap) 0; position: relative; }
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 1rem;
+}
+.section-label.teal { color: var(--teal); }
+.section-label.amber { color: var(--amber); }
+
+.section-heading {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  letter-spacing: 0.03em;
+  line-height: 1;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.section-intro {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  max-width: 720px;
+  margin-bottom: 3rem;
+}
+
+/* ============================================
+   STAT CARDS
+   ============================================ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-top: 2px solid var(--red);
+  padding: 2rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--red-deep), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.stat-card:hover {
+  border-color: var(--red);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 40px rgba(255,45,85,0.1);
+}
+.stat-card:hover::before { opacity: 1; }
+.stat-card.teal-accent { border-top-color: var(--teal); }
+.stat-card.teal-accent::before { background: linear-gradient(to bottom, var(--teal-deep), transparent 60%); }
+.stat-card.teal-accent:hover { border-color: var(--teal); box-shadow: 0 8px 40px rgba(0,212,170,0.1); }
+.stat-card.amber-accent { border-top-color: var(--amber); }
+.stat-card.amber-accent::before { background: linear-gradient(to bottom, var(--amber-deep), transparent 60%); }
+.stat-card.amber-accent:hover { border-color: var(--amber); box-shadow: 0 8px 40px rgba(245,166,35,0.1); }
+
+.stat-number {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  line-height: 1;
+  color: var(--text-primary);
+  position: relative;
+  z-index: 1;
+}
+.stat-number .accent { color: var(--red); }
+.stat-number .teal { color: var(--teal); }
+.stat-number .amber { color: var(--amber); }
+
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+.stat-context {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================
+   PULLQUOTES
+   ============================================ */
+.pullquote {
+  padding: 6rem 2rem;
+  text-align: center;
+  position: relative;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255,45,85,0.04), transparent);
+}
+.pullquote.teal-q {
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(0,212,170,0.04), transparent);
+}
+
+.pullquote-mark {
+  font-family: var(--font-display);
+  font-size: 8rem;
+  line-height: 0.5;
+  color: var(--red);
+  opacity: 0.3;
+  user-select: none;
+  display: block;
+  margin-bottom: 1rem;
+}
+.pullquote.teal-q .pullquote-mark { color: var(--teal); }
+
+.pullquote-text {
+  font-family: var(--font-body);
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--text-primary);
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.pullquote-attr {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 1.5rem;
+}
+
+/* ============================================
+   TIMELINE
+   ============================================ */
+.timeline {
+  position: relative;
+  padding: 2rem 0;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent, var(--red), var(--amber), var(--red), transparent);
+  transform: translateX(-50%);
+  box-shadow: 0 0 20px var(--red-glow), 0 0 40px rgba(255,45,85,0.1);
+}
+
+.tl-item {
+  position: relative;
+  width: 50%;
+  padding: 2rem 3rem;
+}
+.tl-item:nth-child(odd) {
+  margin-left: 0;
+  text-align: right;
+  padding-right: 4rem;
+}
+.tl-item:nth-child(even) {
+  margin-left: 50%;
+  text-align: left;
+  padding-left: 4rem;
+}
+
+.tl-dot {
+  position: absolute;
+  top: 2.5rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 12px var(--red-glow), 0 0 30px rgba(255,45,85,0.15);
+  z-index: 2;
+}
+.tl-item:nth-child(odd) .tl-dot { right: -7px; }
+.tl-item:nth-child(even) .tl-dot { left: -7px; }
+.tl-dot.amber { background: var(--amber); box-shadow: 0 0 12px var(--amber-glow); }
+.tl-dot.teal { background: var(--teal); box-shadow: 0 0 12px var(--teal-glow); }
+
+.tl-date {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  color: var(--red);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.tl-date.amber { color: var(--amber); }
+.tl-date.teal { color: var(--teal); }
+
+.tl-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.03em;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.tl-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ============================================
+   EXPANDABLE CARDS (Risk Register + Priority Actions)
+   ============================================ */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.5rem;
+}
+
+.exp-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-top: 3px solid var(--red);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  position: relative;
+}
+.exp-card:hover {
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
+}
+.exp-card.high { border-top-color: var(--amber); }
+.exp-card.medium { border-top-color: var(--teal); }
+
+.card-header {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.card-severity {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.card-severity.critical { background: var(--red-deep); color: var(--red); border: 1px solid rgba(255,45,85,0.2); }
+.card-severity.high { background: var(--amber-deep); color: var(--amber); border: 1px solid rgba(245,166,35,0.2); }
+.card-severity.medium { background: var(--teal-deep); color: var(--teal); border: 1px solid rgba(0,212,170,0.2); }
+
+.card-id {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-bottom: 0.25rem;
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.card-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-top: 0.25rem;
+}
+
+.card-summary {
+  padding: 0 1.5rem 1.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.card-expand-indicator {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.3s;
+}
+.exp-card:hover .card-expand-indicator { color: var(--text-secondary); }
+.card-expand-indicator .arrow {
+  transition: transform 0.3s;
+  display: inline-block;
+}
+.exp-card.open .card-expand-indicator .arrow { transform: rotate(180deg); }
+
+.card-detail {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.exp-card.open .card-detail { max-height: 2000px; }
+
+.card-detail-inner {
+  padding: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.card-detail-inner p { margin-bottom: 1rem; }
+.card-detail-inner p:last-child { margin-bottom: 0; }
+
+.card-frameworks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1rem;
+}
+.framework-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.4rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-dim);
+  border-radius: 2px;
+}
+
+/* ============================================
+   PRIORITY ACTIONS CARDS
+   ============================================ */
+.pa-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--teal);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.4s ease;
+}
+.pa-card:hover {
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
+}
+.pa-card.critical-pa { border-left-color: var(--red); }
+.pa-card.high-pa { border-left-color: var(--amber); }
+
+.pa-header {
+  padding: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.pa-number {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--teal);
+  line-height: 1;
+  flex-shrink: 0;
+  min-width: 2rem;
+  text-align: center;
+}
+.pa-card.critical-pa .pa-number { color: var(--red); }
+.pa-card.high-pa .pa-number { color: var(--amber); }
+
+.pa-info { flex: 1; }
+
+.pa-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+.pa-meta {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pa-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 2px;
+}
+.pa-tag.start { background: rgba(255,45,85,0.1); color: var(--red); }
+.pa-tag.horizon { background: rgba(245,166,35,0.1); color: var(--amber); }
+.pa-tag.category { background: rgba(0,212,170,0.1); color: var(--teal); }
+
+.pa-summary {
+  padding: 0 1.5rem 1rem 4.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.pa-detail {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.pa-card.open .pa-detail { max-height: 2000px; }
+
+.pa-detail-inner {
+  padding: 1.5rem;
+  padding-left: 4.5rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.pa-detail-inner p { margin-bottom: 1rem; }
+.pa-detail-inner strong { color: var(--text-primary); }
+
+.pa-expand-indicator {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.3s;
+}
+.pa-card:hover .pa-expand-indicator { color: var(--text-secondary); }
+.pa-expand-indicator .arrow { transition: transform 0.3s; display: inline-block; }
+.pa-card.open .pa-expand-indicator .arrow { transform: rotate(180deg); }
+
+/* ============================================
+   DATA VIZ — TIME TO EXPLOIT CHART
+   ============================================ */
+.chart-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  padding: 2.5rem 2rem 2rem;
+  margin-top: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+.chart-container::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 200px;
+  background: radial-gradient(ellipse at 50% 0%, var(--red-deep), transparent);
+  pointer-events: none;
+}
+
+.chart-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.3rem;
+  position: relative;
+  z-index: 1;
+}
+.chart-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.chart-svg-wrap {
+  width: 100%;
+  overflow-x: auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================
+   BOARD BRIEFING
+   ============================================ */
+.briefing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.briefing-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  padding: 2rem;
+  position: relative;
+}
+.briefing-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 2px;
+}
+.briefing-card:nth-child(1)::before { background: linear-gradient(90deg, var(--red), transparent); }
+.briefing-card:nth-child(2)::before { background: linear-gradient(90deg, var(--amber), transparent); }
+.briefing-card:nth-child(3)::before { background: linear-gradient(90deg, var(--teal), transparent); }
+.briefing-card:nth-child(4)::before { background: linear-gradient(90deg, var(--red), var(--amber)); }
+
+.briefing-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  letter-spacing: 0.03em;
+  margin-bottom: 1rem;
+}
+.briefing-card p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.briefing-card ul {
+  list-style: none;
+  margin-top: 0.75rem;
+}
+.briefing-card li {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  padding: 0.4rem 0;
+  padding-left: 1.2rem;
+  position: relative;
+}
+.briefing-card li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--text-dim);
+}
+
+/* ============================================
+   CONTRIBUTORS SECTION
+   ============================================ */
+.contributors-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+.contributor-name {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 0.3rem 0.6rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-dim);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+.contributor-name:hover {
+  color: var(--text-primary);
+  border-color: var(--border-glow);
+  background: rgba(255,255,255,0.06);
+}
+.contributor-name.author {
+  color: var(--red);
+  border-color: rgba(255,45,85,0.2);
+}
+
+/* ============================================
+   FINAL CALLOUT
+   ============================================ */
+.final-callout {
+  border: 1px solid var(--red);
+  background: linear-gradient(135deg, var(--red-deep), var(--bg-card));
+  padding: 3rem;
+  position: relative;
+  margin-top: 4rem;
+  box-shadow: 0 0 60px rgba(255,45,85,0.06);
+}
+.final-callout::before {
+  content: 'THESIS';
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  color: var(--red);
+  position: absolute;
+  top: -0.5rem;
+  left: 2rem;
+  background: var(--bg-deep);
+  padding: 0 0.75rem;
+}
+.final-callout p {
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+.final-callout p + p { margin-top: 1rem; }
+
+/* ============================================
+   FOOTER
+   ============================================ */
+footer {
+  padding: 4rem 2rem;
+  text-align: center;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 6rem;
+}
+footer p {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  line-height: 2;
+}
+footer a {
+  color: var(--red);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+footer a:hover { color: var(--text-primary); }
+
+/* ============================================
+   PA LIST LAYOUT
+   ============================================ */
+.pa-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
+@media (max-width: 900px) {
+  .timeline::before { left: 20px; }
+  .tl-item, .tl-item:nth-child(odd), .tl-item:nth-child(even) {
+    width: 100%;
+    margin-left: 0;
+    text-align: left;
+    padding-left: 50px;
+    padding-right: 1rem;
+  }
+  .tl-dot, .tl-item:nth-child(odd) .tl-dot, .tl-item:nth-child(even) .tl-dot {
+    left: 13px;
+    right: auto;
+  }
+  .card-grid { grid-template-columns: 1fr; }
+  .briefing-grid { grid-template-columns: 1fr; }
+  .pa-summary, .pa-detail-inner { padding-left: 1.5rem; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero-svg-wrap { width: 200px; height: 200px; }
+}
+@media (max-width: 600px) {
+  :root { --section-gap: 6rem; }
+  body { font-size: 16px; }
+  .container { padding: 0 1.25rem; }
+  .stat-number { font-size: 2.5rem; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .pullquote { padding: 4rem 1.5rem; }
+  .pullquote-mark { font-size: 5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle light/dark theme" title="Toggle theme">
+  <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+</button>
+
+<!-- ============================================
+     HERO SECTION
+     ============================================ -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-svg-wrap">
+      <svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ff2d55"/>
+            <stop offset="100%" stop-color="#f5a623"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <clipPath id="shieldClip">
+            <path d="M140 30 L240 75 L240 160 C240 210 200 250 140 270 C80 250 40 210 40 160 L40 75 Z"/>
+          </clipPath>
+        </defs>
+        <!-- outer rotating ring -->
+        <g class="rotate-ring">
+          <circle cx="140" cy="140" r="135" fill="none" stroke="rgba(255,45,85,0.1)" stroke-width="1" stroke-dasharray="8 12"/>
+        </g>
+        <g class="rotate-ring-reverse">
+          <circle cx="140" cy="140" r="125" fill="none" stroke="rgba(245,166,35,0.06)" stroke-width="1" stroke-dasharray="4 16"/>
+        </g>
+        <!-- shield -->
+        <g class="shield-group">
+          <path d="M140 35 L235 78 L235 158 C235 206 197 245 140 265 C83 245 45 206 45 158 L45 78 Z"
+                fill="none" stroke="url(#shieldGrad)" stroke-width="2" filter="url(#glow)"/>
+          <path d="M140 50 L222 87 L222 155 C222 195 190 228 140 245 C90 228 58 195 58 155 L58 87 Z"
+                fill="rgba(255,45,85,0.03)" stroke="rgba(255,45,85,0.15)" stroke-width="1"/>
+          <!-- scan line -->
+          <g clip-path="url(#shieldClip)">
+            <rect class="scan-line" x="40" y="30" width="200" height="3"
+                  fill="linear-gradient(90deg, transparent, rgba(255,45,85,0.4), transparent)"
+                  style="fill:rgba(255,45,85,0.3)"/>
+          </g>
+          <!-- broken lock icon -->
+          <g transform="translate(140,135)" stroke="url(#shieldGrad)" fill="none" stroke-width="2.5" stroke-linecap="round">
+            <rect x="-20" y="-5" width="40" height="32" rx="3"/>
+            <path d="M-12,-5 L-12,-18 C-12,-30 12,-30 12,-18 L12,-12" stroke-dasharray="0" />
+            <circle cx="0" cy="10" r="4" fill="url(#shieldGrad)" stroke="none"/>
+            <line x1="0" y1="14" x2="0" y2="22"/>
+          </g>
+          <!-- crosshair marks -->
+          <g stroke="rgba(255,45,85,0.25)" stroke-width="1">
+            <line x1="140" y1="55" x2="140" y2="75"/>
+            <line x1="140" y1="225" x2="140" y2="245"/>
+            <line x1="60" y1="140" x2="80" y2="140"/>
+            <line x1="200" y1="140" x2="220" y2="140"/>
+          </g>
+        </g>
+        <!-- corner brackets -->
+        <g stroke="rgba(255,255,255,0.15)" stroke-width="1.5" fill="none" stroke-linecap="square">
+          <path d="M20,50 L20,20 L50,20"/>
+          <path d="M230,20 L260,20 L260,50"/>
+          <path d="M260,230 L260,260 L230,260"/>
+          <path d="M50,260 L20,260 L20,230"/>
+        </g>
+      </svg>
+    </div>
+    <div class="hero-overline">CSA · SANS · OWASP · 250+ CISOs · 13 April 2026</div>
+    <h1 class="hero-title">THE AI<br>VULNERABILITY<br>STORM</h1>
+    <p class="hero-subtitle">Building a Mythos-Ready Security Program — the expedited strategy briefing that 250 CISOs wrote over a single weekend, because the industry couldn't wait until Monday.</p>
+    <p class="hero-meta">Version 0.4 · CC BY-NC 4.0 · Interactive Companion</p>
+  </div>
+  <div class="scroll-prompt">
+    <span>Scroll to begin</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ============================================
+     STATS SECTION
+     ============================================ -->
+<section class="section" id="stats">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">The Numbers That Matter</div>
+      <h2 class="section-heading">By the Time You Finish Reading This,<br>the Window Has Narrowed</h2>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card reveal" style="transition-delay:0.1s">
+        <div class="stat-number"><span class="accent">181</span> vs 2</div>
+        <div class="stat-label">Working Firefox exploits</div>
+        <div class="stat-context">Mythos generated 181 working exploits where Claude Opus 4.6 succeeded only twice under the same conditions.</div>
+      </div>
+      <div class="stat-card reveal" style="transition-delay:0.15s">
+        <div class="stat-number"><span class="accent">&lt;1</span> day</div>
+        <div class="stat-label">Time to exploit · 2026</div>
+        <div class="stat-context">The Zero Day Clock shows time-to-exploitation has collapsed from weeks to under a single day.</div>
+      </div>
+      <div class="stat-card teal-accent reveal" style="transition-delay:0.2s">
+        <div class="stat-number"><span class="teal">73</span>%</div>
+        <div class="stat-label">Expert CTF solve rate</div>
+        <div class="stat-context">Before April 2025, no LLM could complete a single expert-level CTF problem. Mythos solved 73% of them.</div>
+      </div>
+      <div class="stat-card amber-accent reveal" style="transition-delay:0.25s">
+        <div class="stat-number"><span class="amber">27</span> yrs</div>
+        <div class="stat-label">Oldest bug found</div>
+        <div class="stat-context">A 27-year-old vulnerability in OpenBSD — an OS known primarily for its security — found and patched.</div>
+      </div>
+      <div class="stat-card reveal" style="transition-delay:0.3s">
+        <div class="stat-number"><span class="accent">500+</span></div>
+        <div class="stat-label">High-severity vulns · Pre-Mythos</div>
+        <div class="stat-context">Claude Opus 4.6 alone reported 500+ high-severity vulnerabilities in open source software by February 2026 — before Mythos even existed.</div>
+      </div>
+      <div class="stat-card teal-accent reveal" style="transition-delay:0.35s">
+        <div class="stat-number"><span class="teal">8</span> min</div>
+        <div class="stat-label">AI attack → admin access</div>
+        <div class="stat-context">Sysdig documented an AI-based attack that reached administrator-level access in eight minutes. Start to finish.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PULLQUOTE 1 -->
+<div class="pullquote reveal">
+  <span class="pullquote-mark">"</span>
+  <p class="pullquote-text">In the near term, security organizations will likely be overwhelmed by the need to apply patches and respond to AI-discovered vulnerabilities, exploits, and autonomous attacks.</p>
+  <p class="pullquote-attr">— The AI Vulnerability Storm, Executive Summary</p>
+</div>
+
+<!-- ============================================
+     TIMELINE SECTION
+     ============================================ -->
+<section class="section" id="timeline-section">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label amber">The Trajectory</div>
+      <h2 class="section-heading">The Evolution of LLM-Based<br>Offensive Capabilities</h2>
+      <p class="section-intro">This didn't start with Mythos. The capability has been building for over a year. What changed was the speed, the scale, and the moment it entered the boardroom.</p>
+    </div>
+    <div class="timeline">
+      <div class="tl-item reveal-left">
+        <div class="tl-dot teal"></div>
+        <div class="tl-date teal">June 2025</div>
+        <div class="tl-title">XBOW Tops HackerOne</div>
+        <div class="tl-desc">XBOW became #1 on HackerOne's US leaderboard — the first autonomous system to outperform all human hackers on the platform. Open-source raptor demonstrated that autonomous vulnerability research is available to anyone using an off-the-shelf agent.</div>
+      </div>
+      <div class="tl-item reveal-right">
+        <div class="tl-dot teal"></div>
+        <div class="tl-date teal">August 5, 2025</div>
+        <div class="tl-title">Google Big Sleep Finds 20 Zero-Days</div>
+        <div class="tl-desc">Google's Big Sleep discovered real zero-days in open source — 20 vulnerabilities in projects including FFmpeg and ImageMagick, each found and reproduced autonomously.</div>
+      </div>
+      <div class="tl-item reveal-left">
+        <div class="tl-dot amber"></div>
+        <div class="tl-date amber">August 8, 2025</div>
+        <div class="tl-title">DARPA AIxCC Finals at DEF CON 33</div>
+        <div class="tl-desc">DARPA AIxCC found 54 vulnerabilities in four hours of compute across 54 million lines of code.</div>
+      </div>
+      <div class="tl-item reveal-right">
+        <div class="tl-dot amber"></div>
+        <div class="tl-date amber">September 2025</div>
+        <div class="tl-title">Singularity Warning Issued</div>
+        <div class="tl-desc">Heather Adkins (CISO, Google) & Gadi Evron (CEO, Knostic) published a warning that attackers were racing toward a singularity moment — autonomous vulnerability discovery and exploitation estimated roughly six months away.</div>
+      </div>
+      <div class="tl-item reveal-left">
+        <div class="tl-dot"></div>
+        <div class="tl-date">November 14, 2025</div>
+        <div class="tl-title">First AI-Orchestrated Espionage Campaign</div>
+        <div class="tl-desc">Anthropic disclosed a Chinese state-sponsored group had used Claude Code to autonomously run full attack chains — recon through exfiltration — across roughly 30 global targets (detected mid-September 2025).</div>
+      </div>
+      <div class="tl-item reveal-right">
+        <div class="tl-dot"></div>
+        <div class="tl-date">February 2026</div>
+        <div class="tl-title">AI Finds Hundreds of High-Severity Bugs</div>
+        <div class="tl-desc">Anthropic (using Claude Opus 4.6) reported 500+ high-severity vulnerabilities in open source. AISLE found 12 OpenSSL zero-days, including a CVSS 9.8 flaw dating to 1998. Sysdig documented an AI-based attack reaching admin-level access in 8 minutes. Gambit released a report on the AI-led compromise of Mexican government infrastructure.</div>
+      </div>
+      <div class="tl-item reveal-left">
+        <div class="tl-dot amber"></div>
+        <div class="tl-date amber">March 2026</div>
+        <div class="tl-title">[un]prompted + Zero Day Clock</div>
+        <div class="tl-desc">The [un]prompted conference introduced multiple talks, open source projects, and specific implementations demonstrating the risk with data. The Zero Day Clock launched, visualizing the collapse of time-to-exploit — now under one day in 2026. Linux kernel bug reports climbed from 2 to 10/week — initially hallucinated, now all verified real.</div>
+      </div>
+      <div class="tl-item reveal-right">
+        <div class="tl-dot" style="width:20px;height:20px;left:-10px"></div>
+        <div class="tl-date">April 7, 2026</div>
+        <div class="tl-title">Claude Mythos Preview</div>
+        <div class="tl-desc">Anthropic announces Claude Mythos Preview & Project Glasswing. Thousands of zero-days across every major OS and browser. 72% exploit success rate. 27-year-old OpenBSD bug. 181 working Firefox exploits. Engineers with no security training asked Mythos to find RCEs overnight — and woke up to complete, working exploits.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PULLQUOTE 2 -->
+<div class="pullquote teal-q reveal">
+  <span class="pullquote-mark">"</span>
+  <p class="pullquote-text">This is a normal response to disruptive capability shifts, not a crisis of relevance. The practitioners who adapt fastest will be the ones who lean into AI tooling rather than viewing it as a threat to their expertise.</p>
+  <p class="pullquote-attr">— The Human Cost, Section IV</p>
+</div>
+
+<!-- ============================================
+     DATA VIZ — TIME TO EXPLOIT
+     ============================================ -->
+<section class="section" id="dataviz">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">Data</div>
+      <h2 class="section-heading">The Collapse of Time-to-Exploit</h2>
+      <p class="section-intro">Based on the Zero Day Clock by Sergej Epp. What once took weeks now takes hours. The window between discovery and weaponization has effectively closed.</p>
+    </div>
+    <div class="chart-container reveal">
+      <div class="chart-title">Average Days from Disclosure to Working Exploit</div>
+      <div class="chart-subtitle">Source: Zero Day Clock · Editorial reconstruction from briefing data</div>
+      <div class="chart-svg-wrap">
+        <svg viewBox="0 0 900 430" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:900px;">
+          <defs>
+            <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#f5a623"/>
+              <stop offset="50%" stop-color="#ff6b35"/>
+              <stop offset="100%" stop-color="#ff2d55"/>
+            </linearGradient>
+            <linearGradient id="areaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="rgba(255,45,85,0.12)"/>
+              <stop offset="100%" stop-color="rgba(255,45,85,0)"/>
+            </linearGradient>
+          </defs>
+
+          <!-- grid lines -->
+          <g stroke="rgba(255,255,255,0.04)" stroke-width="1">
+            <line x1="80" y1="50" x2="860" y2="50"/>
+            <line x1="80" y1="103" x2="860" y2="103"/>
+            <line x1="80" y1="157" x2="860" y2="157"/>
+            <line x1="80" y1="210" x2="860" y2="210"/>
+            <line x1="80" y1="263" x2="860" y2="263"/>
+            <line x1="80" y1="317" x2="860" y2="317"/>
+            <line x1="80" y1="370" x2="860" y2="370"/>
+          </g>
+
+          <!-- y-axis labels -->
+          <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#5a5a6a" text-anchor="end">
+            <text x="72" y="54">60d</text>
+            <text x="72" y="107">50d</text>
+            <text x="72" y="161">40d</text>
+            <text x="72" y="214">30d</text>
+            <text x="72" y="267">20d</text>
+            <text x="72" y="321">10d</text>
+            <text x="72" y="374">0d</text>
+          </g>
+
+          <!-- x-axis labels -->
+          <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#5a5a6a" text-anchor="middle">
+            <text x="110" y="392">2018</text>
+            <text x="201" y="392">2019</text>
+            <text x="293" y="392">2020</text>
+            <text x="384" y="392">2021</text>
+            <text x="475" y="392">2022</text>
+            <text x="566" y="392">2023</text>
+            <text x="658" y="392">2024</text>
+            <text x="749" y="392">2025</text>
+            <text x="840" y="392">2026</text>
+          </g>
+
+          <!-- area fill (behind line) -->
+          <polygon
+            points="110,66 201,135 293,146 384,215 475,274 566,317 658,343 749,359 840,367 840,370 110,370"
+            fill="url(#areaGrad)"/>
+
+          <!-- the data line — 9 points, 2018–2026 -->
+          <polyline
+            points="110,66 201,135 293,146 384,215 475,274 566,317 658,343 749,359 840,367"
+            fill="none"
+            stroke="url(#lineGrad)"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+
+          <!-- ANNOTATED DATA POINTS ONLY -->
+
+          <!-- 2018 · ~57 days -->
+          <circle cx="110" cy="66" r="5" fill="#f5a623" stroke="var(--bg-card)" stroke-width="2"/>
+          <line x1="110" y1="60" x2="110" y2="42" stroke="rgba(245,166,35,0.4)" stroke-width="1"/>
+          <text x="120" y="39" font-family="IBM Plex Mono, monospace" font-size="10" fill="#f5a623">~57 days</text>
+
+          <!-- 2021 · ~29 days · AI-assisted fuzzing enters mainstream -->
+          <circle cx="384" cy="215" r="5" fill="#ff6b35" stroke="var(--bg-card)" stroke-width="2"/>
+          <line x1="384" y1="209" x2="384" y2="155" stroke="rgba(245,166,35,0.4)" stroke-width="1"/>
+          <g font-family="Source Serif 4, serif" font-size="11" fill="#f5a623" font-style="italic">
+            <text x="394" y="150">AI-assisted fuzzing</text>
+            <text x="394" y="164">enters mainstream</text>
+          </g>
+
+          <!-- 2025 · ~2 days · XBOW, Big Sleep, DARPA AIxCC, Opus 4.6 -->
+          <circle cx="749" cy="359" r="5" fill="#ff2d55" stroke="var(--bg-card)" stroke-width="2"/>
+          <line x1="749" y1="353" x2="749" y2="245" stroke="rgba(255,45,85,0.35)" stroke-width="1"/>
+          <g font-family="Source Serif 4, serif" font-size="11" fill="#ff2d55" font-style="italic">
+            <text x="710" y="236" text-anchor="middle">XBOW, Big Sleep,</text>
+            <text x="710" y="250" text-anchor="middle">DARPA AIxCC, Opus 4.6</text>
+          </g>
+
+          <!-- 2026 · <1 day · Mythos -->
+          <circle cx="840" cy="367" r="7" fill="#ff2d55" stroke="#ff2d55" stroke-width="3" opacity="0.4"/>
+          <circle cx="840" cy="367" r="4" fill="#ff2d55"/>
+          <line x1="840" y1="361" x2="840" y2="305" stroke="rgba(255,45,85,0.5)" stroke-width="1"/>
+          <rect x="801" y="281" width="78" height="22" rx="2" fill="rgba(255,45,85,0.15)" stroke="rgba(255,45,85,0.3)" stroke-width="1"/>
+          <text x="840" y="296" font-family="IBM Plex Mono, monospace" font-size="11" fill="#ff2d55" text-anchor="middle" font-weight="600">&lt; 1 DAY</text>
+
+          <!-- editorial note -->
+          <rect x="100" y="405" width="760" height="20" rx="0" fill="rgba(255,255,255,0.02)"/>
+          <text x="480" y="418" font-family="IBM Plex Mono, monospace" font-size="9" fill="#5a5a6a" text-anchor="middle">Each patch is now an exploit blueprint. AI accelerates patch-diffing and reverse engineering of fixes.</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PULLQUOTE 3 -->
+<div class="pullquote reveal">
+  <span class="pullquote-mark">"</span>
+  <p class="pullquote-text">Your quarterly pen test is adorable. The attackers run continuously.</p>
+  <p class="pullquote-attr">— Rob T. Lee, Priority Action 11: VulnOps</p>
+</div>
+
+<!-- ============================================
+     RISK REGISTER
+     ============================================ -->
+<section class="section" id="risk-register">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">Risk Register</div>
+      <h2 class="section-heading">13 Risks. Mapped to Four Frameworks.<br>Zero Room for Ambiguity.</h2>
+      <p class="section-intro">Every risk framed as an acceleration of something that already existed — not a new problem Mythos created. Mapped to OWASP LLM 2025, OWASP Agentic 2026, MITRE ATLAS, and NIST CSF 2.0. Click any card to expand.</p>
+    </div>
+
+    <div class="card-grid" id="risk-cards">
+      <!-- Risk 1 -->
+      <div class="exp-card reveal" style="transition-delay:0.05s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 01</div>
+            <div class="card-title">Accelerated Threat Exploitation</div>
+            <div class="card-subtitle">AI-autonomous exploit generation at machine speed</div>
+          </div>
+          <span class="card-severity critical">CRITICAL</span>
+        </div>
+        <div class="card-summary">AI models have been discovering vulnerabilities and creating exploits for over a year. Mythos accelerates this significantly. What changes is the speed, scale, and reduction in skill required.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>AI models have been discovering vulnerabilities and creating exploits for over a year. Mythos accelerates this significantly, but the capability predates it. What changes is the speed, scale, and the reduction in skill required to execute complex attacks — democratizing capabilities that were previously expensive and skill-intensive.</p>
+            <p>Non-frontier, open-weight models can already achieve much of this at accessible cost. Frontier models like Mythos are the acceleration, not the starting gun. Each patch also becomes an exploit blueprint, as AI accelerates patch-diffing and reverse engineering of fixes.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">AML.T0040</span>
+              <span class="framework-tag">AML.T0043</span>
+              <span class="framework-tag">PR.PS</span>
+              <span class="framework-tag">PR.IR</span>
+              <span class="framework-tag">→ PA 4, 5</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+
+      <!-- Risk 2 -->
+      <div class="exp-card reveal" style="transition-delay:0.1s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 02</div>
+            <div class="card-title">Insufficient AI Automation</div>
+            <div class="card-subtitle">Defenders at human speed vs. AI-augmented attackers</div>
+          </div>
+          <span class="card-severity critical">CRITICAL</span>
+        </div>
+        <div class="card-summary">Attackers freely use AI coding agents for vulnerability discovery, exploit development, and attack orchestration. Many defensive teams are not yet aware of equivalent capabilities.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>Attackers freely use AI coding agents for vulnerability discovery, exploit development, and attack orchestration. Many defensive teams are not yet aware of equivalent capabilities available to them, or lack the security controls to deploy them confidently.</p>
+            <p>The resulting asymmetry is not just technological but cultural: teams that do not adopt AI agents cannot match the speed or scale of AI-augmented threats, regardless of their technical skill.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">GV.OC</span>
+              <span class="framework-tag">GV.RM</span>
+              <span class="framework-tag">DE.CM</span>
+              <span class="framework-tag">RS.MA</span>
+              <span class="framework-tag">→ PA 1, 2</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+
+      <!-- Risk 3 -->
+      <div class="exp-card reveal" style="transition-delay:0.15s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 03</div>
+            <div class="card-title">Unmanaged AI Agent Attack Surface</div>
+            <div class="card-subtitle">Privileged AI agents outside existing control frameworks</div>
+          </div>
+          <span class="card-severity critical">CRITICAL</span>
+        </div>
+        <div class="card-summary">Agents are necessary to counter AI-speed threats, but they are privileged, insecure by default, and not covered by existing security controls.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>Agents are necessary to counter AI-speed threats, but they are privileged, insecure by default, and not covered by existing security controls.</p>
+            <p>This asset class introduces defensive risks (insecure, privileged agents within your own environment) and supply chain risks (compromised or manipulated agents from third parties). These have different owners and different mitigations.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">LLM06</span>
+              <span class="framework-tag">ASI02</span>
+              <span class="framework-tag">ASI03</span>
+              <span class="framework-tag">AML.T0047</span>
+              <span class="framework-tag">PR.AA</span>
+              <span class="framework-tag">GV.SC</span>
+              <span class="framework-tag">→ PA 3</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+
+      <!-- Risk 4 -->
+      <div class="exp-card reveal" style="transition-delay:0.2s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 04</div>
+            <div class="card-title">Inadequate Detection & Response Velocity</div>
+            <div class="card-subtitle">Detection at human speed against machine-speed attacks</div>
+          </div>
+          <span class="card-severity critical">CRITICAL</span>
+        </div>
+        <div class="card-summary">AI has reduced the sophistication and time needed to construct complex attacks. Defensive detection has not been upgraded to match.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>AI has reduced the sophistication and time needed to construct complex attacks. Defensive detection and response capabilities have not yet been upgraded to match, creating an asymmetric speed advantage for attackers.</p>
+            <p>Alert triage volumes, SIEM correlation speed, and containment authorization latency were designed for human-paced threats.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">ASI08</span>
+              <span class="framework-tag">AML.T0047</span>
+              <span class="framework-tag">DE.CM</span>
+              <span class="framework-tag">DE.AE</span>
+              <span class="framework-tag">RS.MA</span>
+              <span class="framework-tag">→ PA 9, 10</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+
+      <!-- Risk 5 -->
+      <div class="exp-card reveal" style="transition-delay:0.25s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 05</div>
+            <div class="card-title">Cybersecurity Risk Model Outdated</div>
+            <div class="card-subtitle">Stakeholder decisions based on pre-AI risk models</div>
+          </div>
+          <span class="card-severity critical">CRITICAL</span>
+        </div>
+        <div class="card-summary">Security reporting metrics built on pre-AI assumptions may no longer reflect actual exposure. Could affect business reporting and projections.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>Security reporting metrics built on pre-AI assumptions about exploit timelines and attack complexity may no longer reflect actual exposure.</p>
+            <p>The CISO's ability to control risk has shifted, which could affect business reporting and projections. Outdated risk models could lead to underfunding of the controls that prevent incidents.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">GV.OC</span>
+              <span class="framework-tag">GV.RM</span>
+              <span class="framework-tag">RS.CO</span>
+              <span class="framework-tag">→ PA 6</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+
+      <!-- Risk 6 -->
+      <div class="exp-card high reveal" style="transition-delay:0.05s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 06</div>
+            <div class="card-title">Incomplete Asset & Exposure Inventory</div>
+            <div class="card-subtitle">Unknown attack surface, assets, code, dependencies, shadow agents</div>
+          </div>
+          <span class="card-severity high">HIGH</span>
+        </div>
+        <div class="card-summary">Attackers can now scan an entire OS codebase at accessible cost and enumerate your exposure faster than you can inventory it.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>AI-accelerated attacker capabilities change which assets are at highest risk and which controls matter most. Attackers can now scan an entire OS codebase at accessible cost and enumerate your exposure faster than you can inventory it.</p>
+            <p>For assets that cannot be patched or directly defended, inventory determines whether you can segment, isolate, or monitor them. Without continuously updated inventory, controls have inherent gaps. The proliferation of coding agents to non-developer users further fragments central IT visibility.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">ASI04</span>
+              <span class="framework-tag">AML.T0000</span>
+              <span class="framework-tag">ID.AM</span>
+              <span class="framework-tag">GV.SC</span>
+              <span class="framework-tag">→ PA 7</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+
+      <!-- Risk 7 -->
+      <div class="exp-card high reveal" style="transition-delay:0.1s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 07</div>
+            <div class="card-title">Unsecured Software Delivery Pipeline</div>
+            <div class="card-subtitle">Code shipping without AI-driven security review</div>
+          </div>
+          <span class="card-severity high">HIGH</span>
+        </div>
+        <div class="card-summary">Code produced by humans and AI agents ships without consistent security review. AI-generated code introduces vulnerabilities at higher volume.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>Code produced by both humans and AI agents ships without consistent security review. AI-generated code introduces vulnerabilities at higher volume than manual development.</p>
+            <p>The risk compounds: more code produced faster, with the same defect rate, against a more capable adversary. Without LLM-driven review integrated into the pipeline, exploitable flaws reach production before defenders can find them.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">LLM01</span>
+              <span class="framework-tag">LLM05</span>
+              <span class="framework-tag">LLM08</span>
+              <span class="framework-tag">ASI01</span>
+              <span class="framework-tag">AML.T0018</span>
+              <span class="framework-tag">PR.PS</span>
+              <span class="framework-tag">ID.IM</span>
+              <span class="framework-tag">→ PA 1</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+
+      <!-- Risk 8 -->
+      <div class="exp-card high reveal" style="transition-delay:0.15s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 08</div>
+            <div class="card-title">Insufficient Lateral Movement Containment</div>
+            <div class="card-subtitle">Flat or insufficiently segmented network enabling 1:N exploit leverage</div>
+          </div>
+          <span class="card-severity high">HIGH</span>
+        </div>
+        <div class="card-summary">A flat network gives every successful exploit leverage. AI-driven attacks worsen this: automated multi-hop lateral movement exploits poor architecture faster.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>A flat or insufficiently segmented network gives every successful exploit leverage. AI-driven attacks worsen this: automated multi-hop lateral movement exploits poor architecture faster and more creatively than manual attackers ever could.</p>
+            <p>When AI-accelerated vulnerability discovery increases the volume of exploitable findings, architectural segmentation becomes the primary control limiting blast radius.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">PR.IR</span>
+              <span class="framework-tag">PR.PS</span>
+              <span class="framework-tag">→ PA 8</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+
+      <!-- Risk 9 -->
+      <div class="exp-card high reveal" style="transition-delay:0.2s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 09</div>
+            <div class="card-title">Continuous Vuln Management Maturity Gap</div>
+            <div class="card-subtitle">Reactive posture against continuous AI-discovered zero-days</div>
+          </div>
+          <span class="card-severity high">HIGH</span>
+        </div>
+        <div class="card-summary">Quarterly pen tests and reactive patching cycles cannot keep pace with continuous AI-driven discovery. CVE/NVD infrastructure wasn't built for hundreds of critical CVEs per month.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>AI-driven vulnerability discovery, which predates Mythos but is significantly accelerated by it, means zero-day vulnerabilities in your own code and third-party software can be discovered and weaponized before your security team knows they exist.</p>
+            <p>Quarterly pen tests and reactive patching cycles cannot keep pace with continuous AI-driven discovery. Existing CVE/NVD infrastructure and patch prioritization workflows were built for dozens of critical CVEs per month, not hundreds.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">ASI10</span>
+              <span class="framework-tag">ASI06</span>
+              <span class="framework-tag">AML.T0018</span>
+              <span class="framework-tag">ID.RA</span>
+              <span class="framework-tag">ID.AM</span>
+              <span class="framework-tag">DE.CM</span>
+              <span class="framework-tag">→ PA 11</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+
+      <!-- Risk 10 -->
+      <div class="exp-card high reveal" style="transition-delay:0.25s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 10</div>
+            <div class="card-title">Threat Detection Dependent on Lagging Intel</div>
+            <div class="card-subtitle">CVE- and KEV-based intelligence outpaced by AI discovery rates</div>
+          </div>
+          <span class="card-severity high">HIGH</span>
+        </div>
+        <div class="card-summary">Threat intelligence has been falling behind AI-accelerated vulnerability discovery for over a year. The CVE system may not scale. Novel vulns have no KEV listing by definition.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>Threat intelligence has been falling behind AI-accelerated vulnerability discovery for over a year. Mythos widens the gap further.</p>
+            <p>The CVE system may not scale to AI-generated discovery rates, and novel vulnerabilities have no listing in KEV by definition.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">AML.T0000</span>
+              <span class="framework-tag">DE.CM</span>
+              <span class="framework-tag">ID.RA</span>
+              <span class="framework-tag">GV.OV</span>
+              <span class="framework-tag">→ PA 9, 10</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+
+      <!-- Risk 11 -->
+      <div class="exp-card high reveal" style="transition-delay:0.05s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 11</div>
+            <div class="card-title">Innovation Governance Deficit</div>
+            <div class="card-subtitle">Governance vacuum creating approval friction that slows defensive AI adoption</div>
+          </div>
+          <span class="card-severity high">HIGH</span>
+        </div>
+        <div class="card-summary">Without a cross-functional governance mechanism, onboarding of any new control runs into approval friction. AI-accelerated timelines mean this friction now has a harder deadline.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>Without a cross-functional governance mechanism, the onboarding and deployment of any new control runs into approval friction that slows adoption.</p>
+            <p>This is where the liability and governance asymmetry gets addressed structurally. AI-accelerated timelines mean this friction now has a harder deadline.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">GV.OC</span>
+              <span class="framework-tag">GV.RM</span>
+              <span class="framework-tag">GV.RR</span>
+              <span class="framework-tag">GV.OV</span>
+              <span class="framework-tag">→ PA 2, 4</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+
+      <!-- Risk 12 -->
+      <div class="exp-card high reveal" style="transition-delay:0.1s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 12</div>
+            <div class="card-title">Regulatory & Liability Exposure</div>
+            <div class="card-subtitle">Shifting standard of care as AI scanning becomes broadly available</div>
+          </div>
+          <span class="card-severity high">HIGH</span>
+        </div>
+        <div class="card-summary">The EU AI Act hits August 2026. When AI can find vulnerabilities at accessible cost, the standard of "reasonable defensive effort" shifts. Boards will face negligence questions.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>The EU AI Act (August 2026) introduces automated audit, incident reporting, and cybersecurity requirements around AI. Existing regulations use reasonableness as a test.</p>
+            <p>When AI can find significantly more vulnerabilities at accessible cost, the standard of what constitutes reasonable defensive effort shifts. Boards will face questions about whether they used available AI tools for defensive scanning, and whether not doing so constitutes negligence. This is a governance risk with direct financial exposure.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">GV.OC</span>
+              <span class="framework-tag">GV.RM</span>
+              <span class="framework-tag">GV.RR</span>
+              <span class="framework-tag">→ PA 1, 4</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+
+      <!-- Risk 13 -->
+      <div class="exp-card medium reveal" style="transition-delay:0.15s" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div>
+            <div class="card-id">RISK 13</div>
+            <div class="card-title">AI Hype & Confusion Causing Inaction</div>
+            <div class="card-subtitle">Signal-to-noise collapse in threat and technology guidance</div>
+          </div>
+          <span class="card-severity medium">MEDIUM</span>
+        </div>
+        <div class="card-summary">The volume of AI-related security guidance exceeds anything the industry has experienced. The confusion itself is a consequential risk.</div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <p>The volume of AI-related security guidance, commentary and vendor claims exceeds anything the industry has experienced. Security leaders find it difficult to navigate the noise.</p>
+            <p>The confusion itself is a consequential risk: teams that dismiss the shift as hype, or exhaust their attention on low-signal content, will miss critical threat landscape changes they need to react to.</p>
+            <div class="card-frameworks">
+              <span class="framework-tag">GV.OC</span>
+              <span class="framework-tag">GV.RM</span>
+              <span class="framework-tag">→ PA 1</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-expand-indicator"><span class="arrow">▼</span> Expand full analysis</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PULLQUOTE — EXPLOIT BLUEPRINT -->
+<div class="pullquote reveal">
+  <span class="pullquote-mark">"</span>
+  <p class="pullquote-text">Each patch also becomes an exploit blueprint, as AI accelerates patch-diffing and reverse engineering of fixes. Responsible disclosure just became an attacker tutorial service.</p>
+  <p class="pullquote-attr">— Risk 01: Accelerated Threat Exploitation</p>
+</div>
+
+<!-- PULLQUOTE 4 -->
+<div class="pullquote teal-q reveal">
+  <span class="pullquote-mark">"</span>
+  <p class="pullquote-text">The time available for action is shrinking. Long-term goals should be considered a quarter away at most.</p>
+  <p class="pullquote-attr">— The Shrinking Time Horizon, Section IV</p>
+</div>
+
+<!-- ============================================
+     PRIORITY ACTIONS
+     ============================================ -->
+<section class="section" id="priority-actions">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label teal">The Plan</div>
+      <h2 class="section-heading">11 Priority Actions for a<br>Mythos-Ready Security Program</h2>
+      <p class="section-intro">For the CISO who needs to walk into a room Monday morning with a credible plan. Organized by when it should commence, with aggressive timelines. Click to expand each action.</p>
+    </div>
+
+    <div class="pa-list">
+      <!-- PA 1 -->
+      <div class="pa-card critical-pa reveal" onclick="togglePA(this)">
+        <div class="pa-header">
+          <div class="pa-number">01</div>
+          <div class="pa-info">
+            <div class="pa-title">Point Agents at Your Code and Pipelines</div>
+            <div class="pa-meta">
+              <span class="pa-tag start">Start: This week</span>
+              <span class="pa-tag horizon">Horizon: Ongoing</span>
+              <span class="pa-tag category">Risk control</span>
+            </div>
+          </div>
+        </div>
+        <div class="pa-summary">Turn agents and LLM capabilities inward on your own code and dependencies. Start immediately by asking an agent for a security review of any code.</div>
+        <div class="pa-detail">
+          <div class="pa-detail-inner">
+            <p>Turn agents and LLM capabilities inward on your own code and dependencies. Start immediately by asking an agent for a security review of any code, then build toward a full audit within your CI/CD pipeline, and shift left by adding capabilities directly into developers' coding agents. All code (human or AI-generated) should pass LLM-driven security review before merge.</p>
+            <p><strong>Commercial tools:</strong> Claude Code Security from Anthropic, Codex Security from OpenAI.</p>
+            <p><strong>Open source:</strong> OpenAnt from Knostic, raptor (Claude Code framework), the exploitation-validator agentic skill, and agentic skills from Trail of Bits.</p>
+          </div>
+        </div>
+        <div class="pa-expand-indicator"><span class="arrow">▼</span> Expand full details</div>
+      </div>
+
+      <!-- PA 2 -->
+      <div class="pa-card critical-pa reveal" onclick="togglePA(this)">
+        <div class="pa-header">
+          <div class="pa-number">02</div>
+          <div class="pa-info">
+            <div class="pa-title">Require AI Agent Adoption</div>
+            <div class="pa-meta">
+              <span class="pa-tag start">Start: This week</span>
+              <span class="pa-tag horizon">Horizon: Ongoing</span>
+              <span class="pa-tag category">Operational enabler</span>
+            </div>
+          </div>
+        </div>
+        <div class="pa-summary">Formalize AI agent usage as part of all security functions, with mandatory security controls and oversight in place.</div>
+        <div class="pa-detail">
+          <div class="pa-detail-inner">
+            <p>Formalize AI agent usage (mostly in the form of "coding agents") as part of all security functions, with mandatory security controls and oversight in place. While defensive AI technology has not yet caught up, these agents empower staff to be effective in the new threat landscape, allowing acceleration beyond "human speed."</p>
+            <p><strong>Critical point:</strong> Optional adoption programs have not been shown to overcome cultural barriers, while adoption is a limiting factor in achieving the rest of the actions in this table.</p>
+          </div>
+        </div>
+        <div class="pa-expand-indicator"><span class="arrow">▼</span> Expand full details</div>
+      </div>
+
+      <!-- PA 3 -->
+      <div class="pa-card critical-pa reveal" onclick="togglePA(this)">
+        <div class="pa-header">
+          <div class="pa-number">03</div>
+          <div class="pa-info">
+            <div class="pa-title">Defend Your Agents</div>
+            <div class="pa-meta">
+              <span class="pa-tag start">Start: This month</span>
+              <span class="pa-tag horizon">Horizon: 45 days</span>
+              <span class="pa-tag category">Risk control</span>
+            </div>
+          </div>
+        </div>
+        <div class="pa-summary">Without agents, most tasks on this list will be untenable, but they must be defended. Agents introduce both cyber defense and agentic supply chain risks.</div>
+        <div class="pa-detail">
+          <div class="pa-detail-inner">
+            <p>Without agents, most tasks on this list will be untenable, but they must be defended. Agents are not covered by existing controls and introduce both cyber defense and agentic supply chain risks. The agent harness — prompts, tool definitions, retrieval pipelines, and escalation logic — is where the most consequential failures occur; audit it with the same rigor as the agent's permissions.</p>
+            <p>Before deploying agents in or adjacent to production environments, define scope boundaries, blast-radius limits, escalation logic, and human override mechanisms. <strong>Do not wait for industry governance frameworks. Define your own now.</strong></p>
+          </div>
+        </div>
+        <div class="pa-expand-indicator"><span class="arrow">▼</span> Expand full details</div>
+      </div>
+
+      <!-- PA 4 -->
+      <div class="pa-card critical-pa reveal" onclick="togglePA(this)">
+        <div class="pa-header">
+          <div class="pa-number">04</div>
+          <div class="pa-info">
+            <div class="pa-title">Establish Innovation & Acceleration Governance</div>
+            <div class="pa-meta">
+              <span class="pa-tag start">Start: This week</span>
+              <span class="pa-tag horizon">Horizon: 6 months</span>
+              <span class="pa-tag category">Governance</span>
+            </div>
+          </div>
+        </div>
+        <div class="pa-summary">Cross-functional mechanism (Security, Legal, Engineering) to evaluate new offensive threats and accelerate defensive technology onboarding.</div>
+        <div class="pa-detail">
+          <div class="pa-detail-inner">
+            <p>Cross-functional mechanism (Security, Legal, Engineering) to evaluate new offensive threats and accelerate onboarding of defensive technologies. Without this in place, every other action in this table runs into approval friction that slows deployment to the attacker's advantage.</p>
+          </div>
+        </div>
+        <div class="pa-expand-indicator"><span class="arrow">▼</span> Expand full details</div>
+      </div>
+
+      <!-- PA 5 -->
+      <div class="pa-card critical-pa reveal" onclick="togglePA(this)">
+        <div class="pa-header">
+          <div class="pa-number">05</div>
+          <div class="pa-info">
+            <div class="pa-title">Prepare for Continuous Patching</div>
+            <div class="pa-meta">
+              <span class="pa-tag start">Start: This week</span>
+              <span class="pa-tag horizon">Horizon: 45 days</span>
+              <span class="pa-tag category">Risk control</span>
+            </div>
+          </div>
+        </div>
+        <div class="pa-summary">Prepare triage and deployment capacity to handle a potential flood of patches as Glasswing's ~40 vendors begin disclosing critical vulnerabilities.</div>
+        <div class="pa-detail">
+          <div class="pa-detail-inner">
+            <p>With the increase in vulnerability discovery and reporting, and specifically now that Glasswing has made Mythos available to significant software vendors, prepare triage and deployment capacity to handle a potential flood of patches as new critical vulnerabilities are disclosed.</p>
+            <p><strong>Important tension:</strong> The requirement to delay patching due to supply chain risks (with a cooldown period) directly competes with the need to patch faster. This calls for nuance in decision making, policy, and mitigating controls.</p>
+          </div>
+        </div>
+        <div class="pa-expand-indicator"><span class="arrow">▼</span> Expand full details</div>
+      </div>
+
+      <!-- PA 6 -->
+      <div class="pa-card critical-pa reveal" onclick="togglePA(this)">
+        <div class="pa-header">
+          <div class="pa-number">06</div>
+          <div class="pa-info">
+            <div class="pa-title">Update Risk Models and Reporting</div>
+            <div class="pa-meta">
+              <span class="pa-tag start">Start: This week</span>
+              <span class="pa-tag horizon">Horizon: 45 days</span>
+              <span class="pa-tag category">Governance</span>
+            </div>
+          </div>
+        </div>
+        <div class="pa-summary">Review and update security risk metrics, reporting, and business risk calculations to reflect AI-accelerated exploit timelines.</div>
+        <div class="pa-detail">
+          <div class="pa-detail-inner">
+            <p>Review and update security risk metrics, reporting, and business risk calculations to reflect AI-accelerated exploit timelines and attack complexity. Pre-AI assumptions about patch windows, exploit scarcity, and incident frequency may no longer hold.</p>
+            <p>Outdated models could potentially even lead to underfunding of controls and inaccurate business reporting. Communicate and collaborate with stakeholders, mapping out and prioritizing potential effects on the business, reporting, and projections.</p>
+          </div>
+        </div>
+        <div class="pa-expand-indicator"><span class="arrow">▼</span> Expand full details</div>
+      </div>
+
+      <!-- PA 7 -->
+      <div class="pa-card high-pa reveal" onclick="togglePA(this)">
+        <div class="pa-header">
+          <div class="pa-number">07</div>
+          <div class="pa-info">
+            <div class="pa-title">Inventory and Reduce Attack Surface</div>
+            <div class="pa-meta">
+              <span class="pa-tag start">Start: This month</span>
+              <span class="pa-tag horizon">Horizon: 90 days</span>
+              <span class="pa-tag category">Risk control</span>
+            </div>
+          </div>
+        </div>
+        <div class="pa-summary">Update or create an asset inventory using agents. Start with critical internet-facing systems, build toward full-coverage over 45 days. Generate real SBOMs.</div>
+        <div class="pa-detail">
+          <div class="pa-detail-inner">
+            <p>Make use of, update, or create an inventory. Using agents, the process can be significantly accelerated and enable continuous updates. Start with critical internet-facing systems, build toward a full-coverage inventory over 45 days. Generate real SBOMs.</p>
+            <p>Aggressively shut down unneeded or unmaintained functionality, phase out suppliers that no longer comply with your updated vulnerability management requirements, and isolate or airgap at-risk systems. <strong>You cannot patch, segment, or defend what you don't know exists.</strong></p>
+          </div>
+        </div>
+        <div class="pa-expand-indicator"><span class="arrow">▼</span> Expand full details</div>
+      </div>
+
+      <!-- PA 8 -->
+      <div class="pa-card high-pa reveal" onclick="togglePA(this)">
+        <div class="pa-header">
+          <div class="pa-number">08</div>
+          <div class="pa-info">
+            <div class="pa-title">Harden Your Environment</div>
+            <div class="pa-meta">
+              <span class="pa-tag start">Start: This month</span>
+              <span class="pa-tag horizon">Horizon: 6 months</span>
+              <span class="pa-tag category">Risk control</span>
+            </div>
+          </div>
+        </div>
+        <div class="pa-summary">The basics remain valid. Implement egress filtering (it blocked every public Log4j exploit). Enforce deep segmentation and Zero Trust. Mandate phishing-resistant MFA.</div>
+        <div class="pa-detail">
+          <div class="pa-detail-inner">
+            <p>The basics remain valid and can be prioritized for risks that can't be easily mitigated. Implement egress filtering (it blocked every public Log4j exploit). Enforce deep segmentation and Zero Trust where possible. Lock down your dependency chain. Mandate phishing-resistant MFA for all privileged accounts. Every boundary increases attacker cost.</p>
+            <p>There are also aspects which could be accelerated with AI. For example, software minimization is a high-leverage function that reduces the operational overhead of patching — minimizing base operating system images, or replacing third-party libraries with framework primitives as they emerge over time. AI can do this.</p>
+          </div>
+        </div>
+        <div class="pa-expand-indicator"><span class="arrow">▼</span> Expand full details</div>
+      </div>
+
+      <!-- PA 9 -->
+      <div class="pa-card high-pa reveal" onclick="togglePA(this)">
+        <div class="pa-header">
+          <div class="pa-number">09</div>
+          <div class="pa-info">
+            <div class="pa-title">Build a Deception Capability</div>
+            <div class="pa-meta">
+              <span class="pa-tag start">Start: Next 90 days</span>
+              <span class="pa-tag horizon">Horizon: 6 months</span>
+              <span class="pa-tag category">Risk control</span>
+            </div>
+          </div>
+        </div>
+        <div class="pa-summary">Deception is attack-tool and vulnerability independent — identifying attacks based on TTPs. Deploy canaries, honey tokens, and behavioral monitoring.</div>
+        <div class="pa-detail">
+          <div class="pa-detail-inner">
+            <p>Deception is attack-tool and vulnerability independent, identifying attacks and attackers based on their TTPs. Deploy canaries and honey tokens, layer behavioral monitoring, pre-authorize containment actions, and build response playbooks that execute at machine speed.</p>
+          </div>
+        </div>
+        <div class="pa-expand-indicator"><span class="arrow">▼</span> Expand full details</div>
+      </div>
+
+      <!-- PA 10 -->
+      <div class="pa-card high-pa reveal" onclick="togglePA(this)">
+        <div class="pa-header">
+          <div class="pa-number">10</div>
+          <div class="pa-info">
+            <div class="pa-title">Build an Automated Response Capability</div>
+            <div class="pa-meta">
+              <span class="pa-tag start">Start: Next 90 days</span>
+              <span class="pa-tag horizon">Horizon: 12 months</span>
+              <span class="pa-tag category">Risk control</span>
+            </div>
+          </div>
+        </div>
+        <div class="pa-summary">Improve detection engineering and incident response to be systemic and, to the degree possible, autonomous.</div>
+        <div class="pa-detail">
+          <div class="pa-detail-inner">
+            <p>Improve detection engineering and incident response capabilities to be systemic and, to the degree possible, autonomous. Examples: asset and user behavioral analysis, pre-authorized containment actions, and response playbooks that execute at machine speed.</p>
+          </div>
+        </div>
+        <div class="pa-expand-indicator"><span class="arrow">▼</span> Expand full details</div>
+      </div>
+
+      <!-- PA 11 -->
+      <div class="pa-card critical-pa reveal" onclick="togglePA(this)">
+        <div class="pa-header">
+          <div class="pa-number">11</div>
+          <div class="pa-info">
+            <div class="pa-title">Stand Up VulnOps</div>
+            <div class="pa-meta">
+              <span class="pa-tag start">Start: Next 6 months</span>
+              <span class="pa-tag horizon">Horizon: 12 months</span>
+              <span class="pa-tag category">Risk control · CRITICAL</span>
+            </div>
+          </div>
+        </div>
+        <div class="pa-summary">Build a permanent Vulnerability Operations function — staffed and automated like DevOps, but for continuous AI-driven vulnerability research and remediation.</div>
+        <div class="pa-detail">
+          <div class="pa-detail-inner">
+            <p>Long-term, there is no alternative to building a permanent Vulnerability Operations (VulnOps) function, staffed and automated like DevOps, but for autonomous vulnerability research and remediation.</p>
+            <p>Owns continuous discovery of zero-day vulnerabilities across your entire software estate (from your own code to third-party software), and establishes automated remediation pipelines. Design VulnOps around triage discipline from the start.</p>
+            <p><strong>This used to be too expensive for most organizations. AI changes that math.</strong></p>
+          </div>
+        </div>
+        <div class="pa-expand-indicator"><span class="arrow">▼</span> Expand full details</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PULLQUOTE — CAUGHT IN A VICE -->
+<div class="pullquote teal-q reveal">
+  <span class="pullquote-mark">"</span>
+  <p class="pullquote-text">Security teams are caught in a vice: AI is simultaneously accelerating the volume of vulnerabilities they must respond to, the volume of code their organisations are shipping, and expanding the attack surface.</p>
+  <p class="pullquote-attr">— The Human Cost, Section IV</p>
+</div>
+
+<!-- PULLQUOTE 5 -->
+<div class="pullquote reveal">
+  <span class="pullquote-mark">"</span>
+  <p class="pullquote-text">Burnout and attrition in security functions represent a direct operational risk — the expertise needed to navigate this transition is scarce, takes years to develop, and is not replaceable on short timescales.</p>
+  <p class="pullquote-attr">— The Human Cost, Section IV</p>
+</div>
+
+<!-- ============================================
+     BOARD BRIEFING
+     ============================================ -->
+<section class="section" id="board-briefing">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label amber">Board-Ready</div>
+      <h2 class="section-heading">The 90-Day Plan for the Boardroom</h2>
+      <p class="section-intro">Mythos is now a boardroom concern — and that creates an opportunity. This section is the working tool for CISOs preparing a leadership update, organized around justifying the current program and making the case for what comes next.</p>
+    </div>
+
+    <div class="briefing-grid">
+      <div class="briefing-card reveal">
+        <h3>Increase People & Capacity</h3>
+        <p>Plan for repurposing existing staff (within security and especially within engineering teams) and/or onboarding additional headcount and contractor capacity to handle anticipated increases in triage, remediation, and incidents — while protecting experienced staff from burnout, especially as the first wave of Glasswing patches hits.</p>
+      </div>
+      <div class="briefing-card reveal">
+        <h3>Deploy AI Tooling</h3>
+        <p>Formalize AI agent usage across all security functions as standard practice: scanning your own code, ensuring AI-driven review before code ships, and augmenting teams with purpose-built agents. This equips teams to operate at the same speed as adversaries.</p>
+      </div>
+      <div class="briefing-card reveal">
+        <h3>Harden Infrastructure</h3>
+        <p>Prioritize updating asset inventories; reducing unnecessary exposure; and enforcing segmentation, Zero Trust, egress filtering, and phishing-resistant authentication. Validate these elements across internal systems and key third-party providers (MSPs, SOCs).</p>
+      </div>
+      <div class="briefing-card reveal">
+        <h3>Accelerate Procurement & Governance</h3>
+        <p>Align across functional teams (security, legal, engineering) to evaluate threats and fast-track priority defensive technology onboarding. Current approval cycles are too slow for the coming threat environment.</p>
+      </div>
+      <div class="briefing-card reveal">
+        <h3>Update Playbooks</h3>
+        <p>Update technical and communications response plans to execute at the required speed and scale, including pre-authorized containment and coordination for simultaneous incidents.</p>
+      </div>
+      <div class="briefing-card reveal">
+        <h3>Track Progress</h3>
+        <p>Provide regular check-ins throughout the 90-day period to capture results and identify roadblocks. This is not an open-ended AI initiative — it is a targeted plan with clear owners and outcomes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     CONTRIBUTORS
+     ============================================ -->
+<section class="section" id="contributors">
+  <div class="container" style="text-align:center;">
+    <div class="reveal">
+      <div class="section-label">The Coalition</div>
+      <h2 class="section-heading">250+ CISOs. One Weekend.<br>Because Monday Couldn't Wait.</h2>
+      <p class="section-intro" style="margin:0 auto 2rem;">Authors, contributing authors, and named reviewers — representing only themselves. Assembled in hours.</p>
+    </div>
+    <div class="contributors-cloud reveal">
+      <span class="contributor-name author">Gadi Evron</span>
+      <span class="contributor-name author">Rob T. Lee</span>
+      <span class="contributor-name author">Rich Mogull</span>
+      <span class="contributor-name author">Jen Easterly</span>
+      <span class="contributor-name author">Bruce Schneier</span>
+      <span class="contributor-name author">Chris Inglis</span>
+      <span class="contributor-name author">Phil Venables</span>
+      <span class="contributor-name author">Heather Adkins</span>
+      <span class="contributor-name author">Rob Joyce</span>
+      <span class="contributor-name author">Sounil Yu</span>
+      <span class="contributor-name author">Katie Moussouris</span>
+      <span class="contributor-name author">Jim Reavis</span>
+      <span class="contributor-name author">James Lyne</span>
+      <span class="contributor-name author">Dave Lewis</span>
+      <span class="contributor-name author">John N. Stewart</span>
+      <span class="contributor-name author">Joshua Saxe</span>
+      <span class="contributor-name author">Ramy Houssaini</span>
+      <span class="contributor-name">Mark Aklian</span>
+      <span class="contributor-name">Jake Bernardes</span>
+      <span class="contributor-name">Alan Berry</span>
+      <span class="contributor-name">Bryson Bort</span>
+      <span class="contributor-name">Mea Clift</span>
+      <span class="contributor-name">David B. Cross</span>
+      <span class="contributor-name">Chris Cochran</span>
+      <span class="contributor-name">Daniel Cuthbert</span>
+      <span class="contributor-name">Julie Davila</span>
+      <span class="contributor-name">Sergej Epp</span>
+      <span class="contributor-name">Erik Hart</span>
+      <span class="contributor-name">Gary Hayslip</span>
+      <span class="contributor-name">Heather Hinton</span>
+      <span class="contributor-name">Mike Johnson</span>
+      <span class="contributor-name">Josh Lemos</span>
+      <span class="contributor-name">Bob Lord</span>
+      <span class="contributor-name">Ciaran Martin</span>
+      <span class="contributor-name">Tomas Maldonado</span>
+      <span class="contributor-name">Ross McKerchar</span>
+      <span class="contributor-name">Greg Notch</span>
+      <span class="contributor-name">Gavin Reid</span>
+      <span class="contributor-name">Ed Skoudis</span>
+      <span class="contributor-name">Steve Wilson</span>
+      <span class="contributor-name">Jason Woloz</span>
+      <span class="contributor-name">+ 200 more</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     FINAL CALLOUT
+     ============================================ -->
+<section class="section" id="conclusion">
+  <div class="container">
+    <div class="pullquote reveal" style="padding:4rem 2rem;">
+      <span class="pullquote-mark">"</span>
+      <p class="pullquote-text">We have done this before. Y2K was a systemic threat with a hard deadline, and the industry met it through coordinated, disciplined effort. This is the same kind of problem, requiring the same kind of response, with more powerful tools available to defenders.</p>
+      <p class="pullquote-attr">— Conclusions and Recommendations</p>
+    </div>
+
+    <div class="final-callout reveal">
+      <p>AI-based attacks represent a structural shift in how offense and defense work, and it will not change. The cost and capability floor to exploit discovery is dropping, the time between disclosure and weaponization is compressing toward zero, and capabilities that previously required nation-state resources are now becoming broadly accessible.</p>
+      <p>Building a "Mythos-ready" security program is not about reacting to one model or announcement. It is about permanently closing the gap between how fast vulnerabilities are found and how fast your organization can respond.</p>
+      <p style="color:var(--red); font-weight:600;">Empower your teams to use AI for defense, starting today. Every action in this brief can begin this week.</p>
+    </div>
+
+    <div style="text-align:center; margin-top:4rem;" class="reveal">
+      <a href="https://labs.cloudsecurityalliance.org/mythos-ciso/" target="_blank" rel="noopener"
+         style="display:inline-block; font-family:var(--font-mono); font-size:0.75rem; letter-spacing:0.15em;
+                text-transform:uppercase; color:var(--red); border:1px solid var(--red); padding:1rem 2.5rem;
+                text-decoration:none; transition:all 0.3s;">
+        Read the Full Briefing at CSA →
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Interactive companion to "The AI Vulnerability Storm: Building a Mythos-Ready Security Program"</p>
+  <p>CSA · SANS · [un]prompted · OWASP GenAI Security Project · Version 0.4 · 13 April 2026</p>
+  <p>Released under <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a> · <a href="https://labs.cloudsecurityalliance.org/mythos-ciso/" target="_blank" rel="noopener">Source document</a></p>
+</footer>
+
+<!-- ============================================
+     JAVASCRIPT
+     ============================================ -->
+<script>
+// Theme toggle
+const themeToggle = document.getElementById('themeToggle');
+const root = document.documentElement;
+
+// Check for saved preference or system preference
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) {
+  root.setAttribute('data-theme', savedTheme);
+} else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+  root.setAttribute('data-theme', 'light');
+}
+
+themeToggle.addEventListener('click', () => {
+  const current = root.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  if (next === 'dark') {
+    root.removeAttribute('data-theme');
+  } else {
+    root.setAttribute('data-theme', next);
+  }
+  try { localStorage.setItem('theme', next); } catch(e) {}
+});
+
+// Intersection Observer for reveal animations
+const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, observerOptions);
+
+document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => observer.observe(el));
+
+// Card expand/collapse
+function toggleCard(card) {
+  card.classList.toggle('open');
+}
+function togglePA(card) {
+  card.classList.toggle('open');
+}
+
+// Hero particle canvas
+(function() {
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let w, h;
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  class Particle {
+    constructor() {
+      this.reset();
+    }
+    reset() {
+      this.x = Math.random() * w;
+      this.y = Math.random() * h;
+      this.vx = (Math.random() - 0.5) * 0.3;
+      this.vy = (Math.random() - 0.5) * 0.3;
+      this.r = Math.random() * 1.5 + 0.5;
+      this.alpha = Math.random() * 0.3 + 0.05;
+      const isLight = root.getAttribute('data-theme') === 'light';
+      if (isLight) {
+        this.color = Math.random() > 0.7 ? '212,33,62' : (Math.random() > 0.5 ? '201,133,16' : '100,100,110');
+        this.alpha = Math.random() * 0.15 + 0.03;
+      } else {
+        this.color = Math.random() > 0.7 ? '255,45,85' : (Math.random() > 0.5 ? '245,166,35' : '255,255,255');
+      }
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      if (this.x < 0 || this.x > w || this.y < 0 || this.y > h) this.reset();
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${this.color},${this.alpha})`;
+      ctx.fill();
+    }
+  }
+
+  for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+  function animate() {
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => { p.update(); p.draw(); });
+
+    // draw connections
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          const isLight = root.getAttribute('data-theme') === 'light';
+          const lineColor = isLight ? `rgba(212,33,62,${0.06 * (1 - dist / 120)})` : `rgba(255,45,85,${0.04 * (1 - dist / 120)})`;
+          ctx.strokeStyle = lineColor;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+// Smooth scroll hiding of scroll prompt
+window.addEventListener('scroll', () => {
+  const prompt = document.querySelector('.scroll-prompt');
+  if (window.scrollY > 100) {
+    prompt.style.opacity = '0';
+    prompt.style.transition = 'opacity 0.5s';
+  } else {
+    prompt.style.opacity = '';
+  }
+});
+</script>
+</body>
+</html>
