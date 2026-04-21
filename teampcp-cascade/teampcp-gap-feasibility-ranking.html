@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeamPCP Gap Solutions — Build Feasibility Ranking</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0e13;
+    --surface: #13161d;
+    --surface-raised: #1a1e27;
+    --border: #252a35;
+    --border-accent: #2d3344;
+    --text-primary: #e2e5eb;
+    --text-secondary: #8b92a3;
+    --text-muted: #5c6478;
+    --accent-green: #34d399;
+    --accent-green-dim: rgba(52,211,153,0.08);
+    --accent-amber: #fbbf24;
+    --accent-amber-dim: rgba(251,191,36,0.08);
+    --accent-red: #f87171;
+    --accent-red-dim: rgba(248,113,113,0.08);
+    --accent-blue: #60a5fa;
+    --accent-blue-dim: rgba(96,165,250,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.55;
+    padding: 40px 32px;
+    min-height: 100vh;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; }
+
+  header {
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .legend {
+    display: flex;
+    gap: 24px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  .legend-dot.easy { background: var(--accent-green); }
+  .legend-dot.moderate { background: var(--accent-amber); }
+  .legend-dot.hard { background: var(--accent-red); }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+
+  thead th {
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  thead th:first-child { border-radius: 8px 0 0 0; padding-left: 20px; }
+  thead th:last-child { border-radius: 0 8px 0 0; }
+
+  tbody tr {
+    transition: background 0.15s ease;
+  }
+
+  tbody tr:hover {
+    background: var(--surface);
+  }
+
+  tbody td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  tbody td:first-child { padding-left: 20px; }
+
+  .rank-cell {
+    width: 44px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  .gap-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .gap-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 13.5px;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .gap-desc {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+
+  .difficulty-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+
+  .difficulty-badge.easy {
+    background: var(--accent-green-dim);
+    color: var(--accent-green);
+    border: 1px solid rgba(52,211,153,0.15);
+  }
+
+  .difficulty-badge.moderate {
+    background: var(--accent-amber-dim);
+    color: var(--accent-amber);
+    border: 1px solid rgba(251,191,36,0.15);
+  }
+
+  .difficulty-badge.hard {
+    background: var(--accent-red-dim);
+    color: var(--accent-red);
+    border: 1px solid rgba(248,113,113,0.15);
+  }
+
+  .tech-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .tech-tag {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  .delivery-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--accent-blue-dim);
+    color: var(--accent-blue);
+    border: 1px solid rgba(96,165,250,0.12);
+    white-space: nowrap;
+    margin-bottom: 3px;
+  }
+
+  .solution-text {
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+
+  .col-rank { width: 44px; }
+  .col-difficulty { width: 100px; }
+  .col-problem { width: 22%; }
+  .col-solution { width: 26%; }
+  .col-tech { width: 16%; }
+  .col-delivery { width: 16%; }
+
+  .section-divider td {
+    padding: 8px 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-accent);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  @media (max-width: 900px) {
+    body { padding: 20px 12px; }
+    table { font-size: 12px; }
+    thead th, tbody td { padding: 10px 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>TeamPCP Gap Solutions — Build Feasibility Ranking</h1>
+    <p class="subtitle">10 unsolved AppSec gaps ranked from easiest to hardest to build and implement. Based on the TeamPCP Supply Chain Campaign analysis (Feb–Mar 2026).</p>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot easy"></div>Buildable now — weeks to low months</div>
+      <div class="legend-item"><div class="legend-dot moderate"></div>Moderate — scoped but needs coordination</div>
+      <div class="legend-item"><div class="legend-dot hard"></div>Hard — multi-year, cross-industry effort</div>
+    </div>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="col-rank">#</th>
+        <th class="col-difficulty">Difficulty</th>
+        <th class="col-problem">Problem</th>
+        <th class="col-solution">Solution</th>
+        <th class="col-tech">Tech Stack</th>
+        <th class="col-delivery">Delivery Channel</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- SECTION: BUILDABLE NOW -->
+      <tr class="section-divider"><td colspan="6">Buildable Now</td></tr>
+
+      <tr>
+        <td class="rank-cell">1</td>
+        <td><span class="difficulty-badge easy">Easy</span></td>
+        <td>
+          <span class="gap-id">Gap 2.2</span>
+          <span class="gap-name">No Detection for C2 Domain Rotation in CI/CD</span>
+          <span class="gap-desc">Attackers used a fresh typosquatted domain per vendor wave. Blocking one IOC gave zero protection against the next.</span>
+        </td>
+        <td>
+          <span class="solution-text">Action authors publish a network manifest declaring which domains their action contacts. Any undeclared egress from a CI runner triggers an alert. Pair with DNS-permutation monitoring for vendor domains.</span>
+        </td>
+        <td>
+          <div class="tech-tags">
+            <span class="tech-tag">YAML schema</span>
+            <span class="tech-tag">eBPF / netfilter</span>
+            <span class="tech-tag">dnstwist</span>
+            <span class="tech-tag">GitHub Actions metadata</span>
+          </div>
+        </td>
+        <td>
+          <span class="delivery-tag">CI/CD platform feature</span>
+          <span class="delivery-tag">GitHub Actions extension</span>
+          <span class="delivery-tag">Open-source CLI tool</span>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="rank-cell">2</td>
+        <td><span class="difficulty-badge easy">Easy</span></td>
+        <td>
+          <span class="gap-id">Gap 3.5 (partial)</span>
+          <span class="gap-name">No Credential Cascade Visibility</span>
+          <span class="gap-desc">No tool maps which 3rd-party actions can access which secrets, or which downstream systems those secrets unlock. The entire chain from Node ③→⑦ was invisible beforehand.</span>
+        </td>
+        <td>
+          <span class="solution-text">Static analysis tool that parses CI/CD pipeline configs (Actions YAML, GitLab CI) and produces a graph: action → secrets accessed → downstream systems reachable. Visualizes blast radius before incidents.</span>
+        </td>
+        <td>
+          <div class="tech-tags">
+            <span class="tech-tag">YAML parser</span>
+            <span class="tech-tag">Graph DB / D3.js</span>
+            <span class="tech-tag">GitHub API</span>
+            <span class="tech-tag">Python / Go</span>
+          </div>
+        </td>
+        <td>
+          <span class="delivery-tag">Open-source CLI tool</span>
+          <span class="delivery-tag">GitHub App</span>
+          <span class="delivery-tag">SaaS dashboard</span>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="rank-cell">3</td>
+        <td><span class="difficulty-badge easy">Easy</span></td>
+        <td>
+          <span class="gap-id">Gap 3.3</span>
+          <span class="gap-name">No Security Model for IDE Extension Supply Chains</span>
+          <span class="gap-desc">Trojanized Checkmarx extensions on OpenVSX ran with full user permissions. No permission model, no signing standard, no cross-registry integrity checks.</span>
+        </td>
+        <td>
+          <span class="solution-text">Permission declaration model (like mobile apps) for extensions. Certificate-pinned signing. Cross-registry diff service that alerts when the same extension diverges between Marketplace and OpenVSX.</span>
+        </td>
+        <td>
+          <div class="tech-tags">
+            <span class="tech-tag">VS Code Extension API</span>
+            <span class="tech-tag">Code signing (X.509)</span>
+            <span class="tech-tag">Registry APIs</span>
+            <span class="tech-tag">Diff engine</span>
+          </div>
+        </td>
+        <td>
+          <span class="delivery-tag">IDE platform feature</span>
+          <span class="delivery-tag">Registry policy change</span>
+          <span class="delivery-tag">Open-source monitor</span>
+        </td>
+      </tr>
+
+      <!-- SECTION: MODERATE -->
+      <tr class="section-divider"><td colspan="6">Moderate — Scoped but Needs Adoption</td></tr>
+
+      <tr>
+        <td class="rank-cell">4</td>
+        <td><span class="difficulty-badge moderate">Moderate</span></td>
+        <td>
+          <span class="gap-id">Gap 1.2</span>
+          <span class="gap-name">No Agent Identity or Attribution Framework</span>
+          <span class="gap-desc">hackerbot-claw opened PRs across thousands of repos with no way for maintainers to identify it as an autonomous agent vs. a human researcher.</span>
+        </td>
+        <td>
+          <span class="solution-text">Voluntary agent identity header in PRs (like User-Agent for crawlers). Platform-enforced bot labeling. Behavioral heuristics detecting agent-like patterns: rapid cross-repo PRs, uniform payloads, inhuman timing.</span>
+        </td>
+        <td>
+          <div class="tech-tags">
+            <span class="tech-tag">Platform APIs</span>
+            <span class="tech-tag">Anomaly detection (ML)</span>
+            <span class="tech-tag">Metadata schema</span>
+            <span class="tech-tag">Rate limiting</span>
+          </div>
+        </td>
+        <td>
+          <span class="delivery-tag">GitHub / GitLab policy</span>
+          <span class="delivery-tag">Open standard (RFC)</span>
+          <span class="delivery-tag">Platform-native detection</span>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="rank-cell">5</td>
+        <td><span class="difficulty-badge moderate">Moderate</span></td>
+        <td>
+          <span class="gap-id">Gap 3.4</span>
+          <span class="gap-name">No Detection for AI-Generated Malware</span>
+          <span class="gap-desc">CanisterWorm was "vibe-coded" — clean, well-commented, structurally normal. Existing scanners look for obfuscation patterns that AI-generated malware doesn't have.</span>
+        </td>
+        <td>
+          <span class="solution-text">Registry-level sandboxed execution of install hooks. Monitor for credential enumeration, exfiltration, and persistence creation at runtime — catching intent regardless of code style.</span>
+        </td>
+        <td>
+          <div class="tech-tags">
+            <span class="tech-tag">Container sandboxing</span>
+            <span class="tech-tag">Syscall tracing (strace/seccomp)</span>
+            <span class="tech-tag">Behavioral analysis</span>
+            <span class="tech-tag">Registry integration</span>
+          </div>
+        </td>
+        <td>
+          <span class="delivery-tag">PyPI / npm infrastructure</span>
+          <span class="delivery-tag">Open-source sandbox tool</span>
+          <span class="delivery-tag">Registry pre-publish gate</span>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="rank-cell">6</td>
+        <td><span class="difficulty-badge moderate">Moderate</span></td>
+        <td>
+          <span class="gap-id">Gap 3.1 (partial)</span>
+          <span class="gap-name">No Trust Framework for AI Infrastructure Packages</span>
+          <span class="gap-desc">LiteLLM holds every LLM API key by design — present in 36% of cloud environments. No framework distinguishes its risk from a date-formatting library with the same download count.</span>
+        </td>
+        <td>
+          <span class="solution-text">Privilege classification taxonomy: packages self-declare credential categories they require. "Blast radius score" combining downloads × privilege level. Enhanced registry review for high-privilege packages.</span>
+        </td>
+        <td>
+          <div class="tech-tags">
+            <span class="tech-tag">Registry metadata API</span>
+            <span class="tech-tag">Scoring engine</span>
+            <span class="tech-tag">Manifest schema</span>
+            <span class="tech-tag">Static analysis</span>
+          </div>
+        </td>
+        <td>
+          <span class="delivery-tag">PyPI / npm feature</span>
+          <span class="delivery-tag">OpenSSF scorecard plugin</span>
+          <span class="delivery-tag">SCA vendor integration</span>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="rank-cell">7</td>
+        <td><span class="difficulty-badge moderate">Moderate</span></td>
+        <td>
+          <span class="gap-id">Gap 3.5 (full)</span>
+          <span class="gap-name">No Cross-Vendor Credential Cascade Prevention</span>
+          <span class="gap-desc">Credentials from Trivy's CI → npm → KICS → LiteLLM. Each compromised env yielded keys to the next. No isolation between pipeline stages consuming different vendors' tools.</span>
+        </td>
+        <td>
+          <span class="solution-text">Pipeline stage isolation: each stage (scan, build, publish) gets only its own credentials. Cross-ecosystem revocation protocol: automated notification + rotation when a vendor tool is compromised.</span>
+        </td>
+        <td>
+          <div class="tech-tags">
+            <span class="tech-tag">OPA / policy engine</span>
+            <span class="tech-tag">OIDC scoped tokens</span>
+            <span class="tech-tag">Webhook orchestration</span>
+            <span class="tech-tag">Secrets managers</span>
+          </div>
+        </td>
+        <td>
+          <span class="delivery-tag">CI/CD platform architecture</span>
+          <span class="delivery-tag">OpenSSF working group</span>
+          <span class="delivery-tag">Industry protocol (FIRST)</span>
+        </td>
+      </tr>
+
+      <!-- SECTION: HARD -->
+      <tr class="section-divider"><td colspan="6">Hard — Multi-Year / Cross-Industry</td></tr>
+
+      <tr>
+        <td class="rank-cell">8</td>
+        <td><span class="difficulty-badge hard">Hard</span></td>
+        <td>
+          <span class="gap-id">Gap 1.1</span>
+          <span class="gap-name">No Framework for Agent Attack Speed and Scale</span>
+          <span class="gap-desc">hackerbot-claw scanned 47K+ repos, classified 9 vuln classes, generated custom exploits, and achieved code execution — all in 37 hours. No threat model accounts for this speed.</span>
+        </td>
+        <td>
+          <span class="solution-text">Extend STRIDE / MITRE ATT&CK with an "autonomous agent" adversary profile: continuous scanning, adaptive exploits, parallelized execution, sub-minute pivots. Redefine remediation SLAs accordingly.</span>
+        </td>
+        <td>
+          <div class="tech-tags">
+            <span class="tech-tag">MITRE ATT&CK framework</span>
+            <span class="tech-tag">Threat modeling tools</span>
+            <span class="tech-tag">Standards bodies</span>
+          </div>
+        </td>
+        <td>
+          <span class="delivery-tag">MITRE / OWASP standard</span>
+          <span class="delivery-tag">Threat modeling extension</span>
+          <span class="delivery-tag">Training / certification</span>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="rank-cell">9</td>
+        <td><span class="difficulty-badge hard">Hard</span></td>
+        <td>
+          <span class="gap-id">Gap 2.1</span>
+          <span class="gap-name">No Detection or Takedown for Blockchain-Based C2</span>
+          <span class="gap-desc">CanisterWorm used an ICP canister as a dead-drop C2. No registrar, no single hosting provider, no takedown point. EDR/NDR tools can't distinguish it from legitimate blockchain traffic.</span>
+        </td>
+        <td>
+          <span class="solution-text">Endpoint behavioral detection (polling → payload → execute pattern). Network heuristics for ICP traffic from CI runners. Industry consortium for decentralized network abuse reporting. Registry scanners for canister URLs.</span>
+        </td>
+        <td>
+          <div class="tech-tags">
+            <span class="tech-tag">EDR/NDR integration</span>
+            <span class="tech-tag">TLS fingerprinting</span>
+            <span class="tech-tag">Blockchain APIs</span>
+            <span class="tech-tag">Legal frameworks</span>
+          </div>
+        </td>
+        <td>
+          <span class="delivery-tag">EDR vendor feature</span>
+          <span class="delivery-tag">OpenSSF / FIRST consortium</span>
+          <span class="delivery-tag">Law enforcement coordination</span>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="rank-cell">10</td>
+        <td><span class="difficulty-badge hard">Hard</span></td>
+        <td>
+          <span class="gap-id">Gap 3.2</span>
+          <span class="gap-name">No SBOM for AI Agent Dependency Chains</span>
+          <span class="gap-desc">A developer never installed LiteLLM directly — it arrived via Cursor → MCP plugin → transitive dep. This chain is invisible to CycloneDX/SPDX and every existing SBOM tool.</span>
+        </td>
+        <td>
+          <span class="solution-text">Extend CycloneDX/SPDX with AI artifact types (MCP servers, agent skills, IDE extensions). Runtime dependency tracker monitoring actual installs during agent operation. Dependency transparency mandate for MCP servers.</span>
+        </td>
+        <td>
+          <div class="tech-tags">
+            <span class="tech-tag">CycloneDX / SPDX</span>
+            <span class="tech-tag">Runtime agent (eBPF)</span>
+            <span class="tech-tag">MCP protocol</span>
+            <span class="tech-tag">IDE plugin APIs</span>
+          </div>
+        </td>
+        <td>
+          <span class="delivery-tag">Standards body (OWASP)</span>
+          <span class="delivery-tag">Open-source runtime agent</span>
+          <span class="delivery-tag">IDE-level SBOM generator</span>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="rank-cell">11</td>
+        <td><span class="difficulty-badge hard">Hard</span></td>
+        <td>
+          <span class="gap-id">Gap 1.3</span>
+          <span class="gap-name">No Defense Model for Agent-vs-Agent CI/CD Warfare</span>
+          <span class="gap-desc">hackerbot-claw tried to poison a CLAUDE.md file to trick a Claude-based CI defender into injecting malicious code. First documented AI-vs-AI attack in a pipeline. Only one known instance.</span>
+        </td>
+        <td>
+          <span class="solution-text">Prompt injection resistance standards for CI agents. Tool allowlisting per pipeline stage. Separation of AI code generation from AI code approval. Behavioral anomaly monitoring for agent pipeline activity.</span>
+        </td>
+        <td>
+          <div class="tech-tags">
+            <span class="tech-tag">Prompt hardening suites</span>
+            <span class="tech-tag">Policy-as-code (OPA)</span>
+            <span class="tech-tag">Agent sandboxing</span>
+            <span class="tech-tag">LLM eval frameworks</span>
+          </div>
+        </td>
+        <td>
+          <span class="delivery-tag">AI vendor certification</span>
+          <span class="delivery-tag">CI/CD platform feature</span>
+          <span class="delivery-tag">New security discipline</span>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

