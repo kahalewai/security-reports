@@ -1456,8 +1456,8 @@ footer a:hover { color: var(--text); border-bottom-color: var(--text); }
 <section class="pullquote">
   <div class="pullquote-inner reveal">
     <span class="pullquote-mark">"</span>
-    <p class="pullquote-text">Even the most simplistic synthetic benchmarks on LLM's ability to produce correct <em>and</em> secure code at the same time are sitting at the coin flip range today. Meaning the efficiency gains in reporting vulnerabilities will be asymmetric with the ability to address them.</p>
-    <p class="pullquote-attr"><strong>Greg Kroah-Hartman</strong> · Linux Kernel Maintainer · oss-security mailing list, 28–29 April 2026 · Source [10]</p>
+    <p class="pullquote-text">We're seeing duplicate reports of the same issue found by multiple independent groups that use LLMs, within the embargo period.</p>
+    <p class="pullquote-attr"><strong>Clemens Lang</strong> · Red Hat · oss-security "Coordinated Disclosure in the LLM Age" thread, 28–29 April 2026 · Source [10]</p>
   </div>
 </section>
 
@@ -1624,7 +1624,7 @@ footer a:hover { color: var(--text); border-bottom-color: var(--text); }
           <div class="tl-meta"><span class="tl-date">2026-04-28 · +36 days</span><span class="tl-phase">Disclosure</span></div>
           <h3 class="tl-title">"Coordinated Disclosure in the LLM Age" thread opens</h3>
           <p class="tl-summary">Jeremy Stanley (OpenStack VMT) opens a parallel thread on oss-security questioning whether traditional embargoes remain viable when LLM-assisted rediscovery is routine.</p>
-          <div class="tl-detail">Greg Kroah-Hartman and Clemens Lang (Red Hat) respond. Lang reports: <em>"We're seeing duplicate reports of the same issue found by multiple independent groups that use LLMs, within the embargo period."</em> The thread overlaps Copy Fail's disclosure window — the same kernel maintainers receiving the deluge of LLM-assisted reports are openly grappling with the structural problem.<span class="cite">Source [10] · Confidence: Confirmed</span></div>
+          <div class="tl-detail">Greg Kroah-Hartman and Clemens Lang (Red Hat) respond. Lang reports that maintainers are now seeing duplicate reports of the same issue found by multiple independent LLM-using groups within the embargo period itself — a structural strain that didn't exist eighteen months ago. The thread overlaps Copy Fail's disclosure window: the same kernel maintainers receiving the deluge of LLM-assisted reports are openly grappling with what coordinated disclosure should look like in this regime.<span class="cite">Source [10] · Confidence: Confirmed</span></div>
           <span class="tl-expand">Expand detail</span>
         </div>
       </div>
@@ -1987,8 +1987,8 @@ footer a:hover { color: var(--text); border-bottom-color: var(--text); }
 <section class="pullquote">
   <div class="pullquote-inner reveal">
     <span class="pullquote-mark inflection">"</span>
-    <p class="pullquote-text">If your threat model still budgets kernel LPEs as rare, you probably have weeks to update that — not years.</p>
-    <p class="pullquote-attr"><strong>David Brumley</strong> · Chief AI &amp; Science Officer, Bugcrowd · CMU professor · ForAllSecure founder · Source [7]</p>
+    <p class="pullquote-text">"We don't have a public security contact" is no longer a defensible posture.</p>
+    <p class="pullquote-attr"><strong>David Brumley</strong> · Chief AI &amp; Science Officer, Bugcrowd · CMU professor · Source [7]</p>
   </div>
 </section>
 
@@ -2372,7 +2372,7 @@ footer a:hover { color: var(--text); border-bottom-color: var(--text); }
             <dl>
               <dt>Addresses</dt><dd>NIST CSF 2.0 GV.OC; ISO/IEC 29147; CISA CVD guidance</dd>
               <dt>Disrupts ATT&amp;CK</dt><dd>Indirect — improves how external signals about your own vulnerabilities reach security teams</dd>
-              <dt>Grounding</dt><dd>ISO/IEC 29147 &amp; 30111; Bugcrowd commentary [7]: <em>"'We don't have a public security contact' is no longer a defensible posture"</em></dd>
+              <dt>Grounding</dt><dd>ISO/IEC 29147 &amp; 30111; Bugcrowd commentary [7] frames the absence of a published security contact as a posture that no longer holds up under current disclosure cadence.</dd>
               <dt>Effort note</dt>
               <dd class="effort">For organizations already running a VDP or bug bounty: tune intake capacity for the higher volume and quality of LLM-assisted submissions. For organizations without a security.txt: 30–60 day setup. The curl project, which once paused its bounty over hallucinated reports, now reports an increasing share of <em>quality</em> AI-supported findings.</dd>
             </dl>
