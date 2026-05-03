@@ -1,0 +1,2252 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inside the IDE - Mini Shai-Hulud and the new attack surface</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg-elev: #0d0d10;
+    --bg-card: #131318;
+    --bg-card-hover: #181820;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.16);
+    --text: #e8e6e3;
+    --text-muted: #9a9590;
+    --text-dim: #6b6660;
+    --danger: #ff4d4d;
+    --danger-dim: rgba(255, 77, 77, 0.12);
+    --constructive: #4dd4a8;
+    --constructive-dim: rgba(77, 212, 168, 0.12);
+    --inflection: #f5b041;
+    --inflection-dim: rgba(245, 176, 65, 0.12);
+    --display: 'Fraunces', Georgia, serif;
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+    --body-max: 880px;
+    --callout-max: 720px;
+    --gutter: 24px;
+    --section-gap: 96px;
+    --within-gap: 64px;
+  }
+
+  [data-theme="light"] {
+    --bg: #faf8f5;
+    --bg-elev: #f3f0ea;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f7f4ee;
+    --border: rgba(0,0,0,0.10);
+    --border-strong: rgba(0,0,0,0.20);
+    --text: #1a1815;
+    --text-muted: #5e5a55;
+    --text-dim: #8a857f;
+    --danger: #c8302e;
+    --danger-dim: rgba(200, 48, 46, 0.10);
+    --constructive: #1f8a64;
+    --constructive-dim: rgba(31, 138, 100, 0.10);
+    --inflection: #b8741b;
+    --inflection-dim: rgba(184, 116, 27, 0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--display);
+    font-weight: 400;
+    line-height: 1.6;
+    font-size: 17px;
+    overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(245, 176, 65, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(77, 212, 168, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(255, 77, 77, 0.02) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  main { position: relative; z-index: 1; }
+
+  /* ---- Theme toggle ---- */
+  .theme-toggle {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  .theme-toggle:hover { background: var(--bg-card-hover); transform: scale(1.05); }
+  .theme-toggle svg { width: 20px; height: 20px; }
+  [data-theme="dark"] .theme-toggle .sun-icon { display: block; }
+  [data-theme="dark"] .theme-toggle .moon-icon { display: none; }
+  [data-theme="light"] .theme-toggle .sun-icon { display: none; }
+  [data-theme="light"] .theme-toggle .moon-icon { display: block; }
+
+  /* ---- Hero ---- */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    position: relative;
+  }
+
+  .hero-marker {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--inflection);
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeIn 0.8s ease 0.2s forwards;
+  }
+
+  .hero-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-style: italic;
+    font-size: clamp(48px, 9vw, 116px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    text-align: center;
+    max-width: 1100px;
+    margin: 0 auto 32px;
+    background: linear-gradient(135deg, var(--text) 0%, var(--inflection) 50%, var(--danger) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    padding-right: 0.15em;
+    opacity: 0;
+    animation: fadeIn 1s ease 0.4s forwards;
+  }
+
+  .hero-deck {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(17px, 1.8vw, 21px);
+    line-height: 1.55;
+    color: var(--text-muted);
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto 64px;
+    opacity: 0;
+    animation: fadeIn 1s ease 0.7s forwards;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 32px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 64px;
+    opacity: 0;
+    animation: fadeIn 1s ease 0.9s forwards;
+  }
+  .hero-meta span { color: var(--text-muted); }
+
+  .hero-visual-wrap {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto 48px;
+    opacity: 0;
+    animation: fadeIn 1.2s ease 1.1s forwards;
+  }
+
+  .scroll-prompt {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    opacity: 0;
+    animation: fadeIn 1s ease 1.5s forwards, scrollBounce 2s ease-in-out infinite 2.5s;
+  }
+  .scroll-prompt::after {
+    content: '';
+    display: block;
+    width: 1px;
+    height: 32px;
+    background: linear-gradient(to bottom, var(--text-dim), transparent);
+    margin: 12px auto 0;
+  }
+
+  @keyframes fadeIn { to { opacity: 1; } }
+  @keyframes scrollBounce {
+    0%, 100% { transform: translate(-50%, 0); }
+    50% { transform: translate(-50%, 8px); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  @keyframes scanLine {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+
+  /* ---- Body sections ---- */
+  .section {
+    max-width: var(--body-max);
+    margin: 0 auto;
+    padding: var(--section-gap) var(--gutter);
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .section.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--inflection);
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: var(--display);
+    font-weight: 600;
+    font-style: italic;
+    font-size: clamp(34px, 5.5vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    color: var(--text);
+    padding-right: 0.1em;
+  }
+
+  .section-lede {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(17px, 1.6vw, 20px);
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin-bottom: 56px;
+    max-width: 680px;
+  }
+
+  .section-body p {
+    margin-bottom: 22px;
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .section-body p.lead {
+    font-size: 19px;
+    color: var(--text);
+    margin-bottom: 32px;
+  }
+
+  .section-body strong {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .section-body em {
+    font-style: italic;
+    color: var(--text);
+  }
+  .section-body code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--bg-card);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--inflection);
+    border: 1px solid var(--border);
+  }
+
+  /* ---- Stat grid ---- */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 40px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 32px 24px 28px;
+    position: relative;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent, var(--inflection));
+  }
+  .stat-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-strong);
+  }
+  .stat-card[data-accent="danger"] { --accent: var(--danger); }
+  .stat-card[data-accent="constructive"] { --accent: var(--constructive); }
+  .stat-card[data-accent="inflection"] { --accent: var(--inflection); }
+
+  .stat-value {
+    font-family: var(--display);
+    font-weight: 700;
+    font-style: italic;
+    font-size: clamp(40px, 5vw, 64px);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--accent, var(--inflection));
+    margin-bottom: 16px;
+    padding-right: 0.1em;
+  }
+  .stat-label {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .stat-source {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* ---- Persistence mechanism callout cards ---- */
+  .file-list {
+    background: var(--bg-card);
+    border: 1px solid var(--danger-dim);
+    border-left: 3px solid var(--danger);
+    padding: 24px 28px;
+    margin: 32px 0;
+    font-family: var(--mono);
+    font-size: 14px;
+  }
+  .file-list .file-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+  }
+  .file-list .file-row:last-child { border-bottom: none; }
+  .file-list .file-path {
+    color: var(--danger);
+    font-weight: 500;
+    flex-shrink: 0;
+    min-width: 220px;
+  }
+  .file-list .file-purpose {
+    color: var(--text-muted);
+    font-family: var(--display);
+    font-size: 14px;
+    font-style: italic;
+  }
+
+  /* ---- Timeline (alternating, no nth selectors) ---- */
+  .timeline {
+    position: relative;
+    margin: 48px 0;
+    padding: 0;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom,
+      transparent 0%,
+      var(--border-strong) 8%,
+      var(--inflection) 50%,
+      var(--border-strong) 92%,
+      transparent 100%);
+    transform: translateX(-0.5px);
+  }
+  .timeline-item {
+    position: relative;
+    width: 50%;
+    padding: 16px 40px;
+    margin-bottom: 12px;
+  }
+  .timeline-item[data-side="left"] {
+    margin-left: 0;
+    margin-right: auto;
+    padding-right: 64px;
+    padding-left: 0;
+    text-align: right;
+  }
+  .timeline-item[data-side="right"] {
+    margin-left: 50%;
+    margin-right: 0;
+    padding-left: 64px;
+    padding-right: 0;
+    text-align: left;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    top: 22px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--marker, var(--inflection));
+  }
+  .timeline-item[data-side="left"]::before {
+    right: -6px;
+  }
+  .timeline-item[data-side="right"]::before {
+    left: -6px;
+  }
+  .timeline-item[data-marker="danger"] { --marker: var(--danger); }
+  .timeline-item[data-marker="constructive"] { --marker: var(--constructive); }
+  .timeline-item[data-marker="inflection"] { --marker: var(--inflection); }
+
+  .timeline-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--marker, var(--inflection));
+    margin-bottom: 8px;
+  }
+  .timeline-event-title {
+    font-family: var(--display);
+    font-weight: 600;
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .timeline-event-desc {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+
+  /* ---- Attack chain cards ---- */
+  .technique-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 40px;
+  }
+  .technique-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 24px 24px 20px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    position: relative;
+  }
+  .technique-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--danger);
+  }
+  .technique-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-strong);
+  }
+  .technique-id {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--danger);
+    margin-bottom: 8px;
+  }
+  .technique-title {
+    font-family: var(--display);
+    font-weight: 600;
+    font-style: italic;
+    font-size: 18px;
+    line-height: 1.3;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .technique-tactic {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .technique-summary {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+  .technique-detail {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, margin-top 0.4s ease;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text);
+    margin-top: 0;
+  }
+  .technique-card.expanded .technique-detail {
+    max-height: 800px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .technique-card.expanded .expand-toggle::after { content: '−'; }
+  .expand-toggle {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 18px;
+    line-height: 1;
+  }
+  .expand-toggle::after { content: '+'; }
+
+  /* ---- Supporting techniques dropdown ---- */
+  .supporting-dropdown {
+    margin-top: 32px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+  }
+  .supporting-toggle {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 18px 24px;
+    color: var(--text);
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 16px;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .supporting-toggle::after {
+    content: '+';
+    font-family: var(--mono);
+    color: var(--text-dim);
+  }
+  .supporting-dropdown.open .supporting-toggle::after { content: '−'; }
+  .supporting-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease;
+  }
+  .supporting-dropdown.open .supporting-content { max-height: 2000px; }
+  .supporting-inner {
+    padding: 0 24px 24px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+  .supporting-inner .supporting-item {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .supporting-inner .supporting-item:last-child { border-bottom: none; }
+  .supporting-id {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .supporting-name {
+    font-family: var(--display);
+    font-weight: 500;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .supporting-desc {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+
+  /* ---- OWASP risk cards ---- */
+  .owasp-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 40px;
+  }
+  .owasp-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .owasp-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-strong);
+  }
+  .owasp-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--severity-color, var(--text-dim));
+  }
+  .owasp-card[data-severity="primary"] { --severity-color: var(--danger); }
+  .owasp-card[data-severity="contributing"] { --severity-color: var(--inflection); }
+
+  .owasp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+  .owasp-id-name {
+    flex-grow: 1;
+  }
+  .owasp-id {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--severity-color, var(--text-dim));
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .owasp-name {
+    font-family: var(--display);
+    font-weight: 600;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--text);
+  }
+  .owasp-severity {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--severity-color, var(--text-dim));
+    border: 1px solid var(--severity-color, var(--text-dim));
+    padding: 4px 10px;
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+  .owasp-detail {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+  .owasp-card.expanded .owasp-detail {
+    max-height: 600px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ---- Mitigation cards ---- */
+  .mitigation-list {
+    margin-top: 40px;
+  }
+  .mitigation-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--constructive);
+    padding: 24px 28px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .mitigation-item:hover { background: var(--bg-card-hover); }
+  .mitigation-name {
+    font-family: var(--display);
+    font-weight: 600;
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.35;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .mitigation-summary {
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+  .mitigation-detail {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+  .mitigation-item.expanded .mitigation-detail {
+    max-height: 1500px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .mitigation-detail p { margin-bottom: 14px; font-size: 14px; line-height: 1.65; color: var(--text); }
+  .mitigation-detail .mit-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--constructive);
+    margin-bottom: 4px;
+    margin-top: 12px;
+  }
+
+  /* ---- SAP credit callout ---- */
+  .sap-credit {
+    background: var(--constructive-dim);
+    border: 1px solid var(--constructive);
+    padding: 28px 32px;
+    margin: 40px 0;
+    position: relative;
+  }
+  .sap-credit::before {
+    content: 'A constructive read';
+    position: absolute;
+    top: -10px;
+    left: 24px;
+    background: var(--bg);
+    padding: 0 12px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--constructive);
+  }
+  .sap-credit p {
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .sap-credit p:last-child { margin-bottom: 0; }
+
+  /* ---- Recommendations / horizons ---- */
+  .horizon-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 48px;
+  }
+  .horizon-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 28px 28px 24px;
+    position: relative;
+  }
+  .horizon-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--horizon-color, var(--inflection));
+  }
+  .horizon-panel[data-horizon="00"] { --horizon-color: var(--danger); }
+  .horizon-panel[data-horizon="01"] { --horizon-color: var(--inflection); }
+  .horizon-panel[data-horizon="02"] { --horizon-color: var(--constructive); }
+  .horizon-panel[data-horizon="03"] { --horizon-color: var(--text-muted); }
+
+  .horizon-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--horizon-color, var(--inflection));
+    margin-bottom: 4px;
+  }
+  .horizon-window {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+  }
+  .horizon-title {
+    font-family: var(--display);
+    font-weight: 600;
+    font-style: italic;
+    font-size: 21px;
+    line-height: 1.3;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+  .horizon-list {
+    list-style: none;
+  }
+  .horizon-list li {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .horizon-list li:last-child { border-bottom: none; }
+  .horizon-list li strong {
+    display: block;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+    font-style: italic;
+    font-family: var(--display);
+    font-size: 15px;
+  }
+  .horizon-list li span {
+    color: var(--text-muted);
+  }
+
+  /* ---- Pullquotes ---- */
+  .pullquote {
+    max-width: var(--body-max);
+    margin: var(--section-gap) auto;
+    padding: 0 var(--gutter);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .pullquote.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .pullquote-mark {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 96px;
+    line-height: 0.5;
+    color: var(--inflection);
+    margin-bottom: 16px;
+    opacity: 0.4;
+  }
+  .pullquote-text {
+    font-family: var(--display);
+    font-weight: 500;
+    font-style: italic;
+    font-size: clamp(24px, 3.5vw, 38px);
+    line-height: 1.3;
+    color: var(--text);
+    max-width: 800px;
+    margin: 0 auto 24px;
+    padding-right: 0.15em;
+  }
+  .pullquote-attr {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .pullquote.editorial .pullquote-text {
+    background: linear-gradient(135deg, var(--text) 0%, var(--inflection) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ---- Chart section ---- */
+  .chart-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 40px 24px 32px;
+    margin: 40px 0;
+  }
+  .chart-caption {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    text-align: center;
+    margin-top: 24px;
+  }
+  .chart-legend {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    margin-top: 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chart-legend-swatch {
+    width: 16px;
+    height: 3px;
+  }
+
+  /* ---- Final callout ---- */
+  .final-callout {
+    max-width: var(--callout-max);
+    margin: var(--section-gap) auto;
+    padding: 56px 48px;
+    border: 1px solid var(--border-strong);
+    border-top: 3px solid var(--danger);
+    background: var(--bg-card);
+    text-align: left;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .final-callout.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .final-callout-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--danger);
+    margin-bottom: 16px;
+  }
+  .final-callout-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-style: italic;
+    font-size: clamp(32px, 4.5vw, 48px);
+    line-height: 1.05;
+    margin-bottom: 28px;
+    color: var(--text);
+    padding-right: 0.15em;
+  }
+  .final-callout p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--text);
+    margin-bottom: 18px;
+  }
+  .final-callout p:last-child { margin-bottom: 0; }
+  .final-callout p strong {
+    color: var(--inflection);
+    font-weight: 500;
+  }
+
+  /* ---- Sources section ---- */
+  .sources-section {
+    max-width: var(--body-max);
+    margin: 0 auto;
+    padding: var(--section-gap) var(--gutter);
+    border-top: 1px solid var(--border);
+  }
+  .sources-title {
+    font-family: var(--display);
+    font-weight: 600;
+    font-style: italic;
+    font-size: 32px;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .sources-intro {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+    max-width: 640px;
+  }
+  .sources-group {
+    margin-bottom: 36px;
+  }
+  .sources-group-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--inflection);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .source-entry {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .source-entry:last-child { border-bottom: none; }
+  .source-num {
+    font-family: var(--mono);
+    color: var(--text-dim);
+    margin-right: 12px;
+    font-size: 12px;
+  }
+  .source-publisher {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .source-title {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  .source-date {
+    font-family: var(--mono);
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+  .source-entry a {
+    color: var(--inflection);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    word-break: break-word;
+  }
+  .source-entry a:hover { color: var(--danger); text-decoration: underline; }
+
+  /* ---- Footer ---- */
+  footer {
+    text-align: center;
+    padding: 48px 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+  }
+  footer a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  footer a:hover { color: var(--inflection); }
+
+  /* ---- Mobile ---- */
+  @media (max-width: 768px) {
+    :root {
+      --section-gap: 64px;
+      --within-gap: 40px;
+    }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .technique-grid { grid-template-columns: 1fr; }
+    .horizon-grid { grid-template-columns: 1fr; }
+    .timeline::before { left: 16px; }
+    .timeline-item {
+      width: 100%;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      padding-left: 40px !important;
+      padding-right: 0 !important;
+      text-align: left !important;
+    }
+    .timeline-item::before {
+      left: 10px !important;
+      right: auto !important;
+    }
+    .file-list .file-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .file-list .file-path { min-width: 0; }
+    .hero-meta { flex-direction: column; gap: 12px; align-items: center; }
+    .pullquote-mark { font-size: 64px; }
+    .final-callout { padding: 36px 24px; }
+  }
+  @media (max-width: 480px) {
+    .stat-grid { grid-template-columns: 1fr; }
+    .section { padding: 64px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+  <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <circle cx="12" cy="12" r="4"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" stroke-linecap="round"/>
+  </svg>
+  <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke-linejoin="round"/>
+  </svg>
+</button>
+
+<main>
+
+<!-- ============================================ -->
+<!-- HERO -->
+<!-- ============================================ -->
+<section class="hero">
+  <div class="hero-marker">Inside the IDE · Mini Shai-Hulud · April 2026</div>
+  <h1 class="hero-title">AI tools are now the target.&nbsp;&nbsp;</h1>
+  <p class="hero-deck">Three waves in five months. Compromised packages on npm, PyPI, and Packagist. The persistence mechanism reaches inside Claude Code and VS Code. The development community needs to update its threat model.</p>
+
+  <div class="hero-meta">
+    <span>Apr 22 · Bitwarden CLI</span>
+    <span>Apr 29 · SAP CAP packages</span>
+    <span>Apr 30 · Lightning · Intercom</span>
+  </div>
+
+  <div class="hero-visual-wrap">
+    <svg width="100%" viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="hero-title hero-desc">
+      <title id="hero-title">The IDE persistence mechanism</title>
+      <desc id="hero-desc">Diagram showing a poisoned repository being opened in an IDE, triggering payload files in .claude and .vscode directories that re-fire the credential stealer.</desc>
+
+      <defs>
+        <linearGradient id="repo-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ff4d4d" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#ff4d4d" stop-opacity="0.04"/>
+        </linearGradient>
+        <linearGradient id="ide-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f5b041" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#f5b041" stop-opacity="0.03"/>
+        </linearGradient>
+        <linearGradient id="creds-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4dd4a8" stop-opacity="0.04"/>
+          <stop offset="100%" stop-color="#ff4d4d" stop-opacity="0.18"/>
+        </linearGradient>
+      </defs>
+
+      <!-- POISONED REPO (left) -->
+      <g>
+        <rect x="40" y="80" width="180" height="200" rx="2" fill="url(#repo-grad)" stroke="#ff4d4d" stroke-width="0.5" stroke-opacity="0.5"/>
+        <text x="130" y="108" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#ff4d4d" letter-spacing="0.1em">POISONED REPO</text>
+
+        <!-- payload file rows with pulsing -->
+        <g style="animation: pulse 2.4s ease-in-out infinite">
+          <rect x="56" y="124" width="148" height="22" fill="rgba(255,77,77,0.10)" stroke="#ff4d4d" stroke-width="0.5" stroke-opacity="0.4"/>
+          <text x="64" y="139" font-family="JetBrains Mono, monospace" font-size="10" fill="#ff4d4d">.claude/settings.json</text>
+        </g>
+        <g style="animation: pulse 2.4s ease-in-out infinite 0.4s">
+          <rect x="56" y="152" width="148" height="22" fill="rgba(255,77,77,0.10)" stroke="#ff4d4d" stroke-width="0.5" stroke-opacity="0.4"/>
+          <text x="64" y="167" font-family="JetBrains Mono, monospace" font-size="10" fill="#ff4d4d">.claude/setup.mjs</text>
+        </g>
+        <g style="animation: pulse 2.4s ease-in-out infinite 0.8s">
+          <rect x="56" y="180" width="148" height="22" fill="rgba(255,77,77,0.10)" stroke="#ff4d4d" stroke-width="0.5" stroke-opacity="0.4"/>
+          <text x="64" y="195" font-family="JetBrains Mono, monospace" font-size="10" fill="#ff4d4d">.claude/router_runtime.js</text>
+        </g>
+        <g style="animation: pulse 2.4s ease-in-out infinite 1.2s">
+          <rect x="56" y="208" width="148" height="22" fill="rgba(255,77,77,0.10)" stroke="#ff4d4d" stroke-width="0.5" stroke-opacity="0.4"/>
+          <text x="64" y="223" font-family="JetBrains Mono, monospace" font-size="10" fill="#ff4d4d">.vscode/tasks.json</text>
+        </g>
+        <g style="animation: pulse 2.4s ease-in-out infinite 1.6s">
+          <rect x="56" y="236" width="148" height="22" fill="rgba(255,77,77,0.10)" stroke="#ff4d4d" stroke-width="0.5" stroke-opacity="0.4"/>
+          <text x="64" y="251" font-family="JetBrains Mono, monospace" font-size="10" fill="#ff4d4d">.vscode/setup.mjs</text>
+        </g>
+      </g>
+
+      <!-- ARROW: REPO → IDE -->
+      <g>
+        <line x1="220" y1="180" x2="280" y2="180" stroke="#f5b041" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+        <polygon points="280,180 274,176 274,184" fill="#f5b041"/>
+        <text x="250" y="172" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#f5b041" letter-spacing="0.05em">git clone</text>
+      </g>
+
+      <!-- IDE / CLAUDE CODE (center) -->
+      <g>
+        <rect x="280" y="80" width="180" height="200" rx="2" fill="url(#ide-grad)" stroke="#f5b041" stroke-width="0.5" stroke-opacity="0.6"/>
+        <text x="370" y="108" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#f5b041" letter-spacing="0.1em">CLAUDE CODE / VS CODE</text>
+
+        <text x="370" y="148" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="14" fill="#e8e6e3">SessionStart hook</text>
+        <text x="370" y="168" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="14" fill="#e8e6e3">runOn: folderOpen</text>
+
+        <line x1="320" y1="188" x2="420" y2="188" stroke="#f5b041" stroke-opacity="0.3" stroke-width="0.5"/>
+
+        <text x="370" y="214" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#f5b041" opacity="0.85">spawns Bun</text>
+        <text x="370" y="232" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#f5b041" opacity="0.85">runs payload</text>
+        <text x="370" y="250" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#f5b041" opacity="0.85">harvests creds</text>
+      </g>
+
+      <!-- ARROW: IDE → EXFIL -->
+      <g>
+        <line x1="460" y1="180" x2="520" y2="180" stroke="#ff4d4d" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+        <polygon points="520,180 514,176 514,184" fill="#ff4d4d"/>
+        <text x="490" y="172" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#ff4d4d" letter-spacing="0.05em">exfiltrate</text>
+      </g>
+
+      <!-- CREDENTIALS LEAVING (right) -->
+      <g>
+        <rect x="520" y="80" width="160" height="200" rx="2" fill="url(#creds-grad)" stroke="#ff4d4d" stroke-width="0.5" stroke-opacity="0.5"/>
+        <text x="600" y="108" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#ff4d4d" letter-spacing="0.1em">CREDENTIALS</text>
+
+        <text x="600" y="138" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="13" fill="#e8e6e3" opacity="0.9">GitHub tokens</text>
+        <text x="600" y="158" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="13" fill="#e8e6e3" opacity="0.9">npm tokens</text>
+        <text x="600" y="178" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="13" fill="#e8e6e3" opacity="0.9">SSH keys</text>
+        <text x="600" y="198" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="13" fill="#e8e6e3" opacity="0.9">cloud creds</text>
+        <text x="600" y="218" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="13" fill="#e8e6e3" opacity="0.9">Vault tokens</text>
+        <text x="600" y="238" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="13" fill="#e8e6e3" opacity="0.9">MCP / Claude config</text>
+      </g>
+
+      <!-- LOOP-BACK ARROW: persistence re-fires -->
+      <g opacity="0.5">
+        <path d="M 600 280 Q 600 320 370 320 Q 130 320 130 280" fill="none" stroke="#f5b041" stroke-width="1" stroke-dasharray="4 4"/>
+        <polygon points="130,280 126,288 134,288" fill="#f5b041"/>
+        <text x="370" y="338" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#f5b041" letter-spacing="0.05em">persistence re-fires on next session</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="scroll-prompt">Scroll</div>
+</section>
+
+<!-- ============================================ -->
+<!-- STAT GRID -->
+<!-- ============================================ -->
+<section class="section" id="stats">
+  <div class="eyebrow">By the numbers</div>
+  <div class="section-lede">Six numbers from public reporting between April 22 and April 30, 2026. Each cited to a single source. No estimates.</div>
+
+  <div class="stat-grid">
+    <div class="stat-card" data-accent="danger">
+      <div class="stat-value">5</div>
+      <div class="stat-label">File paths under <code>.claude/</code> and <code>.vscode/</code> written into poisoned repositories — turning the AI assistant's own configuration into a re-trigger hook</div>
+      <div class="stat-source">Wiz · Socket · Apr 30, 2026</div>
+    </div>
+    <div class="stat-card" data-accent="inflection">
+      <div class="stat-value">8.3M</div>
+      <div class="stat-label">Monthly downloads of the compromised Lightning PyPI package, used widely for training PyTorch models</div>
+      <div class="stat-source">OX Security · Apr 30, 2026</div>
+    </div>
+    <div class="stat-card" data-accent="danger">
+      <div class="stat-value">1,800</div>
+      <div class="stat-label">Public dead-drop repositories created across two waves three days apart, each tagged with a campaign marker</div>
+      <div class="stat-source">OX Security · Apr 30, 2026</div>
+    </div>
+    <div class="stat-card" data-accent="danger">
+      <div class="stat-value">6 min</div>
+      <div class="stat-label">Between malicious <code>mbt@1.2.48</code> publish and first victim dead-drop repository appearing on GitHub</div>
+      <div class="stat-source">Snyk · Apr 29, 2026</div>
+    </div>
+    <div class="stat-card" data-accent="constructive">
+      <div class="stat-value">14 min</div>
+      <div class="stat-label">Socket's detection time on the malicious <code>intercom/intercom-php@5.0.2</code> Packagist artifact after release</div>
+      <div class="stat-source">Socket · Apr 30, 2026</div>
+    </div>
+    <div class="stat-card" data-accent="inflection">
+      <div class="stat-value">20.7M</div>
+      <div class="stat-label">Lifetime installs of the Packagist PHP package abused via Composer plugin execution</div>
+      <div class="stat-source">Socket · Apr 30, 2026</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SECTION 3: PERSISTENCE MECHANISM -->
+<!-- ============================================ -->
+<section class="section" id="persistence">
+  <div class="eyebrow">The new attack surface</div>
+  <h2 class="section-title">Your IDE just became part of the worm.&nbsp;&nbsp;</h2>
+  <p class="section-lede">The campaign writes payload files into <code>.claude/</code> and <code>.vscode/</code> directories of every repository it can reach. Cloning a poisoned repository and opening it in your AI coding assistant re-fires the entire attack on a fresh machine.</p>
+
+  <div class="section-body">
+    <p class="lead">This is the structural shift. For most of 2025, the AI coding assistant and the IDE workspace were treated as productivity surfaces — adjacent to the supply chain risk, but not part of it. The April 2026 wave changes that. The campaign deliberately writes attacker-controlled files into the configuration directories that AI coding assistants and IDEs treat as implicitly trusted at session start.</p>
+
+    <p>What the campaign drops, and what each file does:</p>
+
+    <div class="file-list">
+      <div class="file-row">
+        <span class="file-path">.claude/settings.json</span>
+        <span class="file-purpose">Claude Code SessionStart hook — runs <code>node .vscode/setup.mjs</code> on every new session</span>
+      </div>
+      <div class="file-row">
+        <span class="file-path">.claude/setup.mjs</span>
+        <span class="file-purpose">Bun bootstrapper — downloads the runtime, prepares the payload</span>
+      </div>
+      <div class="file-row">
+        <span class="file-path">.claude/router_runtime.js</span>
+        <span class="file-purpose">Self-copy of the running payload via <code>Bun.main</code></span>
+      </div>
+      <div class="file-row">
+        <span class="file-path">.vscode/tasks.json</span>
+        <span class="file-purpose">VS Code task <em>Environment Setup</em> — runs on <code>folderOpen</code></span>
+      </div>
+      <div class="file-row">
+        <span class="file-path">.vscode/setup.mjs</span>
+        <span class="file-purpose">Identical dropper — entry point for the VS Code execution path</span>
+      </div>
+    </div>
+
+    <p>The commits are authored as <code>claude &lt;claude@users.noreply.github.com&gt;</code> with the message <code>chore: update dependencies</code> — designed to blend into normal developer activity in any repository's history.</p>
+
+    <p>The mechanical effect is that the persistence outlives the package. Once an organisation removes a malicious version of <code>@cap-js/sqlite</code> or <code>lightning</code> from its lockfiles, the attack chain is not over — every repository the compromised developer's tokens could touch may now carry a payload that re-fires the next time anyone clones that repository and opens it in Claude Code or VS Code. This is the worm continuing to propagate through the developer's tooling rather than through the package registry.</p>
+
+    <p>The credential targets reflect the same shift in posture. Among the secrets the payload harvests are <strong>MCP configuration files</strong> and <strong>Claude config</strong> — explicit acknowledgement that the AI coding assistant's own context is now considered worth stealing. SANDWORM_MODE earlier in 2026 demonstrated prompt-injection logic targeting AI coding assistants directly. The trajectory is clear, and it lands here: AI development tooling is not collateral to the supply-chain threat anymore. It is the threat surface.</p>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- TIMELINE -->
+<!-- ============================================ -->
+<section class="section" id="timeline">
+  <div class="eyebrow">A campaign in waves</div>
+  <h2 class="section-title">Five months. Three waves. One playbook.&nbsp;&nbsp;</h2>
+  <p class="section-lede">Mini Shai-Hulud did not invent its tradecraft. It refined a pattern visible since September 2025 and turned it on the highest-trust packages in three ecosystems.</p>
+
+  <div class="timeline">
+    <div class="timeline-item" data-side="left" data-marker="inflection">
+      <div class="timeline-date">Sept 14-17, 2025</div>
+      <div class="timeline-event-title">Original Shai-Hulud surfaces on npm</div>
+      <div class="timeline-event-desc">Patient zero <code>rxnt-authentication v0.0.3</code>. Worm spreads to hundreds of npm packages, exfiltrating to attacker-created public GitHub repos named "Shai-Hulud." First truly self-propagating npm worm.</div>
+    </div>
+
+    <div class="timeline-item" data-side="right" data-marker="constructive">
+      <div class="timeline-date">Sept 2025 — onward</div>
+      <div class="timeline-event-title">npm hardening response</div>
+      <div class="timeline-event-desc">GitHub mandates 2FA for local publishing, limits token lifespan to seven days, promotes trusted publishing — the OIDC approach pioneered by PyPI.</div>
+    </div>
+
+    <div class="timeline-item" data-side="left" data-marker="constructive">
+      <div class="timeline-date">November 2025</div>
+      <div class="timeline-event-title">SAP cds-dbs migrates to OIDC trusted publishing</div>
+      <div class="timeline-event-desc">The <code>@cap-js/*</code> packages move to OIDC trusted publishing — exactly the post-Shai-Hulud move the ecosystem called for.</div>
+    </div>
+
+    <div class="timeline-item" data-side="right" data-marker="danger">
+      <div class="timeline-date">Nov 21-24, 2025</div>
+      <div class="timeline-event-title">Shai-Hulud 2.0 — "The Second Coming"</div>
+      <div class="timeline-event-desc">~796 packages compromised, 25,000+ malicious repositories across ~500 GitHub users. Pre-install execution. Bun runtime introduced to bypass Node.js process monitoring. Destructive fallback that wipes the user's home directory if exfiltration fails.</div>
+    </div>
+
+    <div class="timeline-item" data-side="left" data-marker="inflection">
+      <div class="timeline-date">Late Feb 2026</div>
+      <div class="timeline-event-title">TeamPCP compromises Trivy</div>
+      <div class="timeline-event-desc">First substantive supply-chain operation by TeamPCP (also tracked as DeadCatx3, PCPcat, ShellForce). Active since at least 2024.</div>
+    </div>
+
+    <div class="timeline-item" data-side="right" data-marker="danger">
+      <div class="timeline-date">March 16-23, 2026</div>
+      <div class="timeline-event-title">Checkmarx, Trivy, LiteLLM, Telnyx, KICS</div>
+      <div class="timeline-event-desc">TeamPCP injects credential stealers into security tooling. KICS Docker images on Docker Hub, GitHub Actions, Open VSX plugins. Mercor (AI startup) confirmed affected via LiteLLM. TeamPCP claims via @pcpcats account.</div>
+    </div>
+
+    <div class="timeline-item" data-side="left" data-marker="danger">
+      <div class="timeline-date">April 22, 2026 · 21:57-23:30 UTC</div>
+      <div class="timeline-event-title">Bitwarden CLI cascade — 90 minutes</div>
+      <div class="timeline-event-desc">Bitwarden's Dependabot pulls a malicious <code>checkmarx/kics:latest</code> image into Bitwarden's CI/CD pipeline — the first documented case in this campaign of one popular developer tool poisoning another's pipeline through ordinary dependency-update automation. Payload contains "Shai-Hulud: The Third Coming."</div>
+    </div>
+
+    <div class="timeline-item" data-side="right" data-marker="danger">
+      <div class="timeline-date">April 29, 2026 · 09:55 UTC</div>
+      <div class="timeline-event-title">Mini Shai-Hulud hits SAP CAP packages</div>
+      <div class="timeline-event-desc">Four packages briefly available in malicious form: <code>@cap-js/sqlite 2.2.2</code>, <code>@cap-js/postgres 2.2.2</code>, <code>@cap-js/db-service 2.10.1</code>, <code>mbt 1.2.48</code>. First victim dead-drop repository appears six minutes after publish.</div>
+    </div>
+
+    <div class="timeline-item" data-side="left" data-marker="constructive">
+      <div class="timeline-date">April 29, 2026 · 13:46 UTC</div>
+      <div class="timeline-event-title">SAP publishes clean superseding versions</div>
+      <div class="timeline-event-desc">Roughly four hours from malicious publish to clean release via the <code>cap-npm</code> GitHub Actions OIDC trusted publisher. Compromised <code>cloudmtabot</code> token suspended. Workflow updated to require human approval for npm publication. Security note 3747787 published to customers and partners.</div>
+    </div>
+
+    <div class="timeline-item" data-side="right" data-marker="danger">
+      <div class="timeline-date">April 30, 2026</div>
+      <div class="timeline-event-title">Lightning PyPI · Intercom npm · Intercom Packagist</div>
+      <div class="timeline-event-desc">Lightning <code>2.6.2</code> and <code>2.6.3</code> compromised on PyPI — payload injected directly into <code>__init__.py</code>, runs at first import. Intercom-client <code>7.0.4</code> on npm with malicious preinstall. Intercom-php <code>5.0.2</code> on Packagist via Composer plugin abuse. Per Intercom: a single developer's local install of <code>pyannote-audio</code> chained the Lightning compromise into Intercom.</div>
+    </div>
+
+    <div class="timeline-item" data-side="left" data-marker="inflection">
+      <div class="timeline-date">Today — campaign ongoing</div>
+      <div class="timeline-event-title">These attacks are not over</div>
+      <div class="timeline-event-desc">Wiz assesses the campaign currently active. OX Security tracks 1,200 → 1,800 dead-drop repositories across two waves three days apart. Aikido: <em>"We're probably yet to see the full fallout from this campaign."</em></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- PULLQUOTE 1 -->
+<!-- ============================================ -->
+<aside class="pullquote editorial">
+  <div class="pullquote-mark">"</div>
+  <div class="pullquote-text"><em>AI tools are now the target. Your IDE configuration is the new persistence mechanism.&nbsp;&nbsp;</em></div>
+  <div class="pullquote-attr">The thesis of this report</div>
+</aside>
+
+<!-- ============================================ -->
+<!-- ATTACK CHAIN -->
+<!-- ============================================ -->
+<section class="section" id="attack-chain">
+  <div class="eyebrow">How the worm works</div>
+  <h2 class="section-title">Eight techniques. No magic.&nbsp;&nbsp;</h2>
+  <p class="section-lede">What looks like an advanced operation is a careful composition of well-known techniques against a software supply chain not designed to resist them. Each technique is individually catalogued in MITRE ATT&amp;CK; each is individually defensible.</p>
+
+  <div class="technique-grid">
+
+    <div class="technique-card" onclick="toggleCard(this)">
+      <span class="expand-toggle"></span>
+      <div class="technique-id">T1195.002</div>
+      <div class="technique-title">Compromise software dependencies</div>
+      <div class="technique-tactic">Initial Access</div>
+      <div class="technique-summary">The publishing surface of a legitimate, widely-trusted package becomes the delivery vehicle. <code>npm install</code>, <code>pip install</code>, and <code>composer install</code> carry the payload to every machine that pulls an affected version.</div>
+      <div class="technique-detail">The OIDC trusted-publisher policy for <code>@cap-js/sqlite</code> trusted any workflow in <code>cap-js/cds-dbs</code>, not only the canonical <code>release-please.yml</code> on <code>main</code>. A workflow on a non-main branch with <code>id-token: write</code> permission and <code>environment: npm</code> reference could exchange an OIDC token on behalf of the package. For <code>mbt</code>, an npm token (<code>CLOUD_MTA_BOT_NPM_TOKEN</code>) was likely exposed via a misconfigured CircleCI pull-request job. The Lightning, intercom-client, and intercom-php compromises chained from a single developer's local install of <code>pyannote-audio</code>, which pulled the compromised <code>lightning</code> as a transitive dependency on that workstation, providing the credentials to attack the Intercom packages.</div>
+    </div>
+
+    <div class="technique-card" onclick="toggleCard(this)">
+      <span class="expand-toggle"></span>
+      <div class="technique-id">T1059.007 / T1059.006</div>
+      <div class="technique-title">Install equals execution</div>
+      <div class="technique-tactic">Execution · JavaScript / Python</div>
+      <div class="technique-summary">The bootstrappers run automatically during dependency installation, before any application code. <code>setup.mjs</code> via npm <code>preinstall</code>; <code>setup-intercom.sh</code> via Composer plugin events; <code>start.py</code> via PyPI <code>__init__.py</code> daemon thread.</div>
+      <div class="technique-detail">The bootstrapper downloads Bun 1.3.13 from <code>github.com/oven-sh/bun/releases</code>, extracts the platform-specific binary, and uses Bun rather than Node to execute the main payload. The Lightning variant injects directly into <code>__init__.py</code> via <code>threading.Thread</code> daemon — the payload runs the moment any code imports the package, not just during install. The structural lesson: install equals execution. Cancelling the install does not undo the exfiltration, which completes in seconds.</div>
+    </div>
+
+    <div class="technique-card" onclick="toggleCard(this)">
+      <span class="expand-toggle"></span>
+      <div class="technique-id">T1552.001</div>
+      <div class="technique-title">Credentials in files</div>
+      <div class="technique-tactic">Credential Access</div>
+      <div class="technique-summary">A directed sweep of well-known credential locations: <code>.npmrc</code>, <code>.pypirc</code>, <code>.git-credentials</code>, <code>~/.ssh/</code>, <code>.env</code>, AWS/Azure/GCP files, Docker stores, Kubernetes config, Vault tokens, MCP and Claude configuration files, shell histories, browser password stores.</div>
+      <div class="technique-detail">The Lightning variant adds cryptocurrency wallets (Bitcoin, Litecoin, Monero, Dogecoin, Dash, Exodus, Atomic, Ledger), VPN credentials (NordVPN, ProtonVPN, CyberGhost, Windscribe, OpenVPN), Discord and Slack session data. The SAP-operation variant adds extraction of saved passwords from Chrome, Safari, Edge, Brave, and Chromium. The harvest list documents the present-day reality: every one of these is a credential at rest in a known location on a developer machine.</div>
+    </div>
+
+    <div class="technique-card" onclick="toggleCard(this)">
+      <span class="expand-toggle"></span>
+      <div class="technique-id">T1552.005</div>
+      <div class="technique-title">Cloud instance metadata</div>
+      <div class="technique-tactic">Credential Access</div>
+      <div class="technique-summary">Where the payload runs in a cloud workload, it queries the instance metadata service (IMDS) directly for workload identities and short-lived credentials. Authenticated calls against AWS SSM, AWS Secrets Manager, Azure Key Vault, GCP Secret Manager, Kubernetes Secrets, Vault.</div>
+      <div class="technique-detail">Supports VM, serverless, and container workloads — Google Cloud Functions, Amazon ECS, Kubernetes pods. This pattern was already established in Shai-Hulud 2.0 in November 2025 and continues unchanged. The token has limited lifetime, but the active session is enough to pivot.</div>
+    </div>
+
+    <div class="technique-card" onclick="toggleCard(this)">
+      <span class="expand-toggle"></span>
+      <div class="technique-id">T1212</div>
+      <div class="technique-title">Runner memory scraping</div>
+      <div class="technique-tactic">Credential Access</div>
+      <div class="technique-summary">On Linux CI runners, an embedded Python helper reads <code>/proc/&lt;pid&gt;/maps</code> and <code>/proc/&lt;pid&gt;/mem</code> for the <code>Runner.Worker</code> process, extracting every secret matching the GitHub Actions in-memory secret structure.</div>
+      <div class="technique-detail">This bypasses GitHub Actions' own log-masking guarantee — secrets that are masked when echoed to logs are still extractable from the running worker's address space. This technique was observed in earlier TeamPCP campaigns and continues in the SAP wave. The countermeasure is workload-level isolation, not log-masking.</div>
+    </div>
+
+    <div class="technique-card" onclick="toggleCard(this)">
+      <span class="expand-toggle"></span>
+      <div class="technique-id">T1027</div>
+      <div class="technique-title">Obfuscated payload</div>
+      <div class="technique-tactic">Defense Evasion</div>
+      <div class="technique-summary">An ~11.6-11.7 MB obfuscated single-file JavaScript bundle (<code>router_runtime.js</code> / <code>execution.js</code>). C2 hostname reconstructed from decoded blobs at runtime. Stolen credentials wrapped with AES-256-GCM and RSA-OAEP/SHA-256 before transit.</div>
+      <div class="technique-detail">Executing under Bun rather than Node is a complementary evasion: detection rules looking for credential access spawned from <code>node</code> will not see Bun spawning the same code. The Bun binary self-deletes after execution to reduce forensic traces. Wiz's TeamPCP attribution rests on the shared RSA public key across operations.</div>
+    </div>
+
+    <div class="technique-card" onclick="toggleCard(this)">
+      <span class="expand-toggle"></span>
+      <div class="technique-id">T1567.001</div>
+      <div class="technique-title">Exfiltration via GitHub</div>
+      <div class="technique-tactic">Exfiltration</div>
+      <div class="technique-summary">The dominant channel is GitHub itself. The malware creates a public repository on the <em>victim's own</em> GitHub account, names it with a Dune-themed slug, sets the description to <code>A Mini Shai-Hulud has Appeared</code>, and commits the encrypted payload there.</div>
+      <div class="technique-detail">Cross-victim exfiltration was confirmed in Shai-Hulud 2.0 — one victim's secrets observed in a public repository owned by a second, unrelated victim — meaning organisations auditing only their own GitHub identities can miss exfiltrated data. The fallback channel is also GitHub: the payload searches public commits for the keyword <code>beautifulcastle</code> to retrieve a base64-encoded current exfiltration endpoint, allowing the attacker to rotate infrastructure without publishing a new package version. Blocking <code>github.com</code> is not a realistic option for development teams.</div>
+    </div>
+
+    <div class="technique-card" onclick="toggleCard(this)">
+      <span class="expand-toggle"></span>
+      <div class="technique-id">T1546</div>
+      <div class="technique-title">IDE / AI-assistant persistence</div>
+      <div class="technique-tactic">Persistence</div>
+      <div class="technique-summary">The payload writes files to <code>.claude/router_runtime.js</code>, <code>.claude/setup.mjs</code>, <code>.claude/settings.json</code> (Claude Code SessionStart hook), <code>.vscode/setup.mjs</code>, <code>.vscode/tasks.json</code> (VS Code <code>runOn: folderOpen</code> task) — turning the AI coding assistant and the editor into the persistence surface.</div>
+      <div class="technique-detail">Commits authored as <code>claude &lt;claude@users.noreply.github.com&gt;</code> with the message <code>chore: update dependencies</code>, blending into normal developer activity. Any developer who clones the repository and opens it in VS Code or Claude Code re-triggers the dropper on a fresh machine. This is the mechanism that makes the campaign continue to spread even after the original poisoned packages have been removed from the registries — turning the developer's tooling itself into the persistence and re-distribution channel.</div>
+    </div>
+
+  </div>
+
+  <div class="supporting-dropdown" onclick="toggleDropdown(this)">
+    <button class="supporting-toggle">Supporting techniques observed</button>
+    <div class="supporting-content">
+      <div class="supporting-inner">
+
+        <div class="supporting-item">
+          <div class="supporting-id">T1195.001 · Initial Access</div>
+          <div class="supporting-name">Compromise software tools</div>
+          <div class="supporting-desc">The April 22 Bitwarden cascade was a Dependabot pull of a compromised <code>checkmarx/kics:latest</code> image into Bitwarden's CI/CD pipeline — one developer tool poisoning another developer tool's pipeline through ordinary dependency-update automation.</div>
+        </div>
+
+        <div class="supporting-item">
+          <div class="supporting-id">T1078.004 · Initial Access / Lateral Movement</div>
+          <div class="supporting-name">Valid accounts (cloud)</div>
+          <div class="supporting-desc">OIDC token exchange against <code>registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/</code> — using a valid (mis-scoped) cloud-issued credential to publish on behalf of a package the attacker does not own.</div>
+        </div>
+
+        <div class="supporting-item">
+          <div class="supporting-id">T1098 · Persistence (registry-level)</div>
+          <div class="supporting-name">Account manipulation</div>
+          <div class="supporting-desc">With a harvested <code>npm_</code> token, the payload calls <code>/-/whoami</code> and package APIs, enumerates packages the token can write to, then downloads, patches (re-injecting <code>setup.mjs</code> + payload, setting <code>scripts.preinstall</code>, bumping the patch version), and republishes the trojanized tarball.</div>
+        </div>
+
+        <div class="supporting-item">
+          <div class="supporting-id">T1480 · Defense Evasion</div>
+          <div class="supporting-name">Execution guardrails — Russian-locale kill switch</div>
+          <div class="supporting-desc">The payload inspects system date/time locale and language environment variables; if any value begins with <code>ru</code>, it terminates without exfiltration. Same guardrail observed in earlier TeamPCP Checkmarx and Bitwarden operations — one of the technical signatures supporting the TeamPCP attribution.</div>
+        </div>
+
+        <div class="supporting-item">
+          <div class="supporting-id">T1102.002 · Command and Control</div>
+          <div class="supporting-name">Web service — bidirectional</div>
+          <div class="supporting-desc">The payload queries the GitHub commit-search API for the keyword <code>beautifulcastle</code> to retrieve a base64-encoded current exfiltration endpoint, and <code>EveryBoiWeBuildIsAWormyBoi</code> / <code>OhNoWhatsGoingOnWithGitHub</code> to recover stolen tokens for fallback exfiltration. GitHub's public commit search functioning as a dead-drop resolver.</div>
+        </div>
+
+        <div class="supporting-item">
+          <div class="supporting-id">T1070.004 · Defense Evasion</div>
+          <div class="supporting-name">Indicator removal — file deletion</div>
+          <div class="supporting-desc">The Bun binary self-deletes after the payload executes, reducing on-disk forensic indicators. The lock file <code>/tmp/tmp.987654321.lock</code> is one of the few stable artifacts left behind on Linux hosts.</div>
+        </div>
+
+        <div class="supporting-item">
+          <div class="supporting-id">T1485 · Impact (lineage only)</div>
+          <div class="supporting-name">Data destruction (Shai-Hulud 2.0 fallback)</div>
+          <div class="supporting-desc">The November 2025 Shai-Hulud 2.0 wave introduced a fail-closed fallback that wiped the user's home directory if it could not authenticate using GitHub or npm credentials. Whether this destructive fallback is retained in the April 2026 Mini variants is not explicitly confirmed in current public reporting.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ============================================ -->
+<!-- PULLQUOTE 2 (sourced) -->
+<!-- ============================================ -->
+<aside class="pullquote">
+  <div class="pullquote-mark">"</div>
+  <div class="pullquote-text">We're probably yet to see the full fallout from this campaign.</div>
+  <div class="pullquote-attr">Raphael Silva, Aikido Security · Dark Reading, April 30, 2026</div>
+</aside>
+
+<!-- ============================================ -->
+<!-- RISK MAPPING -->
+<!-- ============================================ -->
+<section class="section" id="risk">
+  <div class="eyebrow">Where the controls live now</div>
+  <h2 class="section-title">The pipeline is the perimeter, not the application.&nbsp;&nbsp;</h2>
+  <p class="section-lede">OWASP's Top 10 for CI/CD Security Risks names nine of the ten categories this incident exemplifies. The incident is not exotic. It is a textbook reading of a framework that already exists.</p>
+
+  <div class="owasp-grid">
+
+    <div class="owasp-card" data-severity="primary" onclick="toggleOwasp(this)">
+      <div class="owasp-header">
+        <div class="owasp-id-name">
+          <div class="owasp-id">CICD-SEC-1</div>
+          <div class="owasp-name">Insufficient flow control mechanisms</div>
+        </div>
+        <div class="owasp-severity">Primary driver</div>
+      </div>
+      <div class="owasp-detail">For the <code>@cap-js/*</code> packages, the npm OIDC trusted-publisher configuration trusted any workflow in <code>cap-js/cds-dbs</code>, not only the canonical <code>release-please.yml</code> on <code>main</code>. A push of a workflow with <code>id-token: write</code> permission and <code>environment: npm</code> reference on any branch could exchange an OIDC token on behalf of the package. The post-incident addition of a human-approval gate to npm publication closes this surface.</div>
+    </div>
+
+    <div class="owasp-card" data-severity="primary" onclick="toggleOwasp(this)">
+      <div class="owasp-header">
+        <div class="owasp-id-name">
+          <div class="owasp-id">CICD-SEC-2</div>
+          <div class="owasp-name">Inadequate identity and access management</div>
+        </div>
+        <div class="owasp-severity">Primary driver</div>
+      </div>
+      <div class="owasp-detail">A single credential with broader publish or workflow rights than its narrowest legitimate use case becomes the exact key that propagates the worm. Static publish tokens, GitHub PATs with <code>workflow</code> scope, OIDC trust relationships that were over-broad at the workflow level — each is a category of identity boundary that the campaign found and crossed.</div>
+    </div>
+
+    <div class="owasp-card" data-severity="primary" onclick="toggleOwasp(this)">
+      <div class="owasp-header">
+        <div class="owasp-id-name">
+          <div class="owasp-id">CICD-SEC-3</div>
+          <div class="owasp-name">Dependency chain abuse</div>
+        </div>
+        <div class="owasp-severity">Primary driver</div>
+      </div>
+      <div class="owasp-detail">Three install-time execution paths in parallel: npm <code>preinstall</code> hooks (SAP packages, intercom-client), Composer <code>post-install-cmd</code>/<code>post-update-cmd</code> plugin events (intercom-php), PyPI <code>__init__.py</code> injection that runs at first <code>import</code> (lightning). The Packagist case additionally relied on Git tag mutability — Packagist mirrors upstream Git tags, and tags can be force-updated, so an attacker who can modify the upstream repository can replace the contents of an existing version without changing the version number.</div>
+    </div>
+
+    <div class="owasp-card" data-severity="primary" onclick="toggleOwasp(this)">
+      <div class="owasp-header">
+        <div class="owasp-id-name">
+          <div class="owasp-id">CICD-SEC-4</div>
+          <div class="owasp-name">Poisoned pipeline execution</div>
+        </div>
+        <div class="owasp-severity">Primary driver</div>
+      </div>
+      <div class="owasp-detail">A misconfigured CircleCI pull-request job in <code>SAP/cloud-mta-build-tool</code> listed redacted project secrets — including <code>CLOUD_MTA_BOT_NPM_TOKEN</code>, <code>CLOUD_MTA_BOT_GITHUB_TOKEN</code>, CircleCI OIDC tokens, Docker Hub credentials, Cloud Foundry credentials — to a job triggered from an external branch. Octokit warnings for <code>POST https://api.github.com/user/repos</code> in the same logs match the malware's GitHub exfiltration behaviour. This is a category of misconfiguration that affects every CI provider, not a single-organisation issue.</div>
+    </div>
+
+    <div class="owasp-card" data-severity="primary" onclick="toggleOwasp(this)">
+      <div class="owasp-header">
+        <div class="owasp-id-name">
+          <div class="owasp-id">CICD-SEC-5</div>
+          <div class="owasp-name">Insufficient pipeline-based access controls</div>
+        </div>
+        <div class="owasp-severity">Primary driver</div>
+      </div>
+      <div class="owasp-detail">The OIDC token issued for an <code>@cap-js</code> build was usable to publish to npm because the trust policy did not pin the workflow file path or branch. The CI runner secrets that ended up in <code>/proc/&lt;pid&gt;/maps</code> for <code>Runner.Worker</code> were available to a process that should not have been there at all. Pipelines hold release-tier authority continuously, when in most cases they need it for a single job.</div>
+    </div>
+
+    <div class="owasp-card" data-severity="primary" onclick="toggleOwasp(this)">
+      <div class="owasp-header">
+        <div class="owasp-id-name">
+          <div class="owasp-id">CICD-SEC-6</div>
+          <div class="owasp-name">Insufficient credential hygiene</div>
+        </div>
+        <div class="owasp-severity">Primary driver</div>
+      </div>
+      <div class="owasp-detail">Long-lived static tokens were the alternative to OIDC trusted publishing — the very weakness GitHub's post-Shai-Hulud guidance was designed to retire. On the developer side, the harvest list documents the reality: <code>.npmrc</code>, <code>.pypirc</code>, <code>.git-credentials</code>, <code>~/.ssh/</code>, <code>.env</code>, AWS/Azure/GCP credential files, Docker stores, Kubernetes config, Vault tokens, MCP and Claude configuration files, shell histories, browser password stores. Every one is a credential at rest in a known location on a developer machine.</div>
+    </div>
+
+    <div class="owasp-card" data-severity="contributing" onclick="toggleOwasp(this)">
+      <div class="owasp-header">
+        <div class="owasp-id-name">
+          <div class="owasp-id">CICD-SEC-7</div>
+          <div class="owasp-name">Insecure system configuration</div>
+        </div>
+        <div class="owasp-severity">Contributing</div>
+      </div>
+      <div class="owasp-detail">Defaults across the major package managers permit lifecycle scripts to run by default. <code>npm install</code> runs <code>preinstall</code>, Composer plugins run <code>post-install-cmd</code>, <code>pip install</code> runs whatever is in a package's <code>setup.py</code> or <code>__init__.py</code>. None of these defaults is a vulnerability in the registry; they are configuration choices the consuming organisation can override but typically does not.</div>
+    </div>
+
+    <div class="owasp-card" data-severity="contributing" onclick="toggleOwasp(this)">
+      <div class="owasp-header">
+        <div class="owasp-id-name">
+          <div class="owasp-id">CICD-SEC-8</div>
+          <div class="owasp-name">Ungoverned use of third-party services</div>
+        </div>
+        <div class="owasp-severity">Contributing</div>
+      </div>
+      <div class="owasp-detail">GitHub itself is the third-party service being abused — for delivery (Bun runtime download from GitHub Releases), exfiltration (public repository creation under the victim's account), and command and control (commit-search as a dead-drop resolver). Blocking <code>github.com</code> is not a realistic option for development teams, which makes GitHub's role as supply-chain infrastructure a governance question rather than a network-control question.</div>
+    </div>
+
+    <div class="owasp-card" data-severity="primary" onclick="toggleOwasp(this)">
+      <div class="owasp-header">
+        <div class="owasp-id-name">
+          <div class="owasp-id">CICD-SEC-10</div>
+          <div class="owasp-name">Insufficient logging and visibility</div>
+        </div>
+        <div class="owasp-severity">Primary driver</div>
+      </div>
+      <div class="owasp-detail">Several detection-degrading choices stack: Bun execution (defenders watching for credential access spawned from <code>node</code> see nothing), Bun binary self-deletes after execution, payloads daemonize on Linux/macOS (<code>stdout=DEVNULL</code>, <code>stderr=DEVNULL</code>), exfiltration travels over normal <code>api.github.com</code> traffic. Cross-victim exfiltration confirmed in Shai-Hulud 2.0 means an organisation auditing its own GitHub may miss data routed to an unrelated victim's account.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- WHAT EXISTED AND COULD HAVE HELPED -->
+<!-- ============================================ -->
+<section class="section" id="existing">
+  <div class="eyebrow">A constructive read</div>
+  <h2 class="section-title">The controls existed. The configuration was the work.&nbsp;&nbsp;</h2>
+  <p class="section-lede">Trusted publishing was deployed. SCA tooling was running. EDR was watching. What separated rapid containment from extended exposure was whether the careful narrowing — trust-policy scoping, secret isolation, endpoint coverage on developer machines — had been done.</p>
+
+  <div class="sap-credit">
+    <p><strong>SAP's April 29 response is the operational benchmark.</strong> From malicious publish to clean superseding versions: roughly four hours. The <code>cds-dbs</code> team had migrated to OIDC trusted publishing in November 2025 — exactly the post-Shai-Hulud move the ecosystem needed. When the incident hit, SAP's <code>cap-npm</code> GitHub Actions OIDC trusted publisher was used to publish clean superseding versions at 13:46 UTC the same day. The compromised <code>cloudmtabot</code> token was suspended. A human-approval gate was added to npm publication immediately. Security note 3747787 was published to customers and partners.</p>
+    <p>This is what enterprise containment looks like in this category — fast clean-version publication, transparent disclosure, and structural follow-through with workflow hardening. Most organisations consuming open-source tooling would aspire to a four-hour containment window.</p>
+  </div>
+
+  <div class="mitigation-list">
+
+    <div class="mitigation-item" onclick="toggleMitigation(this)">
+      <div class="mitigation-name">npm trusted publishing (OIDC-based)</div>
+      <div class="mitigation-summary">Eliminates the long-lived static-token surface. A token harvested from a CI log or developer endpoint is no longer sufficient to publish — the publishing identity is bound to a specific workflow execution.</div>
+      <div class="mitigation-detail">
+        <p>The <code>cds-dbs</code> team migrated to OIDC trusted publishing in November 2025 — exactly the right call coming out of the September 2025 Shai-Hulud incident. The trust policy, however, accepted any workflow in <code>cap-js/cds-dbs</code> rather than only the canonical <code>release-please.yml</code> on <code>main</code>. Trusted publishing closed the long-lived-token surface; the next layer of work is the trust-policy refinement.</p>
+        <div class="mit-label">The structural reality</div>
+        <p>Trusted publishing is not a single switch — it is a configuration with a default-permissive trust policy, and the careful narrowing is the actual security work. SAP's post-incident addition of a human-approval requirement is the structurally correct response.</p>
+      </div>
+    </div>
+
+    <div class="mitigation-item" onclick="toggleMitigation(this)">
+      <div class="mitigation-name">Pull-request CI permission isolation</div>
+      <div class="mitigation-summary">A pull-request job that cannot see release-tier secrets cannot leak them. Disrupts the initial-access path for any token-exposure vector — including the CircleCI lead in the SAP <code>cloud-mta-build-tool</code> incident.</div>
+      <div class="mitigation-detail">
+        <p>The default behaviour of many CI providers is permissive in ways that surprise even careful operators. CircleCI contexts, GitHub Actions environment secrets, and Jenkins credentials bindings each require active configuration to <em>exclude</em> PR builds from inheriting release-tier scope. The failure mode is silent — the secrets simply appear in the logs of a job that should not have them.</p>
+        <div class="mit-label">Why this is hard</div>
+        <p>Least privilege at the job level is well understood in principle and routinely missed in practice because the cost of getting it right is configuration discipline distributed across every pipeline an organisation owns.</p>
+      </div>
+    </div>
+
+    <div class="mitigation-item" onclick="toggleMitigation(this)">
+      <div class="mitigation-name">Disabling lifecycle scripts at install time</div>
+      <div class="mitigation-summary">A CI runner installing dependencies with <code>--ignore-scripts</code> (npm) or <code>--no-plugins</code> (Composer) does not execute install-time hooks. Breaks the install-equals-execution assumption.</div>
+      <div class="mitigation-detail">
+        <p>The defaults across all three ecosystems permit lifecycle-script execution, and a meaningful share of legitimate packages depend on lifecycle scripts to function (native compilation, post-install setup, CLI symlinking). Turning these off globally creates a long tail of broken installs that organisations have to triage individually. The discipline is therefore allow-list per package, which requires SBOM granularity most organisations do not yet have.</p>
+        <div class="mit-label">The structural read</div>
+        <p>This is one of the most powerful blast-radius reducers available, and it is structurally hard to adopt because the ecosystem grew up assuming lifecycle scripts would run. The work is the patient cataloguing of which dependencies legitimately need to run code at install and which do not.</p>
+      </div>
+    </div>
+
+    <div class="mitigation-item" onclick="toggleMitigation(this)">
+      <div class="mitigation-name">Lockfile pinning with integrity hashes</div>
+      <div class="mitigation-summary">A lockfile with explicit integrity hashes refuses to install a tarball whose contents do not match. Blocks the install path even when the registry serves a malicious version under the same number.</div>
+      <div class="mitigation-detail">
+        <p>Lockfile pinning protects only against the <em>specific</em> malicious version when the legitimate version's hash is already in the lockfile. The first organisation to install a malicious version — between the malicious publish and the registry takedown — has no prior hash to compare against; their lockfile records the malicious hash as authoritative. Lockfiles are a propagation-rate limiter, not a patient-zero defence.</p>
+        <p>The four-hour window for the SAP packages and the minutes-to-hours window for Lightning, Intercom-client, and Intercom-PHP is exactly the window where lockfiles offer no protection. Lockfiles work well for the second through millionth installer; the work is to shorten the patient-zero window through registry-side scanning and behavioural analysis.</p>
+      </div>
+    </div>
+
+    <div class="mitigation-item" onclick="toggleMitigation(this)">
+      <div class="mitigation-name">Endpoint-level package interception</div>
+      <div class="mitigation-summary">A pre-install check that consults a threat-intelligence feed at the moment of <code>npm install</code> blocks the malicious version from ever reaching the lockfile — exactly the patient-zero window that lockfile pinning cannot cover.</div>
+      <div class="mitigation-detail">
+        <p>Effective only where the intel feed already knows the version is malicious. Socket detected the Packagist <code>intercom/intercom-php@5.0.2</code> artifact 14 minutes after release — extremely fast on the vendor side, but the first 14 minutes of installs were not protected by anything except registry-side controls that did not yet exist for this version.</p>
+        <p>This is one of the most actively evolving areas of supply-chain defence. Treating it as a maturing control rather than a finished one keeps the recommendations honest.</p>
+      </div>
+    </div>
+
+    <div class="mitigation-item" onclick="toggleMitigation(this)">
+      <div class="mitigation-name">Cryptographic integrity sealing of AI-agent and IDE configuration files (emerging category)</div>
+      <div class="mitigation-summary">A new control category responding directly to the <code>.claude/</code> and <code>.vscode/</code> persistence vector. Files sealed with cryptographic hashes; modifications fail verification at runtime; changes routed through human approval.</div>
+      <div class="mitigation-detail">
+        <p>This is a newly emerging class of mitigation, responding directly to the persistence vector the April 2026 wave introduced. One open-source implementation, <strong>Agent Context Guard</strong> (Apache 2.0), seals markdown and configuration files with SHA-256 hashes and HMAC-SHA256 signatures, verifies integrity at runtime through a guarded read API, and routes any change through an agent-proposes / human-approves workflow with a tamper-evident audit log. It includes adapters for the major agent frameworks: LangChain, CrewAI, OpenAI tools, Anthropic tools, AutoGen, LlamaIndex, MCP, OpenClaw.</p>
+        <div class="mit-label">Disclosure</div>
+        <p>Agent Context Guard is open-source software authored by this report's author; included here as one example of an emerging tool category, not a singular endorsement. Other open-source and commercial tools in this space are likely to emerge as the threat surface continues to develop.</p>
+        <div class="mit-label">Why this is forward-looking</div>
+        <p>The category did not exist at scale during the April 2026 wave. This is a <em>forward-looking</em> mitigation rather than a <em>missed</em> one — included to mark that the development community is starting to build the tools the new threat surface requires. AI-agent configuration integrity is a category that did not need to exist five years ago. The fact that it now does is itself evidence of the community responding to the same shift this report names.</p>
+        <div class="mit-label">Repository</div>
+        <p><a href="https://github.com/kahalewai/agent-context-guard" target="_blank" rel="noopener">github.com/kahalewai/agent-context-guard</a></p>
+      </div>
+    </div>
+
+    <div class="mitigation-item" onclick="toggleMitigation(this)">
+      <div class="mitigation-name">Treat the developer endpoint as production attack surface</div>
+      <div class="mitigation-summary">A developer endpoint with EDR coverage, restricted local credential storage, and behavioural monitoring catches the Bun spawn, the long-running daemon, the unexpected outbound to <code>zero.masscan.cloud</code>, and the file write to <code>.claude/</code> and <code>.vscode/</code>.</div>
+      <div class="mitigation-detail">
+        <p>Many enterprise EDR rollouts treat developer machines as a special tier where false-positive sensitivity is high — terminal usage, compiler invocations, and developer tooling produce a lot of noise that looks adjacent to malicious behaviour. The result is often weaker policies on developer endpoints than on general corporate endpoints. The campaign exploits exactly that gap.</p>
+        <p>Developer machines have historically been treated as ergonomic terrain that security has to tread lightly across; the April 2026 wave makes the case that they hold cloud-credential, source-code, and customer-data exposure equivalent to production servers, and the policy posture has to follow.</p>
+      </div>
+    </div>
+
+    <div class="mitigation-item" onclick="toggleMitigation(this)">
+      <div class="mitigation-name">SCA / SBOM with continuous IOC integration</div>
+      <div class="mitigation-summary">Continuous scanning of dependency trees against known-bad feeds catches affected versions in lockfiles and artifact stores once IOCs are published. Elastic's December 2025 postmortem credits this stack with rapid containment of Shai-Hulud 2.0.</div>
+      <div class="mitigation-detail">
+        <p>Same patient-zero window as lockfile pinning. Where this control performs strongly is in the second-wave defence — auditing the long tail of installations across an enterprise once IOCs are public. Elastic's case is the model: SCA tooling plus threat intel feeds plus an IR runbook produced rapid containment. The discipline is keeping the inventory continuous and the threat-intel feeds integrated.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- CHART -->
+<!-- ============================================ -->
+<section class="section" id="chart">
+  <div class="eyebrow">Two clocks, one window</div>
+  <h2 class="section-title">Detection in minutes. Exfiltration in seconds.&nbsp;&nbsp;</h2>
+  <p class="section-lede">The defender's detection time and the attacker's exfiltration time are not the same clock. This is what that gap looks like.</p>
+
+  <div class="chart-wrap">
+    <svg width="100%" viewBox="0 0 800 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="chart-title chart-desc">
+      <title id="chart-title">Detection vs exfiltration timeline</title>
+      <desc id="chart-desc">A dual-line chart showing exfiltration completing within seconds of malicious publish, while vendor detection takes minutes to hours.</desc>
+
+      <defs>
+        <linearGradient id="exfil-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ff4d4d" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#ff4d4d" stop-opacity="0.02"/>
+        </linearGradient>
+        <linearGradient id="detect-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4dd4a8" stop-opacity="0.20"/>
+          <stop offset="100%" stop-color="#4dd4a8" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Y axis label -->
+      <text x="40" y="40" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6660" letter-spacing="0.1em">PROGRESS</text>
+      <text x="40" y="55" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6660" letter-spacing="0.1em">100%</text>
+
+      <!-- Chart area: 80,80 to 740,300 -->
+      <!-- Grid -->
+      <line x1="80" y1="80" x2="740" y2="80" stroke="#6b6660" stroke-opacity="0.15" stroke-width="0.5" stroke-dasharray="2 4"/>
+      <line x1="80" y1="190" x2="740" y2="190" stroke="#6b6660" stroke-opacity="0.15" stroke-width="0.5" stroke-dasharray="2 4"/>
+      <line x1="80" y1="300" x2="740" y2="300" stroke="#6b6660" stroke-opacity="0.3" stroke-width="0.5"/>
+
+      <!-- Y-axis tick labels -->
+      <text x="72" y="84" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#6b6660">100%</text>
+      <text x="72" y="194" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#6b6660">50%</text>
+      <text x="72" y="304" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#6b6660">0%</text>
+
+      <!-- X-axis tick markers -->
+      <g font-family="JetBrains Mono, monospace" font-size="10" fill="#9a9590">
+        <line x1="80" y1="300" x2="80" y2="306" stroke="#6b6660" stroke-width="0.5"/>
+        <text x="80" y="320" text-anchor="middle">T=0</text>
+        <text x="80" y="334" text-anchor="middle" font-size="9" fill="#6b6660">publish</text>
+
+        <line x1="170" y1="300" x2="170" y2="306" stroke="#6b6660" stroke-width="0.5"/>
+        <text x="170" y="320" text-anchor="middle">30s</text>
+
+        <line x1="290" y1="300" x2="290" y2="306" stroke="#6b6660" stroke-width="0.5"/>
+        <text x="290" y="320" text-anchor="middle">2m</text>
+
+        <line x1="410" y1="300" x2="410" y2="306" stroke="#6b6660" stroke-width="0.5"/>
+        <text x="410" y="320" text-anchor="middle">6m</text>
+        <text x="410" y="334" text-anchor="middle" font-size="9" fill="#6b6660">first dead-drop</text>
+
+        <line x1="540" y1="300" x2="540" y2="306" stroke="#6b6660" stroke-width="0.5"/>
+        <text x="540" y="320" text-anchor="middle">14m</text>
+        <text x="540" y="334" text-anchor="middle" font-size="9" fill="#6b6660">socket detects</text>
+
+        <line x1="660" y1="300" x2="660" y2="306" stroke="#6b6660" stroke-width="0.5"/>
+        <text x="660" y="320" text-anchor="middle">2-4h</text>
+        <text x="660" y="334" text-anchor="middle" font-size="9" fill="#6b6660">window closes</text>
+
+        <line x1="740" y1="300" x2="740" y2="306" stroke="#6b6660" stroke-width="0.5"/>
+        <text x="740" y="320" text-anchor="middle">~4h</text>
+      </g>
+
+      <!-- EXFILTRATION CURVE: rises near-vertically in the first ~30 seconds, plateaus -->
+      <!-- Path: 80,300 -> 100,290 -> 130,180 -> 170,90 -> 740,80 -->
+      <path d="M 80 300 Q 100 295, 130 180 T 170 90 L 740 80 L 740 300 L 80 300 Z" fill="url(#exfil-fill)" stroke="none"/>
+      <path d="M 80 300 Q 100 295, 130 180 T 170 90 L 740 90" fill="none" stroke="#ff4d4d" stroke-width="2.5"/>
+
+      <!-- DETECTION CURVE: gradual rise from minute 6 onward, S-curve to plateau -->
+      <!-- Path: 80,300 -> 410,300 -> 540,200 -> 660,110 -> 740,95 -->
+      <path d="M 80 300 L 410 300 Q 470 300, 540 200 Q 600 130, 660 110 L 740 95 L 740 300 L 80 300 Z" fill="url(#detect-fill)" stroke="none"/>
+      <path d="M 80 300 L 410 300 Q 470 300, 540 200 Q 600 130, 660 110 L 740 95" fill="none" stroke="#4dd4a8" stroke-width="2.5"/>
+
+      <!-- Annotation: exfil quadrant -->
+      <g>
+        <line x1="155" y1="100" x2="220" y2="60" stroke="#ff4d4d" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.6"/>
+        <rect x="220" y="46" width="200" height="32" fill="rgba(10,10,12,0.85)" stroke="#ff4d4d" stroke-opacity="0.4" stroke-width="0.5"/>
+        <text x="226" y="60" font-family="JetBrains Mono, monospace" font-size="9" fill="#ff4d4d" letter-spacing="0.1em">EXFILTRATION COMPLETE</text>
+        <text x="226" y="73" font-family="Fraunces, serif" font-style="italic" font-size="11" fill="#e8e6e3">Within seconds of install</text>
+      </g>
+
+      <!-- Annotation: detection quadrant -->
+      <g>
+        <line x1="600" y1="160" x2="490" y2="230" stroke="#4dd4a8" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.6"/>
+        <rect x="290" y="220" width="200" height="32" fill="rgba(10,10,12,0.85)" stroke="#4dd4a8" stroke-opacity="0.4" stroke-width="0.5"/>
+        <text x="296" y="234" font-family="JetBrains Mono, monospace" font-size="9" fill="#4dd4a8" letter-spacing="0.1em">VENDOR DETECTION RISES</text>
+        <text x="296" y="247" font-family="Fraunces, serif" font-style="italic" font-size="11" fill="#e8e6e3">Minutes to hours</text>
+      </g>
+
+    </svg>
+
+    <div class="chart-legend">
+      <div class="chart-legend-item">
+        <div class="chart-legend-swatch" style="background: #ff4d4d;"></div>
+        <span>Attacker exfiltration progress</span>
+      </div>
+      <div class="chart-legend-item">
+        <div class="chart-legend-swatch" style="background: #4dd4a8;"></div>
+        <span>Defender detection coverage</span>
+      </div>
+    </div>
+
+    <div class="chart-caption">Composite of public timestamps from Snyk · Socket · Onapsis · Apr 29-30, 2026</div>
+  </div>
+
+  <div class="section-body" style="margin-top: 32px;">
+    <p>The chart's structural argument: by the time defenders converge on a malicious version, the credential exfiltration that version performs has already completed. Six minutes after the SAP <code>mbt@1.2.48</code> publish, the first victim dead-drop repository was already on GitHub. Socket's 14-minute detection on the Packagist artifact was extremely fast on the vendor side — and even that 14-minute window is hours longer than the seconds it takes for a single <code>npm install</code> to harvest and exfiltrate.</p>
+    <p>This is why patient-zero defence has to move upstream of detection. Lockfile pinning, SCA scanning, and threat-intel feeds all rely on the malicious version being known to the defender. The work that closes the patient-zero window is registry-side scanning at upload time, behavioural analysis of new versions, and reputation systems that flag unusual version cadence — controls the registries themselves are best positioned to deliver.</p>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- PULLQUOTE 3 -->
+<!-- ============================================ -->
+<aside class="pullquote editorial">
+  <div class="pullquote-mark">"</div>
+  <div class="pullquote-text"><em>GitHub itself is the C2 surface now. Governing it is the work.&nbsp;&nbsp;</em></div>
+  <div class="pullquote-attr">The architecture of the new threat</div>
+</aside>
+
+<!-- ============================================ -->
+<!-- RECOMMENDATIONS -->
+<!-- ============================================ -->
+<section class="section" id="recommendations">
+  <div class="eyebrow">A response on four horizons</div>
+  <h2 class="section-title">Forty-eight hours. Then four weeks. Then a programme.&nbsp;&nbsp;</h2>
+  <p class="section-lede">Four conversations on four timeframes — what to do tonight, what to do this sprint, what to do this quarter, what the board needs to fund.</p>
+
+  <div class="horizon-grid">
+
+    <div class="horizon-panel" data-horizon="00">
+      <div class="horizon-label">Horizon 00 · Immediate</div>
+      <div class="horizon-window">0–48 hours</div>
+      <div class="horizon-title">Assume compromise. Rotate. Hunt.</div>
+      <ul class="horizon-list">
+        <li>
+          <strong>Audit lockfiles, artifact stores, and CI logs</strong>
+          <span>For affected versions: <code>@cap-js/sqlite 2.2.2</code>, <code>@cap-js/postgres 2.2.2</code>, <code>@cap-js/db-service 2.10.1</code>, <code>mbt 1.2.48</code>, <code>lightning 2.6.2/2.6.3</code>, <code>intercom-client 7.0.4</code>, <code>intercom/intercom-php 5.0.2</code>, <code>@bitwarden/cli 2026.4.0</code>. Search for file artifacts <code>setup.mjs</code>, <code>execution.js</code>, <code>router_runtime.js</code>, <code>start.py</code>, lock file <code>/tmp/tmp.987654321.lock</code>.</span>
+        </li>
+        <li>
+          <strong>Treat exposed machines as compromised</strong>
+          <span>Rotate, in priority order: GitHub PATs and OAuth tokens; npm tokens; cloud credentials (AWS, Azure, GCP); Kubernetes service accounts; Vault tokens; Docker registry; SSH keys; database connection strings; <code>.env</code> secrets; MCP and Claude config; browser passwords; VPN sessions. Lightning users with crypto wallets should treat them as exposed.</span>
+        </li>
+        <li>
+          <strong>Hunt for active persistence on developer endpoints</strong>
+          <span>On Linux/macOS: <code>ps aux | grep bun</code>. Search developer machines for <code>.claude/router_runtime.js</code>, <code>.claude/setup.mjs</code>, <code>.claude/settings.json</code>, <code>.vscode/setup.mjs</code>, <code>.vscode/tasks.json</code> outside repositories where they belong. Search org GitHub for unauthorised commits authored by <code>claude@users.noreply.github.com</code> and branches named <code>shai-hulud</code>. The persistence mechanism survives package removal — anyone who installed an affected version may still have an active credential stealer.</span>
+        </li>
+        <li>
+          <strong>Search GitHub for campaign markers</strong>
+          <span>Inside and outside org GitHub identities. Standing queries for <code>A Mini Shai-Hulud has Appeared</code>, <code>Shai-Hulud</code>, <code>Shai-Hulud Migration</code>, <code>Sha1-Hulud: The Second Coming</code>, <code>Shai-Hulud: The Third Coming</code>, <code>OhNoWhatsGoingOnWithGitHub</code>. Cross-victim exfiltration is real — secrets may sit in repositories on other organisations' GitHub accounts.</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="horizon-panel" data-horizon="01">
+      <div class="horizon-label">Horizon 01 · Short-term</div>
+      <div class="horizon-window">1–4 weeks</div>
+      <div class="horizon-title">Close the configuration surface.</div>
+      <ul class="horizon-list">
+        <li>
+          <strong>Isolate PR-triggered CI jobs from release-tier secrets</strong>
+          <span>GitHub Actions: <code>pull_request</code> not <code>pull_request_target</code> for untrusted PRs; gate release-context jobs behind <code>environments</code> with required reviewers. CircleCI: restrict context access. Jenkins: segregate credentials bindings between PR and release pipelines.</span>
+        </li>
+        <li>
+          <strong>Tighten OIDC trusted-publisher trust policies</strong>
+          <span>Pin to a specific workflow file, repository, and main branch. Treat any wildcard or branch-permissive trust policy as a finding equivalent to a long-lived secret in source control.</span>
+        </li>
+        <li>
+          <strong>Adopt install-time package interception</strong>
+          <span>Aikido Safe Chain (open source), Socket CLI, or commercial vendor offerings. Configure to block on threat-intel feed match and log every install for retrospective hunting. Patient-zero gap remains; control is real and improving.</span>
+        </li>
+        <li>
+          <strong>Stand up continuous monitoring for campaign markers</strong>
+          <span>Detection rules firing on Bun process spawn from Node-context, outbound to <code>zero.masscan.cloud</code> or <code>94.154.172[.]43</code>, file writes to <code>.claude/</code> or <code>.vscode/</code> paths in repos with concurrent token use. Elastic's Shai-Hulud 2.0 detection rules are a public reference.</span>
+        </li>
+        <li>
+          <strong>Default <code>--ignore-scripts</code> and <code>--no-plugins</code> in CI</strong>
+          <span>Build an explicit allow-list of dependencies that legitimately need lifecycle scripts. For PyPI, document and review every package whose <code>__init__.py</code> performs work beyond imports.</span>
+        </li>
+        <li>
+          <strong>Seal AI-agent and IDE configuration files <em>(emerging)</em></strong>
+          <span>Cryptographic integrity sealing for <code>.claude/</code>, <code>.cursor/</code>, <code>.vscode/</code>, <code>.continue/</code>, <code>.aider/</code>, and equivalent configuration directories. Route any agent-proposed change through human approval. Verify integrity in CI as a build-blocking check. Agent Context Guard (Apache 2.0) is one open-source implementation; <em>disclosure: authored by this report's author. Recommended as one example of an emerging tool category.</em></span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="horizon-panel" data-horizon="02">
+      <div class="horizon-label">Horizon 02 · Medium-term</div>
+      <div class="horizon-window">1–3 months</div>
+      <div class="horizon-title">Bring developer tooling into production posture.</div>
+      <ul class="horizon-list">
+        <li>
+          <strong>EDR and behavioural monitoring on developer endpoints</strong>
+          <span>Bring developer machines into the same EDR tier as production servers. The cultural argument that developer endpoints need ergonomic latitude has to be revisited — they hold cloud-credential, source-code, and customer-data exposure equivalent to production.</span>
+        </li>
+        <li>
+          <strong>Migrate long-lived cloud credentials to workload identity</strong>
+          <span>AWS IAM Roles Anywhere or IRSA / EKS Pod Identity for Kubernetes; Azure Workload Identity; GCP Workload Identity Federation; Vault dynamic secrets. Bind the issued credential to a specific audience and job scope. Highest-leverage program-level control against this category of threat.</span>
+        </li>
+        <li>
+          <strong>Continuous SBOM with integrated threat-intel feeds</strong>
+          <span>The deliverable is not the SBOM artifact — it is the integration that surfaces a newly-published IOC across every place that dependency lives in the organisation within minutes. Elastic's December 2025 postmortem is the working example.</span>
+        </li>
+        <li>
+          <strong>Vendor-review programme for security and developer tooling</strong>
+          <span>The campaign's pattern of targeting the tools developers are told to trust most means the assumption that security vendors are net-defenders has to be tempered with structural review. Same questions you'd ask any supplier: trusted publishing? hardened CI? disclosure SLA?</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="horizon-panel" data-horizon="03">
+      <div class="horizon-label">Horizon 03 · Long-term</div>
+      <div class="horizon-window">3–12 months</div>
+      <div class="horizon-title">Re-architect the developer trust boundary.</div>
+      <ul class="horizon-list">
+        <li>
+          <strong>Externalise sensitive credentials from developer machines</strong>
+          <span>Hardware tokens for SSH and Git signing. Just-in-time cloud credentials brokered through workload-identity providers. Password managers backed by phishing-resistant MFA rather than tokens in shell rc files. The argument that has to be won at leadership level: the developer endpoint is part of the production blast radius.</span>
+        </li>
+        <li>
+          <strong>Board-level visibility on supply-chain risk</strong>
+          <span>Quarterly metrics: dependency coverage by continuous SBOM scanning; CI pipelines using trusted publishing with pinned trust policies; cloud credentials in CI that are short-lived workload-identity-issued; mean time from IOC publication to organisation-wide remediation. Without this layer, the work above erodes between incidents.</span>
+        </li>
+        <li>
+          <strong>Engage upstream with registries and consortia</strong>
+          <span>Registry-side malware scanning at upload time; tag-immutability on Packagist; default <code>--ignore-scripts</code> discussions at npm; faster mass-rotation tooling for affected maintainers; cross-registry threat-intel sharing on actor-controlled repository markers. The arc from September 2025 to today is the case for the work.</span>
+        </li>
+        <li>
+          <strong>Commit to the cultural reframing</strong>
+          <span>The IDE, the AI coding assistant, the package manager, the build tool, and the registry are enterprise risk surfaces that need governance, monitoring, and incident-response coverage on the same footing as any production system. This recommendation has no discrete deliverable. Its presence or absence determines whether everything above is point fixes or a coherent programme.</span>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- FINAL CALLOUT -->
+<!-- ============================================ -->
+<aside class="final-callout">
+  <div class="final-callout-eyebrow">The takeaway</div>
+  <h2 class="final-callout-title">These attacks are not over.&nbsp;&nbsp;</h2>
+  <p><strong>AI tools are now the target.</strong> Three waves in five months — Bitwarden CLI, the SAP CAP packages, PyTorch Lightning and the Intercom client across npm, PyPI, and Packagist — show a campaign that has stopped treating developer tooling as collateral and started treating it as the primary attack surface.</p>
+  <p>These attacks are not over, and the work that closes them is not exotic: trust-policy narrowing, pipeline-secret isolation, AI-assistant configuration governance, and the cultural recognition that an IDE workspace is now part of the production blast radius.</p>
+  <p style="margin-top: 24px; font-style: italic; color: var(--text-muted);">If you installed an affected package version in the last week, treat your workstation as carrying a credential stealer until you have verified otherwise. Hunt now.</p>
+</aside>
+
+<!-- ============================================ -->
+<!-- PULLQUOTE 4 -->
+<!-- ============================================ -->
+<aside class="pullquote editorial">
+  <div class="pullquote-mark">"</div>
+  <div class="pullquote-text"><em>Install is execution. The IDE is persistence. AI tooling is the target now.&nbsp;&nbsp;</em></div>
+  <div class="pullquote-attr">The campaign's lesson, in thirteen words</div>
+</aside>
+
+<!-- ============================================ -->
+<!-- SOURCES -->
+<!-- ============================================ -->
+<section class="sources-section" id="sources">
+  <h2 class="sources-title">Show the work.</h2>
+  <p class="sources-intro">This is the source material the report was built from. Any claim above can be traced back here. Sources are grouped by type and ordered by citation index. All links open in a new tab.</p>
+
+  <div class="sources-group">
+    <div class="sources-group-title">Primary research disclosures · April 2026 wave</div>
+
+    <div class="source-entry">
+      <span class="source-num">[01]</span>
+      <span class="source-publisher">OX Security</span> · <span class="source-title">8.3M Downloads Compromised: Lightning &amp; Intercom-Client Infected in Latest Shai-Hulud Attack</span> · <span class="source-date">Apr 30, 2026</span><br>
+      <a href="https://www.ox.security/blog/lightning-python-package-shai-hulud-supply-chain-attack/" target="_blank" rel="noopener">https://www.ox.security/blog/lightning-python-package-shai-hulud-supply-chain-attack/</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[02]</span>
+      <span class="source-publisher">Socket</span> · <span class="source-title">Mini Shai-Hulud Spreads to Packagist: Malicious Intercom PHP Package Compromise</span> · <span class="source-date">Apr 30, 2026</span><br>
+      <a href="https://socket.dev/blog/mini-shai-hulud-packagist-malicious-intercom-php-package-compromise" target="_blank" rel="noopener">https://socket.dev/blog/mini-shai-hulud-packagist-malicious-intercom-php-package-compromise</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[03]</span>
+      <span class="source-publisher">Wiz</span> · <span class="source-title">Supply Chain Campaign Targets SAP npm Packages with Credential-Stealing Malware</span> · <span class="source-date">Apr 29-30, 2026</span><br>
+      <a href="https://www.wiz.io/blog/mini-shai-hulud-supply-chain-sap-npm" target="_blank" rel="noopener">https://www.wiz.io/blog/mini-shai-hulud-supply-chain-sap-npm</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[04]</span>
+      <span class="source-publisher">Netskope Threat Labs</span> · <span class="source-title">Shai-Hulud resurfaces: intercom-client@7.0.4 harvesting GitHub credentials</span> · <span class="source-date">Apr 30, 2026</span><br>
+      <a href="https://www.netskope.com/blog/shai-hulud-intercom-client-7-0-4" target="_blank" rel="noopener">https://www.netskope.com/blog/shai-hulud-intercom-client-7-0-4</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[05]</span>
+      <span class="source-publisher">Aikido Security</span> · <span class="source-title">Popular PyTorch Lightning Package Compromised by Mini Shai-Hulud</span> · <span class="source-date">Apr 30, 2026</span><br>
+      <a href="https://www.aikido.dev/blog/pytorch-lightning-pypi-compromise-mini-shai-hulud" target="_blank" rel="noopener">https://www.aikido.dev/blog/pytorch-lightning-pypi-compromise-mini-shai-hulud</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[14]</span>
+      <span class="source-publisher">Socket</span> · <span class="source-title">SAP CAP npm Packages Targeted in Supply Chain Attack</span> · <span class="source-date">Apr 29, 2026</span><br>
+      <a href="https://socket.dev/blog/sap-cap-npm-packages-supply-chain-attack" target="_blank" rel="noopener">https://socket.dev/blog/sap-cap-npm-packages-supply-chain-attack</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[15]</span>
+      <span class="source-publisher">Snyk</span> · <span class="source-title">Bun-Based Stealer Hits SAP CAP npm Packages</span> · <span class="source-date">Apr 29, 2026</span><br>
+      <a href="https://snyk.io/blog/bun-based-stealer-hits-sap-cap-js-mbt-npm-packages/" target="_blank" rel="noopener">https://snyk.io/blog/bun-based-stealer-hits-sap-cap-js-mbt-npm-packages/</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[16]</span>
+      <span class="source-publisher">Aikido Security</span> · <span class="source-title">Mini Shai-Hulud Targets SAP npm Packages With a Bun-Based Secret Stealer</span> · <span class="source-date">Apr 29, 2026</span><br>
+      <a href="https://www.aikido.dev/blog/mini-shai-hulud-has-appeared" target="_blank" rel="noopener">https://www.aikido.dev/blog/mini-shai-hulud-has-appeared</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[19]</span>
+      <span class="source-publisher">Onapsis</span> · <span class="source-title">Emerging Supply Chain Attack ("Mini Shai-Hulud") Targeting SAP CAP Ecosystem</span> · <span class="source-date">Apr 29, 2026</span><br>
+      <a href="https://onapsis.com/blog/sap-cap-mini-shai-hulud-supply-chain-attack/" target="_blank" rel="noopener">https://onapsis.com/blog/sap-cap-mini-shai-hulud-supply-chain-attack/</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[21]</span>
+      <span class="source-publisher">SafeDep</span> · <span class="source-title">Mini Shai-Hulud and SAP Compromise — deobfuscation analysis</span> · <span class="source-date">Apr 29-30, 2026</span><br>
+      <a href="https://safedep.io/mini-shai-hulud-and-sap-compromise/" target="_blank" rel="noopener">https://safedep.io/mini-shai-hulud-and-sap-compromise/</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[22]</span>
+      <span class="source-publisher">Semgrep</span> · <span class="source-title">Shai-Hulud Themed Malware Found in PyTorch Lightning</span> · <span class="source-date">Apr 30, 2026</span><br>
+      <a href="https://semgrep.dev/blog/2026/malicious-dependency-in-pytorch-lightning-used-for-ai-training/" target="_blank" rel="noopener">https://semgrep.dev/blog/2026/malicious-dependency-in-pytorch-lightning-used-for-ai-training/</a>
+    </div>
+  </div>
+
+  <div class="sources-group">
+    <div class="sources-group-title">Earlier Shai-Hulud waves · Sept-Nov 2025</div>
+
+    <div class="source-entry">
+      <span class="source-num">[06]</span>
+      <span class="source-publisher">ReversingLabs</span> · <span class="source-title">New Shai-Hulud Worm Spreads: What to Know</span> · <span class="source-date">Nov 2025</span><br>
+      <a href="https://www.reversinglabs.com/blog/new-shai-hulud-worm-spreads-what-to-know" target="_blank" rel="noopener">https://www.reversinglabs.com/blog/new-shai-hulud-worm-spreads-what-to-know</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[07]</span>
+      <span class="source-publisher">Unit 42 (Palo Alto Networks)</span> · <span class="source-title">"Shai-Hulud" Worm Compromises npm Ecosystem</span> · <span class="source-date">Nov 2025</span><br>
+      <a href="https://unit42.paloaltonetworks.com/npm-supply-chain-attack/" target="_blank" rel="noopener">https://unit42.paloaltonetworks.com/npm-supply-chain-attack/</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[08]</span>
+      <span class="source-publisher">Datadog Security Labs</span> · <span class="source-title">The Shai-Hulud 2.0 npm Worm: Analysis</span> · <span class="source-date">Nov-Dec 2025</span><br>
+      <a href="https://securitylabs.datadoghq.com/articles/shai-hulud-2.0-npm-worm/" target="_blank" rel="noopener">https://securitylabs.datadoghq.com/articles/shai-hulud-2.0-npm-worm/</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[09]</span>
+      <span class="source-publisher">Wiz Research</span> · <span class="source-title">Shai-Hulud npm Supply Chain Attack (original wave)</span> · <span class="source-date">Sept 15-17, 2025</span><br>
+      <a href="https://www.wiz.io/blog/shai-hulud-npm-supply-chain-attack" target="_blank" rel="noopener">https://www.wiz.io/blog/shai-hulud-npm-supply-chain-attack</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[24]</span>
+      <span class="source-publisher">Endor Labs</span> · <span class="source-title">Understanding npm Worms and the Shai-Hulud Attack</span> · <span class="source-date">Nov 2025</span><br>
+      <a href="https://www.endorlabs.com/learn/understanding-npm-worms-and-the-shai-hulud-attack" target="_blank" rel="noopener">https://www.endorlabs.com/learn/understanding-npm-worms-and-the-shai-hulud-attack</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[25]</span>
+      <span class="source-publisher">Elastic</span> · <span class="source-title">Navigating the Shai-Hulud Worm 2.0: Elastic's Response</span> · <span class="source-date">Dec 2, 2025</span><br>
+      <a href="https://www.elastic.co/blog/shai-hulud-worm-2-0-updated-response" target="_blank" rel="noopener">https://www.elastic.co/blog/shai-hulud-worm-2-0-updated-response</a>
+    </div>
+  </div>
+
+  <div class="sources-group">
+    <div class="sources-group-title">TeamPCP campaign coverage · March-April 2026</div>
+
+    <div class="source-entry">
+      <span class="source-num">[10]</span>
+      <span class="source-publisher">The Register</span> · <span class="source-title">Ongoing supply-chain attack targets security, dev tools</span> · <span class="source-date">Apr 27, 2026</span><br>
+      <a href="https://www.theregister.com/2026/04/27/supply_chain_campaign_targets_security/" target="_blank" rel="noopener">https://www.theregister.com/2026/04/27/supply_chain_campaign_targets_security/</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[11]</span>
+      <span class="source-publisher">The Hacker News</span> · <span class="source-title">Bitwarden CLI Compromised in Ongoing Checkmarx Supply Chain Campaign</span> · <span class="source-date">Apr 23, 2026</span><br>
+      <a href="https://thehackernews.com/2026/04/bitwarden-cli-compromised-in-ongoing.html" target="_blank" rel="noopener">https://thehackernews.com/2026/04/bitwarden-cli-compromised-in-ongoing.html</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[12]</span>
+      <span class="source-publisher">SecurityWeek</span> · <span class="source-title">Bitwarden NPM Package Hit in Supply Chain Attack</span> · <span class="source-date">Apr 24, 2026</span><br>
+      <a href="https://www.securityweek.com/bitwarden-npm-package-hit-in-supply-chain-attack/" target="_blank" rel="noopener">https://www.securityweek.com/bitwarden-npm-package-hit-in-supply-chain-attack/</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[13]</span>
+      <span class="source-publisher">Socket</span> · <span class="source-title">Bitwarden CLI Compromised</span> · <span class="source-date">Apr 23, 2026</span><br>
+      <a href="https://socket.dev/blog/bitwarden-cli-compromised" target="_blank" rel="noopener">https://socket.dev/blog/bitwarden-cli-compromised</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[17]</span>
+      <span class="source-publisher">BleepingComputer</span> · <span class="source-title">Official SAP npm Packages Compromised to Steal Credentials</span> · <span class="source-date">Apr 29, 2026</span><br>
+      <a href="https://www.bleepingcomputer.com/news/security/official-sap-npm-packages-compromised-to-steal-credentials/" target="_blank" rel="noopener">https://www.bleepingcomputer.com/news/security/official-sap-npm-packages-compromised-to-steal-credentials/</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[18]</span>
+      <span class="source-publisher">Dark Reading</span> · <span class="source-title">TeamPCP Hits SAP Packages With 'Mini Shai-Hulud' Attack</span> · <span class="source-date">Apr 30, 2026</span><br>
+      <a href="https://www.darkreading.com/cloud-security/teampcp-sap-packages-mini-shai-hulud" target="_blank" rel="noopener">https://www.darkreading.com/cloud-security/teampcp-sap-packages-mini-shai-hulud</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[20]</span>
+      <span class="source-publisher">The Hacker News</span> · <span class="source-title">SAP-Related npm Packages Compromised in Credential-Stealing Supply Chain Attack</span> · <span class="source-date">Apr 30, 2026</span><br>
+      <a href="https://thehackernews.com/2026/04/sap-npm-packages-compromised-by-mini.html" target="_blank" rel="noopener">https://thehackernews.com/2026/04/sap-npm-packages-compromised-by-mini.html</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[23]</span>
+      <span class="source-publisher">SANS Internet Storm Center</span> · <span class="source-title">TeamPCP Supply Chain Campaign Update 008</span> · <span class="source-date">Apr 26, 2026</span><br>
+      <a href="https://isc.sans.edu/diary/TeamPCP+Supply+Chain+Campaign+Update+008" target="_blank" rel="noopener">https://isc.sans.edu/diary/TeamPCP+Supply+Chain+Campaign+Update+008</a>
+    </div>
+  </div>
+
+  <div class="sources-group">
+    <div class="sources-group-title">Frameworks &amp; emerging mitigations</div>
+
+    <div class="source-entry">
+      <span class="source-num">[26]</span>
+      <span class="source-publisher">MITRE ATT&amp;CK</span> · <span class="source-title">Enterprise technique definitions</span><br>
+      <a href="https://attack.mitre.org/" target="_blank" rel="noopener">https://attack.mitre.org/</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[27]</span>
+      <span class="source-publisher">OWASP</span> · <span class="source-title">Top 10 CI/CD Security Risks</span><br>
+      <a href="https://owasp.org/www-project-top-10-ci-cd-security-risks/" target="_blank" rel="noopener">https://owasp.org/www-project-top-10-ci-cd-security-risks/</a>
+    </div>
+
+    <div class="source-entry">
+      <span class="source-num">[28]</span>
+      <span class="source-publisher">Agent Context Guard</span> · <span class="source-title">Open-source library for cryptographic integrity sealing of AI-agent context files (Apache 2.0)</span> · <span class="source-date">v1.0.1</span><br>
+      <a href="https://github.com/kahalewai/agent-context-guard" target="_blank" rel="noopener">https://github.com/kahalewai/agent-context-guard</a><br>
+      <span style="font-style: italic; color: var(--text-dim); font-size: 12px;">Disclosure: open-source software authored by this report's author; included as one example of an emerging tool category.</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Built by <a href="https://www.linkedin.com/in/kahalewai/" target="_blank" rel="noopener">Kahalewai</a>, Claude did the heavy lifting
+</footer>
+
+</main>
+
+<script>
+  // Theme toggle
+  function toggleTheme() {
+    const body = document.documentElement;
+    const current = body.getAttribute('data-theme');
+    body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+  }
+
+  // Card expand/collapse
+  function toggleCard(el) { el.classList.toggle('expanded'); }
+  function toggleOwasp(el) { el.classList.toggle('expanded'); }
+  function toggleMitigation(el) { el.classList.toggle('expanded'); }
+  function toggleDropdown(el) { el.classList.toggle('open'); }
+
+  // Intersection observer for scroll-in animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.section, .pullquote, .final-callout').forEach(el => {
+    observer.observe(el);
+  });
+</script>
+
+</body>
+</html>
