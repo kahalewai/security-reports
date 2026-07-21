@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self Restraint, the Hugging Face agentic intrusion, July 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0D12; --bg-2:#0E1319; --surface:#12171F; --surface-2:#171E28;
+    --border:#232C38; --border-2:#2E3948;
+    --text:#E9ECF1; --text-dim:#98A2AD; --text-faint:#5E6976;
+    --danger:#FB5A3C;   /* attacker / gap / urgency */
+    --construct:#5B8DEF; /* the fix / defense / blueprint */
+    --inflect:#FFB84D;   /* recognition / detection / inflection */
+    --danger-soft:rgba(251,90,60,.12);
+    --construct-soft:rgba(91,141,239,.12);
+    --inflect-soft:rgba(255,184,77,.12);
+    --shadow:0 24px 60px -30px rgba(0,0,0,.8);
+    --maxw:880px;
+  }
+  [data-theme="light"]{
+    --bg:#F3F4F7; --bg-2:#EAECF0; --surface:#FFFFFF; --surface-2:#F6F8FA;
+    --border:#DCE0E7; --border-2:#C9CFD9;
+    --text:#151A21; --text-dim:#54606D; --text-faint:#8A94A1;
+    --danger:#D63B1F; --construct:#2C63C9; --inflect:#B07407;
+    --danger-soft:rgba(214,59,31,.09);
+    --construct-soft:rgba(44,99,201,.09);
+    --inflect-soft:rgba(176,116,7,.10);
+    --shadow:0 24px 60px -34px rgba(20,26,33,.28);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'Archivo',system-ui,sans-serif; font-size:17px; line-height:1.65;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    transition:background .5s ease,color .5s ease;
+  }
+  ::selection{background:var(--inflect);color:#0A0D12}
+  a{color:inherit}
+  /* ambient background */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(1100px 700px at 78% -8%, rgba(251,90,60,.10), transparent 60%),
+      radial-gradient(900px 640px at 8% 22%, rgba(91,141,239,.10), transparent 62%),
+      radial-gradient(1000px 700px at 60% 108%, rgba(255,184,77,.06), transparent 60%);
+    transition:opacity .5s ease;
+  }
+  [data-theme="light"] body::before{opacity:.55}
+  main,header,footer{position:relative;z-index:1}
+
+  /* containers */
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .wrap-narrow{max-width:760px;margin:0 auto;padding:0 24px}
+
+  /* theme toggle */
+  .toggle{
+    position:fixed;top:18px;right:18px;z-index:50;
+    display:inline-flex;align-items:center;gap:8px;
+    background:var(--surface);border:1px solid var(--border);color:var(--text-dim);
+    border-radius:999px;padding:8px 14px;cursor:pointer;
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    transition:border-color .25s,color .25s,background .25s;
+  }
+  .toggle:hover{border-color:var(--construct);color:var(--text)}
+  .toggle svg{width:14px;height:14px;display:block}
+  .toggle:focus-visible{outline:2px solid var(--construct);outline-offset:3px}
+
+  /* ---------- HERO ---------- */
+  .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+    padding:80px 24px 40px;position:relative;overflow:hidden}
+  .hero-inner{max-width:1180px;margin:0 auto;width:100%}
+  .hero .eyebrow{margin-bottom:22px}
+  .hero h1{
+    font-family:'Big Shoulders Display',sans-serif;font-weight:900;
+    font-size:clamp(62px,10.8vw,154px);line-height:.92;letter-spacing:-.01em;
+    text-transform:uppercase;margin:0 0 4px;
+    background:linear-gradient(178deg,var(--text) 30%,var(--danger) 128%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .hero h1 .thin{-webkit-text-fill-color:transparent}
+  .hero .subrule{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(12px,1.5vw,15px);
+    letter-spacing:.05em;color:var(--danger);margin:14px 0 26px;font-weight:500;
+  }
+  .hero-deck{max-width:640px;font-size:clamp(17px,2.1vw,21px);color:var(--text-dim);line-height:1.55}
+  .hero-deck b{color:var(--text);font-weight:600}
+
+  .hero-art{margin:38px 0 0;width:100%}
+  .hero-art svg{width:100%;height:auto;display:block;overflow:visible}
+
+  .scrollcue{margin-top:30px;display:flex;align-items:center;gap:12px;
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--text-faint)}
+  .scrollcue .bar{width:1px;height:34px;background:linear-gradient(var(--text-faint),transparent);position:relative;overflow:hidden}
+  .scrollcue .bar::after{content:"";position:absolute;top:-34px;left:0;width:1px;height:34px;
+    background:linear-gradient(var(--inflect),transparent);animation:cue 2.1s ease-in-out infinite}
+  @keyframes cue{0%{transform:translateY(0)}60%{transform:translateY(68px)}100%{transform:translateY(68px)}}
+
+  /* svg diagram atoms */
+  .scanline{animation:scan 6.5s linear infinite}
+  @keyframes scan{0%{transform:translateX(-40px);opacity:0}6%{opacity:.9}94%{opacity:.9}100%{transform:translateX(1200px);opacity:0}}
+  .pulse-ring{transform-origin:center;transform-box:fill-box;animation:pulse 2.4s ease-out infinite}
+  @keyframes pulse{0%{transform:scale(.55);opacity:.9}70%{transform:scale(2.4);opacity:0}100%{opacity:0}}
+  .flow-dash{stroke-dasharray:5 7;animation:dash 1.1s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .n-label{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.06em;fill:var(--text-dim);text-transform:uppercase}
+  .n-sub{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.02em;fill:var(--text-faint)}
+  .n-title{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:19px;letter-spacing:.01em;fill:var(--text);text-transform:uppercase}
+  .tag-open{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;fill:var(--danger);text-transform:uppercase}
+  .tag-lock{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;fill:var(--inflect);text-transform:uppercase}
+  .tag-def{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;fill:var(--construct);text-transform:uppercase}
+
+  /* ---------- SECTION SCAFFOLD ---------- */
+  section.block{padding:76px 0}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;
+    letter-spacing:.24em;text-transform:uppercase;color:var(--construct);display:block}
+  .s-title{font-family:'Big Shoulders Display',sans-serif;font-weight:800;
+    font-size:clamp(34px,5.4vw,58px);line-height:.98;letter-spacing:-.005em;text-transform:uppercase;
+    margin:16px 0 0;max-width:15ch}
+  .s-lede{font-size:clamp(16px,1.9vw,19px);color:var(--text-dim);max-width:60ch;margin:20px 0 0;line-height:1.6}
+  .s-head{margin-bottom:44px}
+
+  /* reveal animation */
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+  .reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}
+
+  /* citation chips */
+  .cite{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:500;
+    text-decoration:none;color:var(--construct);border:1px solid var(--border-2);
+    border-radius:5px;padding:1px 5px;margin:0 1px;vertical-align:baseline;transition:.2s;white-space:nowrap}
+  .cite:hover{border-color:var(--construct);background:var(--construct-soft)}
+
+  /* ---------- STAT GRID ---------- */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px 22px 20px;position:relative;overflow:hidden}
+  .stat::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--danger))}
+  .stat .fig{font-family:'Big Shoulders Display',sans-serif;font-weight:900;
+    font-size:clamp(48px,7vw,72px);line-height:.9;color:var(--accent,var(--text));letter-spacing:-.01em}
+  .stat .lab{margin-top:12px;font-size:14.5px;color:var(--text-dim);line-height:1.45}
+  .stat .src{margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--text-faint);text-transform:uppercase}
+  .stat.a-danger{--accent:var(--danger)} .stat.a-con{--accent:var(--construct)} .stat.a-inf{--accent:var(--inflect)}
+
+  /* ---------- FRAMING (by design) ---------- */
+  .frame-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:8px}
+  .limitrow{display:grid;grid-template-columns:210px 1fr;gap:22px;align-items:center;
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px}
+  .limitrow .who{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:23px;text-transform:uppercase;line-height:1;letter-spacing:.01em}
+  .limitrow .who small{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:10.5px;letter-spacing:.1em;color:var(--text-faint);margin-top:8px;text-transform:uppercase}
+  .limitrow .desc{color:var(--text-dim);font-size:15.5px}
+  .limitrow .desc b{color:var(--text);font-weight:600}
+  .bbar{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+  .bbar-track{flex:1;height:12px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden}
+  .bbar-fill{height:100%;border-radius:6px}
+  .bbar-fill.f-danger{background:var(--danger)}
+  .bbar-fill.f-amber{background:var(--inflect)}
+  .bbar-tag{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);white-space:nowrap;min-width:86px;text-align:right}
+  .frame-axis{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);display:flex;justify-content:space-between;max-width:100%;margin:0 0 4px;padding:0 100px 0 0}
+  .frame-close{margin-top:26px;font-size:clamp(18px,2.3vw,23px);line-height:1.5;max-width:34ch;
+    font-family:'Big Shoulders Display',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.005em}
+  .frame-close em{font-style:normal;color:var(--danger)}
+
+  /* ---------- TIMELINE ---------- */
+  .tl{position:relative;margin-top:20px}
+  .tl::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);
+    background:linear-gradient(var(--construct),var(--inflect) 55%,var(--danger));opacity:.5}
+  .tnode{position:relative;width:calc(50% - 34px);margin-bottom:22px}
+  .tnode[data-side="left"]{margin-right:auto;text-align:right}
+  .tnode[data-side="right"]{margin-left:auto}
+  .tdot{position:absolute;top:24px;width:15px;height:15px;border-radius:50%;background:var(--bg);
+    border:3px solid var(--inflect);z-index:2}
+  .tnode[data-side="left"] .tdot{right:-42px}
+  .tnode[data-side="right"] .tdot{left:-42px}
+  .tcard{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:18px 20px;
+    cursor:pointer;transition:border-color .25s,transform .25s}
+  .tcard:hover{border-color:var(--construct-2,var(--border-2))}
+  .tphase{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--inflect);text-transform:uppercase;font-weight:500}
+  .tsum{font-family:'Big Shoulders Display',sans-serif;font-weight:700;font-size:22px;text-transform:uppercase;line-height:1.02;margin:8px 0 0;letter-spacing:.005em}
+  .tmeta{margin-top:9px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.05em;color:var(--text-faint);text-transform:uppercase;display:flex;gap:8px;align-items:center}
+  .tnode[data-side="left"] .tmeta{justify-content:flex-end}
+  .tdetail{max-height:0;overflow:hidden;opacity:0;transition:max-height .4s ease,opacity .35s ease,margin .35s ease}
+  .tcard.open .tdetail{max-height:520px;opacity:1;margin-top:14px}
+  .tdetail p{font-size:14.5px;color:var(--text-dim);line-height:1.6;text-align:left}
+  .conf{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;
+    padding:1px 6px;border-radius:4px;text-transform:uppercase;border:1px solid var(--border-2)}
+  .conf.c-hi{color:var(--construct);border-color:var(--construct)}
+  .conf.c-mid{color:var(--inflect);border-color:var(--inflect)}
+  .conf.c-inf{color:var(--text-faint)}
+
+  /* ---------- ATTACK CHAIN ---------- */
+  .chain{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .tech{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0;overflow:hidden;position:relative}
+  .tech::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--danger)}
+  .tech-head{padding:20px 22px;cursor:pointer;display:block;width:100%;text-align:left;background:none;border:none;color:inherit;font-family:inherit}
+  .tech-id{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--danger)}
+  .tech-id a{color:var(--danger);text-decoration:none;border-bottom:1px dotted var(--danger)}
+  .tactic{float:right;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--text-faint);border:1px solid var(--border-2);border-radius:4px;padding:2px 7px}
+  .tech-name{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:24px;text-transform:uppercase;margin:12px 0 8px;line-height:1;letter-spacing:.005em}
+  .tech-sum{font-size:14.5px;color:var(--text-dim);line-height:1.5}
+  .tech-plus{margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--construct);text-transform:uppercase;display:flex;align-items:center;gap:7px}
+  .tech-plus .pm{display:inline-block;width:14px;height:14px;border:1px solid var(--construct);border-radius:3px;position:relative}
+  .tech-plus .pm::before,.tech-plus .pm::after{content:"";position:absolute;background:var(--construct);left:50%;top:50%;transform:translate(-50%,-50%)}
+  .tech-plus .pm::before{width:7px;height:1.5px}.tech-plus .pm::after{width:1.5px;height:7px;transition:opacity .2s}
+  .tech.open .tech-plus .pm::after{opacity:0}
+  .tech-detail{max-height:0;overflow:hidden;opacity:0;transition:max-height .45s ease,opacity .35s ease}
+  .tech.open .tech-detail{max-height:600px;opacity:1}
+  .tech-detail .inner{padding:0 22px 22px}
+  .tech-detail p{font-size:14px;color:var(--text-dim);line-height:1.6;margin-bottom:12px}
+  .kv{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.03em;color:var(--text-faint);display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+  .kv b{color:var(--text-dim);font-weight:500}
+
+  /* supporting dropdown */
+  .support{margin-top:20px;background:var(--surface-2);border:1px dashed var(--border-2);border-radius:14px;overflow:hidden}
+  .support-head{width:100%;text-align:left;background:none;border:none;color:inherit;cursor:pointer;
+    padding:18px 22px;display:flex;justify-content:space-between;align-items:center;font-family:inherit}
+  .support-head .lbl{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim)}
+  .support-head .chev{font-family:'JetBrains Mono',monospace;color:var(--construct);font-size:13px;transition:transform .3s}
+  .support.open .support-head .chev{transform:rotate(90deg)}
+  .support-body{max-height:0;overflow:hidden;opacity:0;transition:max-height .5s ease,opacity .4s ease}
+  .support.open .support-body{max-height:1200px;opacity:1}
+  .support-body .inner{padding:4px 22px 22px}
+  .sitem{padding:15px 0;border-top:1px solid var(--border)}
+  .sitem:first-child{border-top:none}
+  .sitem .st{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);font-weight:500;letter-spacing:.02em}
+  .sitem p{font-size:13.5px;color:var(--text-dim);margin-top:6px;line-height:1.55}
+  .neg{border-left:2px solid var(--inflect);padding-left:14px;margin-top:6px}
+  .neg .st{color:var(--inflect)}
+
+  /* ---------- ASYMMETRY CHART ---------- */
+  .chartwrap{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:30px 26px 22px;margin-top:8px}
+  .chartwrap svg{width:100%;height:auto;display:block;overflow:visible}
+  .ch-axis{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;fill:var(--text-faint);text-transform:uppercase}
+  .ch-actor{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:19px;fill:var(--text);text-transform:uppercase}
+  .ch-eff{font-family:'Archivo',sans-serif;font-size:13px;fill:var(--text-dim)}
+  .ch-val{font-family:'JetBrains Mono',monospace;font-size:11px;fill:var(--text-faint);font-weight:500}
+  .ch-callout{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.04em;fill:var(--inflect);font-weight:500}
+  .heat-scroll{overflow-x:auto;margin:0 -4px}
+  .heat{display:grid;grid-template-columns:158px repeat(3,1fr);gap:8px;min-width:600px;padding:2px 4px}
+  .hcell{padding:13px 13px;border-radius:10px;display:flex;flex-direction:column;gap:4px;justify-content:center;min-height:70px}
+  .hcell.hhead{min-height:0;padding:0 4px 6px;align-self:end;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-faint);line-height:1.3}
+  .hcell.rowlab{min-height:70px;padding:0 6px;font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:19px;text-transform:uppercase;color:var(--text);justify-content:center;line-height:1}
+  .cell.blocked{background:var(--construct-soft);border:1px solid var(--construct)}
+  .cell.limited{background:var(--inflect-soft);border:1px solid var(--inflect)}
+  .cell.open{background:var(--danger-soft);border:1px solid var(--danger)}
+  .cell .lvl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+  .cell.blocked .lvl{color:var(--construct)} .cell.limited .lvl{color:var(--inflect)} .cell.open .lvl{color:var(--danger)}
+  .cell .cnote{font-size:11px;color:var(--text-dim);line-height:1.3}
+  .heat-legend{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint)}
+  .heat-legend span{display:inline-flex;align-items:center;gap:7px}
+  .heat-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .heat-callout{margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.03em;color:var(--inflect);border-left:2px solid var(--inflect);padding-left:12px}
+
+  /* ---------- RISK MAPPING ---------- */
+  .riskgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .rcard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0;overflow:hidden;position:relative}
+  .rcard::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--construct)}
+  .rcard.span2{grid-column:1 / -1}
+  .r-head{padding:20px 22px;cursor:pointer;background:none;border:none;color:inherit;text-align:left;width:100%;font-family:inherit;display:block}
+  .r-id{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--construct);letter-spacing:.03em}
+  .r-name{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:22px;text-transform:uppercase;margin:8px 0 8px;line-height:1.02}
+  .sev{float:right;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid}
+  .sev.p{color:var(--danger);border-color:var(--danger)}
+  .sev.c{color:var(--inflect);border-color:var(--inflect)}
+  .r-why{font-size:14px;color:var(--text-dim);line-height:1.5}
+  .r-detail{max-height:0;overflow:hidden;opacity:0;transition:max-height .45s ease,opacity .35s ease}
+  .rcard.open .r-detail{max-height:640px;opacity:1}
+  .r-detail .inner{padding:0 22px 22px}
+  .r-detail p{font-size:13.5px;color:var(--text-dim);line-height:1.6;margin-bottom:10px}
+  .r-detail .lead{color:var(--text);font-weight:500}
+  .cwe-list{display:grid;gap:10px;margin-top:4px}
+  .cwe{border-top:1px solid var(--border);padding-top:12px}
+  .cwe:first-child{border-top:none;padding-top:4px}
+  .cwe .cid{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--construct);font-weight:500}
+  .cwe .cid a{color:var(--construct);text-decoration:none;border-bottom:1px dotted var(--construct)}
+  .cwe p{font-size:13px;color:var(--text-dim);margin-top:5px;line-height:1.5}
+
+  /* ---------- MITIGATIONS ---------- */
+  .mitgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .mit{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:relative}
+  .mit::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--construct)}
+  .mit-head{padding:20px 22px;cursor:pointer;background:none;border:none;color:inherit;text-align:left;width:100%;font-family:inherit;display:block}
+  .mit-n{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--construct);font-weight:700}
+  .mit-name{font-family:'Big Shoulders Display',sans-serif;font-weight:700;font-size:20px;text-transform:uppercase;margin:8px 0 8px;line-height:1.04}
+  .mit-line{font-size:13.5px;color:var(--text-dim);line-height:1.5}
+  .mit-detail{max-height:0;overflow:hidden;opacity:0;transition:max-height .45s ease,opacity .35s ease}
+  .mit.open .mit-detail{max-height:560px;opacity:1}
+  .mit-detail .inner{padding:0 22px 22px}
+  .drow{margin-top:12px}
+  .drow .dl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);margin-bottom:3px}
+  .drow .dv{font-size:13.5px;color:var(--text-dim);line-height:1.5}
+  .drow.note .dv{color:var(--text);border-left:2px solid var(--construct);padding-left:12px}
+
+  /* ---------- HORIZONS ---------- */
+  .horizons{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:8px}
+  .hz{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 22px;position:relative}
+  .hz.urgent{border-color:var(--danger);background:linear-gradient(180deg,var(--danger-soft),transparent 40%)}
+  .hz-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .hz-code{font-family:'Big Shoulders Display',sans-serif;font-weight:900;font-size:34px;letter-spacing:.01em;line-height:1;color:var(--text)}
+  .hz.urgent .hz-code{color:var(--danger)}
+  .hz-win{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;padding:4px 10px;border-radius:6px;
+    border:1px solid var(--border-2);color:var(--text-dim)}
+  .hz.urgent .hz-win{border-color:var(--danger);color:var(--danger)}
+  .hz-title{font-family:'Archivo',sans-serif;font-weight:600;font-size:14px;color:var(--text-dim);letter-spacing:.02em;margin-bottom:16px}
+  .rec{padding:14px 0;border-top:1px solid var(--border)}
+  .rec:first-of-type{border-top:none;padding-top:2px}
+  .rec .rt{font-weight:600;font-size:15px;color:var(--text);line-height:1.35}
+  .rec .ra{font-size:13.5px;color:var(--text-dim);margin-top:5px;line-height:1.5}
+  .rec .rm{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.04em;color:var(--text-faint);text-transform:uppercase;display:flex;gap:6px;flex-wrap:wrap}
+  .rec .rm span{border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+  .rec .rm .eff{color:var(--inflect);border-color:var(--inflect)}
+
+  /* ---------- PULLQUOTES ---------- */
+  .pq{padding:70px 0}
+  .pq .inner{max-width:900px;margin:0 auto;padding:0 24px;position:relative}
+  .pq .mark{font-family:'Big Shoulders Display',sans-serif;font-weight:900;font-size:120px;line-height:.6;
+    color:var(--danger);opacity:.85;height:56px;display:block}
+  .pq blockquote{font-family:'Archivo',sans-serif;font-weight:600;
+    font-size:clamp(23px,3.8vw,38px);line-height:1.24;letter-spacing:-.01em;margin:2px 0 18px;max-width:24ch}
+  .pq.editorial blockquote{
+    background:linear-gradient(96deg,var(--text) 40%,var(--danger));
+    -webkit-background-clip:text;background-clip:text;color:transparent;padding-right:4px}
+  .pq cite{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--text-faint);display:block}
+  .pq cite.ed{color:var(--construct)}
+  .pq cite em{font-style:italic;color:var(--text-dim)}
+
+  /* ---------- FINAL CALLOUT ---------- */
+  .callout{padding:40px 0 90px}
+  .callout .box{border:1.5px solid var(--danger);border-radius:20px;padding:44px 40px;
+    background:linear-gradient(180deg,var(--danger-soft),transparent 70%);position:relative;overflow:hidden}
+  .callout .tag{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--danger);font-weight:500}
+  .callout .thesis{font-size:clamp(19px,2.5vw,25px);line-height:1.5;margin:18px 0 0;color:var(--text)}
+  .callout .thesis b{font-weight:700}
+  .callout .kicker{margin-top:26px;font-family:'Big Shoulders Display',sans-serif;font-weight:800;
+    font-size:clamp(22px,3.4vw,34px);text-transform:uppercase;line-height:1.02;letter-spacing:.005em;
+    background:linear-gradient(94deg,var(--danger),var(--inflect));-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:4px}
+
+  /* ---------- SOURCES ---------- */
+  .sources{padding:60px 0;border-top:1px solid var(--border);background:var(--bg-2)}
+  .src-intro{font-size:15px;color:var(--text-dim);max-width:64ch;margin:14px 0 34px;line-height:1.6}
+  .src-group{margin-bottom:30px}
+  .src-group h3{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--construct);margin-bottom:14px;font-weight:500}
+  .src-item{display:grid;grid-template-columns:30px 1fr;gap:12px;padding:11px 0;border-top:1px solid var(--border);font-size:14px}
+  .src-item:first-of-type{border-top:none}
+  .src-num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-faint);font-weight:500}
+  .src-item .meta{color:var(--text-dim);line-height:1.5}
+  .src-item .pub{color:var(--text);font-weight:600}
+  .src-item .dt{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-faint);letter-spacing:.04em}
+  .src-item a.lnk{color:var(--construct);text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.03em;word-break:break-all;border-bottom:1px dotted var(--construct)}
+  .src-item a.lnk:hover{background:var(--construct-soft)}
+
+  /* ---------- FOOTER ---------- */
+  footer{padding:34px 24px 48px;text-align:center;border-top:1px solid var(--border)}
+  footer p{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.08em;color:var(--text-faint)}
+  footer a{color:var(--construct);text-decoration:none;border-bottom:1px solid var(--border-2)}
+  footer a:hover{border-color:var(--construct)}
+
+  /* focus */
+  button:focus-visible,a:focus-visible,.tcard:focus-visible{outline:2px solid var(--construct);outline-offset:3px;border-radius:6px}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media(max-width:760px){
+    body{font-size:16px}
+    .stats,.chain,.riskgrid,.mitgrid,.horizons{grid-template-columns:1fr}
+    .rcard.span2{grid-column:auto}
+    .tl::before{left:16px}
+    .tnode{width:100%}
+    .tnode[data-side="left"],.tnode[data-side="right"]{margin:0 0 20px;text-align:left}
+    .tnode[data-side="left"] .tdot,.tnode[data-side="right"] .tdot{left:9px;right:auto}
+    .tcard{margin-left:38px}
+    .tnode[data-side="left"] .tmeta{justify-content:flex-start}
+    .limitrow{grid-template-columns:1fr;gap:14px}
+    .hero h1{font-size:clamp(52px,14vw,92px)}
+    .tactic,.sev{float:none;display:inline-block;margin-top:6px}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none !important;scroll-behavior:auto !important}
+    .reveal{opacity:1;transform:none;transition:none}
+    .scanline,.pulse-ring,.flow-dash{animation:none !important}
+  }
+</style>
+</head>
+<body>
+
+<button class="toggle" id="themeBtn" aria-label="Switch theme">
+  <svg id="thIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+  <span id="thTxt">Light</span>
+</button>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow reveal in">Incident study &middot; AI security</div>
+    <h1 class="reveal in">Self&nbsp;Restraint</h1>
+    <div class="subrule reveal in">HUGGING FACE / PRODUCTION INTRUSION / DISCLOSED 16 JUL 2026</div>
+    <p class="hero-deck reveal in">In mid-July 2026, an autonomous AI agent breached Hugging Face's production infrastructure over a weekend. <b>It marks a wider shift: the agent runs the whole attack, and design choices, not the exploit, decide the damage.</b></p>
+
+    <div class="hero-art reveal in" aria-hidden="true">
+      <svg viewBox="0 0 1080 430" role="img">
+        <defs>
+          <marker id="ahB" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0 0 L7 3 L0 6 Z" fill="var(--construct)"/></marker>
+        </defs>
+
+        <text class="n-label" x="36" y="40" style="fill:var(--text-faint)">FORENSICS: ANALYZING THE ATTACK'S OWN ARTIFACTS</text>
+
+        <!-- the evidence (left, center) -->
+        <g transform="translate(36,150)">
+          <rect width="250" height="120" rx="13" fill="var(--surface)" stroke="var(--danger)" stroke-width="1.6"/>
+          <text class="n-title" x="18" y="38">THE EVIDENCE</text>
+          <text class="n-sub" x="18" y="62">payloads, self-migrating C2</text>
+          <text class="n-sub" x="18" y="80">17,000+ recorded events</text>
+          <text class="n-sub" x="18" y="102" style="fill:var(--text-faint)">must be analyzed to respond</text>
+        </g>
+
+        <!-- top branch: to cloud model, refused -->
+        <path d="M286 202 C 448 190, 600 134, 782 128" fill="none" stroke="var(--construct)" stroke-width="3"/>
+        <g stroke="var(--inflect)" stroke-width="2.8">
+          <line x1="791" y1="118" x2="809" y2="138"/>
+          <line x1="809" y1="118" x2="791" y2="138"/>
+        </g>
+        <line x1="800" y1="82" x2="800" y2="178" stroke="var(--inflect)" stroke-width="6"/>
+        <text class="tag-lock" x="800" y="72" text-anchor="middle">SAFETY GUARDRAIL</text>
+
+        <g transform="translate(818,80)" opacity=".72">
+          <rect width="250" height="98" rx="12" fill="var(--surface)" stroke="var(--construct)" stroke-width="1.4"/>
+          <text class="n-title" x="16" y="34" style="fill:var(--construct)">CLOUD-HOSTED MODEL</text>
+          <text class="n-sub" x="16" y="56">frontier model w/ provider safety</text>
+          <text class="tag-lock" x="16" y="78">REFUSED THE ARTIFACTS</text>
+        </g>
+
+        <!-- bottom branch: to self-hosted model, analyzed -->
+        <path d="M286 220 C 448 232, 600 312, 806 320" fill="none" stroke="var(--construct)" stroke-width="3" marker-end="url(#ahB)"/>
+        <text class="tag-def" x="470" y="300">no refusal</text>
+        <text class="tag-def" x="596" y="352">kept in-house</text>
+
+        <g transform="translate(818,280)">
+          <rect width="250" height="98" rx="12" fill="var(--surface)" stroke="var(--construct)" stroke-width="1.9"/>
+          <text class="n-title" x="16" y="34" style="fill:var(--construct)">SELF-HOSTED MODEL</text>
+          <text class="n-sub" x="16" y="56">open weight, runs in-house</text>
+          <text class="tag-def" x="16" y="78">ANALYZED THE EVIDENCE</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="scrollcue reveal in"><span class="bar"></span>Scroll to read the anatomy</div>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ STATS ============ -->
+<section class="block" id="numbers">
+  <div class="wrap">
+    <div class="s-head reveal">
+      <div class="eyebrow">By the numbers</div>
+      <h2 class="s-title">This happened at machine speed.</h2>
+      <p class="s-lede">A few sourced numbers set the tempo, and mark the line between what is known and what still isn't.</p>
+    </div>
+    <div class="stats">
+      <div class="stat a-danger reveal">
+        <div class="fig">17,000+</div>
+        <div class="lab">attacker actions the defenders reconstructed with their own AI.</div>
+        <div class="src">Source <a class="cite" href="#s1">1</a></div>
+      </div>
+      <div class="stat a-danger reveal d1">
+        <div class="fig">2</div>
+        <div class="lab">code-execution paths chained to get in: a remote-code loader plus template injection.</div>
+        <div class="src">Source <a class="cite" href="#s1">1</a></div>
+      </div>
+      <div class="stat a-con reveal d2">
+        <div class="fig">0</div>
+        <div class="lab">public models, datasets, or Spaces found tampered with. The integrity boundary held.</div>
+        <div class="src">Source <a class="cite" href="#s1">1</a></div>
+      </div>
+      <div class="stat a-inf reveal">
+        <div class="fig">1</div>
+        <div class="lab">weekend: the window the escalation and lateral movement ran in.</div>
+        <div class="src">Source <a class="cite" href="#s1">1</a></div>
+      </div>
+      <div class="stat a-inf reveal d1">
+        <div class="fig">?</div>
+        <div class="lab">Unknown: the attacker's model, and whether any partner or customer data was touched. Still being assessed.</div>
+        <div class="src">Sources <a class="cite" href="#s1">1</a> <a class="cite" href="#s10">10</a></div>
+      </div>
+      <div class="stat a-danger reveal d2">
+        <div class="fig">80&ndash;90%</div>
+        <div class="lab">of tactical work run autonomously in the Nov 2025 GTG-1002 case, the pattern this one continues.</div>
+        <div class="src">Source <a class="cite" href="#s13">13</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- pullquote 1 -->
+<section class="pq editorial reveal">
+  <div class="inner">
+    <span class="mark">&ldquo;</span>
+    <blockquote>Internal guardrails slowed the defenders down. The attacker's AI had none.</blockquote>
+    <cite class="ed">The thesis of this report</cite>
+  </div>
+</section>
+
+<!-- ============ FRAMING / BY DESIGN ============ -->
+<section class="block" id="design">
+  <div class="wrap">
+    <div class="s-head reveal">
+      <div class="eyebrow">By design</div>
+      <h2 class="s-title">The guardrails faced the wrong way.</h2>
+      <p class="s-lede">The component that processed untrusted data could reach almost anything. The defenders' own AI tools were locked down so hard they would not help. The attacker's AI had no limits at all. The bars below show how limited each actor was, on one shared scale, and each level was a design choice that can be changed.</p>
+    </div>
+    <div class="frame-grid">
+      <div class="limitrow reveal">
+        <div class="who">The worker<small>processed hostile data</small></div>
+        <div>
+          <div class="bbar"><div class="bbar-track"><div class="bbar-fill f-danger" style="width:22%"></div></div><span class="bbar-tag">Low limits</span></div>
+          <div class="desc">It ran with a mounted cluster token, reachable cloud credentials, and a path to the node, so one ordinary bug reached far past the parser.</div>
+        </div>
+      </div>
+      <div class="limitrow reveal d1">
+        <div class="who">The defense AI<small>hosted frontier models</small></div>
+        <div>
+          <div class="bbar"><div class="bbar-track"><div class="bbar-fill f-amber" style="width:96%"></div></div><span class="bbar-tag">Maxed out</span></div>
+          <div class="desc">Provider safety filters read the real attack commands, payloads, and C2 as an attack, and refused the forensic work when it was needed most.</div>
+        </div>
+      </div>
+      <div class="limitrow reveal d2">
+        <div class="who">The attacker AI<small>model unknown</small></div>
+        <div>
+          <div class="bbar"><div class="bbar-track"><div class="bbar-fill f-danger" style="width:5%"></div></div><span class="bbar-tag">No limits</span></div>
+          <div class="desc">Whether a jailbroken hosted model or an unrestricted open one, it answered to no usage policy and ran the whole path at machine speed.</div>
+        </div>
+      </div>
+    </div>
+    <p class="frame-close reveal">Every one of these was a <em>design decision</em>. And every one can be moved.</p>
+  </div>
+</section>
+
+<!-- ============ TIMELINE ============ -->
+<section class="block" id="timeline">
+  <div class="wrap">
+    <div class="s-head reveal">
+      <div class="eyebrow">One weekend</div>
+      <h2 class="s-title">The whole intrusion fit in one weekend.</h2>
+      <p class="s-lede">From a malicious dataset to several internal clusters, then rebuilt afterward with the defenders' own AI. Confirmed facts are marked, and inferred timing is flagged as inferred. Tap any phase to expand.</p>
+    </div>
+    <div class="tl">
+
+      <div class="tnode reveal" data-side="left">
+        <span class="tdot"></span>
+        <div class="tcard" tabindex="0" role="button" aria-expanded="false">
+          <div class="tphase">01 &middot; Before the weekend</div>
+          <h3 class="tsum">The worker could reach more than the job needed</h3>
+          <div class="tmeta"><span class="conf c-inf">Pre-incident</span> Sources 1 &middot; 3 &middot; 5</div>
+          <div class="tdetail"><p>Two code-execution paths existed in dataset processing (a remote-code dataset loader and template injection in dataset config). Worker pods carried a mounted Kubernetes ServiceAccount token, ran without a RuntimeDefault seccomp profile, and had Linux capabilities left in place. Nodes exposed reusable cloud and cluster credentials, and production MongoDB used a static password, migrated to identity-based auth only afterward. How long the vulnerable paths had been exposed before the intrusion is not public.</p></div>
+        </div>
+      </div>
+
+      <div class="tnode reveal" data-side="right">
+        <span class="tdot"></span>
+        <div class="tcard" tabindex="0" role="button" aria-expanded="false">
+          <div class="tphase">02 &middot; Initial compromise</div>
+          <h3 class="tsum">A malicious dataset ran code on a worker</h3>
+          <div class="tmeta"><span class="conf c-hi">Confirmed</span> <span class="conf c-inf">dates inferred</span></div>
+          <div class="tdetail"><p>A crafted dataset abused the two code-execution paths to run code on a processing worker. This was software code execution, not prompt injection, AI enters the story later in the operating loop. How the first foothold went undetected is not public. The weekend of roughly 11 to 12 July is inferred from the patch trail, not stated by the company. Sources 1 &middot; 5.</p></div>
+        </div>
+      </div>
+
+      <div class="tnode reveal" data-side="left">
+        <span class="tdot"></span>
+        <div class="tcard" tabindex="0" role="button" aria-expanded="false">
+          <div class="tphase">03 &middot; Escalation</div>
+          <h3 class="tsum">From the worker to the node, then across clusters</h3>
+          <div class="tmeta"><span class="conf c-hi">Confirmed</span> Source 1</div>
+          <div class="tdetail"><p>Worker execution escalated to node-level access. The actor harvested cloud and cluster credentials and moved laterally into several internal clusters, reaching a limited set of internal datasets and several service credentials. The actor did not defeat each downstream service, it inherited trust from the platform's own identity material.</p></div>
+        </div>
+      </div>
+
+      <div class="tnode reveal" data-side="right">
+        <span class="tdot"></span>
+        <div class="tcard" tabindex="0" role="button" aria-expanded="false">
+          <div class="tphase">04 &middot; The operator</div>
+          <h3 class="tsum">One agent, thousands of actions, disposable sandboxes</h3>
+          <div class="tmeta"><span class="conf c-hi">Confirmed</span> Source 1</div>
+          <div class="tdetail"><p>The campaign was run by an autonomous agent framework, appearing to be built on an agentic security-research harness, with the underlying model unknown. It executed more than 17,000 recorded actions across a swarm of short-lived sandboxes, with self-migrating command-and-control staged on public services. Dwell time and the full cluster list are not public.</p></div>
+        </div>
+      </div>
+
+      <div class="tnode reveal" data-side="left">
+        <span class="tdot"></span>
+        <div class="tcard" tabindex="0" role="button" aria-expanded="false">
+          <div class="tphase">05 &middot; Discovery</div>
+          <h3 class="tsum">The defenders' own AI caught it</h3>
+          <div class="tmeta"><span class="conf c-hi">Confirmed</span> <span class="conf c-inf">timing inferred</span></div>
+          <div class="tdetail"><p>The intrusion surfaced through AI-assisted detection. An anomaly pipeline uses LLM-based triage over security telemetry, and the correlation of those signals flagged the compromise. Detection by roughly 13 July is inferred from the first worker-hardening merge in the public repo. Sources 1 &middot; 3.</p></div>
+        </div>
+      </div>
+
+      <div class="tnode reveal" data-side="right">
+        <span class="tdot"></span>
+        <div class="tcard" tabindex="0" role="button" aria-expanded="false">
+          <div class="tphase">06 &middot; Response</div>
+          <h3 class="tsum">Root cause closed, nodes rebuilt, secrets rotated</h3>
+          <div class="tmeta"><span class="conf c-hi">Confirmed</span> Sources 1 &middot; 3 &middot; 5</div>
+          <div class="tdetail"><p>The team closed the dataset code-execution paths, eradicated the foothold, and rebuilt the compromised nodes rather than cleaning them in place. Affected credentials were revoked and rotated, with a broader precautionary rotation started. Worker pods were hardened (PR #3368, 13 July: no auto ServiceAccount token, RuntimeDefault seccomp, drop all capabilities), alongside related changes (fsspec and protocol allowlist, MongoDB to AWS identity auth, JWT key rotation). Alerting was improved to page a responder in minutes, any day of the week. Forensics ran with LLM analysis agents, and after hosted APIs blocked the workload the team pivoted to self-hosted GLM 5.2, which also kept attacker data and credentials inside the environment.</p></div>
+        </div>
+      </div>
+
+      <div class="tnode reveal" data-side="left">
+        <span class="tdot"></span>
+        <div class="tcard" tabindex="0" role="button" aria-expanded="false">
+          <div class="tphase">07 &middot; Where it stands</div>
+          <h3 class="tsum">Fixed, but the customer-data question is still open</h3>
+          <div class="tmeta"><span class="conf c-hi">Ongoing</span> Sources 1 &middot; 10</div>
+          <div class="tdetail"><p>Root cause is closed, the foothold eradicated, and affected nodes rebuilt. A broader secret rotation is underway. The assessment of whether any partner or customer data was affected remains open as of the latest coverage. The law-enforcement referral and external forensic review continue. No attribution has been made, and the attacker's underlying model is unknown.</p></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- pullquote 4 -->
+<section class="pq editorial reveal">
+  <div class="inner">
+    <span class="mark">&ldquo;</span>
+    <blockquote>The exploit was ordinary. The blast radius was a design decision.</blockquote>
+    <cite class="ed">The report's central claim</cite>
+  </div>
+</section>
+
+<!-- ============ ATTACK CHAIN ============ -->
+<section class="block" id="chain">
+  <div class="wrap">
+    <div class="s-head reveal">
+      <div class="eyebrow">Step by step</div>
+      <h2 class="s-title">Six techniques, none of them new.</h2>
+      <p class="s-lede">Exploit a public-facing app, run code, break out to the host, grab credentials, move sideways, call home. The autonomy sped up the gaps between these steps, it did not add one. Mapped to MITRE ATT&amp;CK. Tap a card for detail.</p>
+    </div>
+    <div class="chain">
+
+      <div class="tech reveal">
+        <button class="tech-head" aria-expanded="false">
+          <span class="tech-id"><a href="https://attack.mitre.org/techniques/T1190/" target="_blank" rel="noopener">T1190</a></span><span class="tactic">Initial Access</span>
+          <div class="tech-name">Exploit Public-Facing App</div>
+          <div class="tech-sum">A crafted dataset abused two code-execution paths in dataset processing.</div>
+          <div class="tech-plus"><span class="pm"></span>What happened here</div>
+        </button>
+        <div class="tech-detail"><div class="inner">
+          <p>An attacker-supplied dataset was processed by the dataset-processing service and abused two code-execution paths in it: a remote-code dataset loader and template injection in dataset configuration. The platform's willingness to process untrusted data was the entry. This was not prompt injection, it was classic code execution in an application that ingests hostile input.</p>
+          <div class="kv"><b>Evidence:</b> Sources 1, 5 <b>&middot; Confidence:</b> <span class="conf c-hi">High</span></div>
+        </div></div>
+      </div>
+
+      <div class="tech reveal d1">
+        <button class="tech-head" aria-expanded="false">
+          <span class="tech-id"><a href="https://attack.mitre.org/techniques/T1059/" target="_blank" rel="noopener">T1059</a></span><span class="tactic">Execution</span>
+          <div class="tech-name">Command &amp; Scripting Interp.</div>
+          <div class="tech-sum">Both paths resulted in code running on a processing worker.</div>
+          <div class="tech-plus"><span class="pm"></span>What happened here</div>
+        </button>
+        <div class="tech-detail"><div class="inner">
+          <p>Both abused paths resulted in code executing on a processing worker. The remote-code loader executes code by design, and the template-injection path reaches execution through the configuration primitive. The specific interpreter and runtime are not disclosed, so no sub-technique is assigned.</p>
+          <div class="kv"><b>Evidence:</b> Sources 1, 5 <b>&middot; Confidence:</b> <span class="conf c-hi">High</span></div>
+        </div></div>
+      </div>
+
+      <div class="tech reveal">
+        <button class="tech-head" aria-expanded="false">
+          <span class="tech-id"><a href="https://attack.mitre.org/techniques/T1611/" target="_blank" rel="noopener">T1611</a></span><span class="tactic">Priv. Escalation</span>
+          <div class="tech-name">Escape to Host</div>
+          <div class="tech-sum">Worker execution became node-level access.</div>
+          <div class="tech-plus"><span class="pm"></span>What happened here</div>
+        </button>
+        <div class="tech-detail"><div class="inner">
+          <p>Execution on the worker, a containerized pod, escalated to node-level access, breaking out of the worker's isolation to the underlying node. The specific escape primitive is not disclosed, but the class of movement is confirmed, and the post-incident hardening removes worker authority precisely to shrink this step.</p>
+          <div class="kv"><b>Evidence:</b> Sources 1, 3 <b>&middot; Confidence:</b> <span class="conf c-hi">High</span> tactic, <span class="conf c-mid">Medium</span> mechanism</div>
+        </div></div>
+      </div>
+
+      <div class="tech reveal d1">
+        <button class="tech-head" aria-expanded="false">
+          <span class="tech-id"><a href="https://attack.mitre.org/techniques/T1552/005/" target="_blank" rel="noopener">T1552.005</a></span><span class="tactic">Credential Access</span>
+          <div class="tech-name">Unsecured Credentials</div>
+          <div class="tech-sum">Reachable cloud and cluster credentials were harvested.</div>
+          <div class="tech-plus"><span class="pm"></span>What happened here</div>
+        </button>
+        <div class="tech-detail"><div class="inner">
+          <p>From node access, the actor harvested cloud and cluster credentials reachable from the worker's environment. The post-incident removal of the worker's ServiceAccount token and the emphasis on cutting metadata access both point to reachable ambient credentials, most plausibly via the cloud instance metadata endpoint and mounted cluster identity, as the harvested material.</p>
+          <div class="kv"><b>Evidence:</b> Sources 1, 3, 5 <b>&middot; Confidence:</b> <span class="conf c-hi">High</span> access, <span class="conf c-mid">Medium</span> sub-technique</div>
+        </div></div>
+      </div>
+
+      <div class="tech reveal">
+        <button class="tech-head" aria-expanded="false">
+          <span class="tech-id"><a href="https://attack.mitre.org/techniques/T1550/001/" target="_blank" rel="noopener">T1550.001</a></span><span class="tactic">Lateral Movement</span>
+          <div class="tech-name">Alt. Authentication Material</div>
+          <div class="tech-sum">Harvested credentials unlocked several internal clusters.</div>
+          <div class="tech-plus"><span class="pm"></span>What happened here</div>
+        </button>
+        <div class="tech-detail"><div class="inner">
+          <p>The harvested cloud and cluster credentials were reused to authenticate into several internal clusters. The actor did not defeat each downstream service, it inherited trust from the platform's own identity material. The credential topology was the accelerant that turned a narrow bug into a multi-cluster incident.</p>
+          <div class="kv"><b>Evidence:</b> Sources 1, 5 <b>&middot; Confidence:</b> <span class="conf c-hi">High</span> movement, <span class="conf c-mid">Medium</span> sub-technique</div>
+        </div></div>
+      </div>
+
+      <div class="tech reveal d1">
+        <button class="tech-head" aria-expanded="false">
+          <span class="tech-id"><a href="https://attack.mitre.org/techniques/T1102/" target="_blank" rel="noopener">T1102</a></span><span class="tactic">Command &amp; Control</span>
+          <div class="tech-name">Web Service</div>
+          <div class="tech-sum">Self-migrating C2 hid on public services.</div>
+          <div class="tech-plus"><span class="pm"></span>What happened here</div>
+        </button>
+        <div class="tech-detail"><div class="inner">
+          <p>Command-and-control was staged on public services and self-migrated, relocating its control channel across legitimate public infrastructure rather than sitting on a fixed, blockable endpoint. This defeats detections keyed to a stable IP, domain, or host, and forces defenders toward behavioral sequences instead.</p>
+          <div class="kv"><b>Evidence:</b> Source 1 <b>&middot; Confidence:</b> <span class="conf c-hi">High</span></div>
+        </div></div>
+      </div>
+
+    </div>
+
+    <!-- supporting techniques dropdown -->
+    <div class="support reveal">
+      <button class="support-head" aria-expanded="false">
+        <span class="lbl">Supporting techniques observed</span>
+        <span class="chev">&#9654;</span>
+      </button>
+      <div class="support-body"><div class="inner">
+        <div class="sitem">
+          <div class="st">T1078 &middot; Valid Accounts (.004 Cloud Accounts)</div>
+          <p>The harvested credentials functioned as valid authorization spanning multiple tactics, the credential reuse that made lateral movement look like legitimate access. Sources 1, 5. Confidence: High.</p>
+        </div>
+        <div class="sitem">
+          <div class="st">T1213 / T1530 &middot; Data from Repositories / Cloud Storage</div>
+          <p>Access to a limited set of internal datasets. Classifying this as Collection is an inference from the disclosed access, the specific repository type is not named. Source 1. Confidence: Medium.</p>
+        </div>
+        <div class="sitem">
+          <div class="st">Ephemeral disposable infrastructure &middot; defense evasion property</div>
+          <p>The swarm of short-lived sandboxes plus the self-migrating C2 is, functionally, defense evasion: it strips away the stable IP, session, hostname, and user agent that IOC-based detection relies on. No single ATT&amp;CK technique cleanly captures an operator running a disposable cloud swarm, so none is forced. Sources 1, 5. Confidence: High that it occurred.</p>
+        </div>
+        <div class="sitem">
+          <div class="neg">
+            <div class="st">Boundary &middot; Exfiltration not confirmed</div>
+            <p>The chain is supported only as far as Collection. Whether internal-dataset or credential material actually left the environment is exactly the open partner and customer-data question. Sources 1, 10.</p>
+          </div>
+        </div>
+        <div class="sitem">
+          <div class="neg">
+            <div class="st">Boundary &middot; Impact not observed</div>
+            <p>No destruction, encryption, or public-asset tampering was claimed, a meaningful contrast with the JADEPUFFER database destruction. The public integrity findings were clean. Sources 1, 11.</p>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ASYMMETRY CHART ============ -->
+<section class="block" id="asymmetry">
+  <div class="wrap">
+    <div class="s-head reveal">
+      <div class="eyebrow">Who was fenced in</div>
+      <h2 class="s-title">The tightest limits were on the defenders.</h2>
+      <p class="s-lede">Line each player up against the limits it actually operated under, and the real lesson shows up in a single glance.</p>
+    </div>
+    <div class="chartwrap reveal">
+      <div class="heat-scroll">
+        <div class="heat" role="img" aria-label="Access heat map: the worker was open across most capabilities, the defense AI was blocked across all of them, and the attacker AI was open across all of them.">
+          <div class="hcell hhead"></div>
+          <div class="hcell hhead">Reach across the stack</div>
+          <div class="hcell hhead">Freedom to execute</div>
+          <div class="hcell hhead">Free of policy limits</div>
+
+          <div class="hcell rowlab">The worker</div>
+          <div class="hcell cell open"><span class="lvl">Open</span><span class="cnote">reached several clusters</span></div>
+          <div class="hcell cell open"><span class="lvl">Open</span><span class="cnote">ran code on the node</span></div>
+          <div class="hcell cell limited"><span class="lvl">Limited</span><span class="cnote">some isolation, too little</span></div>
+
+          <div class="hcell rowlab">The defense AI</div>
+          <div class="hcell cell blocked"><span class="lvl">Blocked</span><span class="cnote">walled off from evidence</span></div>
+          <div class="hcell cell blocked"><span class="lvl">Blocked</span><span class="cnote">refused the workload</span></div>
+          <div class="hcell cell blocked"><span class="lvl">Blocked</span><span class="cnote">filtered by policy</span></div>
+
+          <div class="hcell rowlab">The attacker AI</div>
+          <div class="hcell cell open"><span class="lvl">Open</span><span class="cnote">moved at will</span></div>
+          <div class="hcell cell open"><span class="lvl">Open</span><span class="cnote">executed freely</span></div>
+          <div class="hcell cell open"><span class="lvl">Open</span><span class="cnote">no usage policy</span></div>
+        </div>
+      </div>
+      <div class="heat-legend"><span><i style="background:var(--construct)"></i>Blocked</span><span><i style="background:var(--inflect)"></i>Limited</span><span><i style="background:var(--danger)"></i>Open</span></div>
+      <div class="heat-callout">The most fenced-in actor was the one trying to help.</div>
+    </div>
+  </div>
+</section>
+
+<!-- pullquote 3 (sourced) -->
+<section class="pq reveal">
+  <div class="inner">
+    <span class="mark">&ldquo;</span>
+    <blockquote>Autonomy compressed the time and labor between those steps.</blockquote>
+    <cite>Rohit Ramachandran &middot; <em>independent analysis</em></cite>
+  </div>
+</section>
+
+<!-- ============ RISK MAPPING ============ -->
+<section class="block" id="risk">
+  <div class="wrap">
+    <div class="s-head reveal">
+      <div class="eyebrow">Where this lives</div>
+      <h2 class="s-title">A supply-chain bug with a company-wide blast radius.</h2>
+      <p class="s-lede">OWASP's LLM list names the AI-platform surfaces that got hit. CWE names the exact weaknesses to fix. You want both. Tap to expand.</p>
+    </div>
+    <div class="riskgrid">
+
+      <div class="rcard reveal">
+        <button class="r-head" aria-expanded="false">
+          <span class="r-id">LLM03:2025</span><span class="sev p">Primary driver</span>
+          <div class="r-name">Supply Chain</div>
+          <div class="r-why">A user-supplied dataset crossed the ingestion trust boundary and reached an executable pipeline.</div>
+        </button>
+        <div class="r-detail"><div class="inner">
+          <p class="lead">Why it applies</p>
+          <p>OWASP LLM03 covers risk introduced by third-party artifacts entering the AI lifecycle, including datasets and the components that process them. A dataset platform ingests untrusted, user-supplied datasets as a core function, so that ingestion surface is a supply-chain trust boundary.</p>
+          <p class="lead">The specific weakness</p>
+          <p>An attacker-supplied dataset crossed the ingestion boundary and reached an executable pipeline. Untrusted third-party content became the entry vector. Sources 1, 5, 16.</p>
+        </div></div>
+      </div>
+
+      <div class="rcard reveal d1">
+        <button class="r-head" aria-expanded="false">
+          <span class="r-id">LLM06:2025</span><span class="sev p">Primary driver</span>
+          <div class="r-name">Excessive Agency</div>
+          <div class="r-why">The untrusted-data worker carried far more authority than parsing a dataset required.</div>
+        </button>
+        <div class="r-detail"><div class="inner">
+          <p class="lead">Why it applies</p>
+          <p>OWASP LLM06 covers automated components granted more functionality, permissions, or autonomy than their task requires. The value of a compromise is set by what the compromised component can reach.</p>
+          <p class="lead">The specific weakness</p>
+          <p>The worker held a mounted Kubernetes ServiceAccount token able to call the K8s API, reachable cloud and cluster credentials, and node reachability. That excess authority turned a narrow code-execution bug into a multi-cluster incident. The post-incident hardening is precisely the removal of that excess agency. Sources 1, 3, 5, 16.</p>
+        </div></div>
+      </div>
+
+      <div class="rcard reveal">
+        <button class="r-head" aria-expanded="false">
+          <span class="r-id">LLM04:2025</span><span class="sev c">Contributing lens</span>
+          <div class="r-name">Data &amp; Model Poisoning</div>
+          <div class="r-why">Names the ingestion pipeline as a live, first-class attack surface.</div>
+        </button>
+        <div class="r-detail"><div class="inner">
+          <p class="lead">Why it applies</p>
+          <p>OWASP LLM04 names the data-ingestion pipeline as a first-class attack surface, and its documented consequence space includes hidden command execution reached through malicious data, not only degraded model behavior.</p>
+          <p class="lead">The specific weakness</p>
+          <p>A malicious data artifact introduced into the processing pipeline achieved code execution on a worker. The incident is a concrete demonstration of the ingestion pipeline as the live attack surface this category flags. Source 1, 16.</p>
+        </div></div>
+      </div>
+
+      <div class="rcard span2 reveal d1">
+        <button class="r-head" aria-expanded="false">
+          <span class="r-id">CWE &middot; the precise-weakness lens</span><span class="sev p">Fix targets</span>
+          <div class="r-name">The exact bugs to close</div>
+          <div class="r-why">OWASP situates the incident, CWE pins the remediation an engineer would file.</div>
+        </button>
+        <div class="r-detail"><div class="inner">
+          <div class="cwe-list">
+            <div class="cwe"><div class="cid"><a href="https://cwe.mitre.org/data/definitions/94.html" target="_blank" rel="noopener">CWE-94</a> &middot; Improper Control of Generation of Code (Primary)</div><p>The remote-code dataset loader executes attacker-controlled code by design when handling an untrusted dataset, the canonical code-injection weakness.</p></div>
+            <div class="cwe"><div class="cid"><a href="https://cwe.mitre.org/data/definitions/1336.html" target="_blank" rel="noopener">CWE-1336</a> &middot; Server-Side Template Injection (Primary)</div><p>The template-injection path in dataset configuration let attacker-controlled input reach a server-side template engine, yielding execution.</p></div>
+            <div class="cwe"><div class="cid"><a href="https://cwe.mitre.org/data/definitions/269.html" target="_blank" rel="noopener">CWE-269</a> &middot; Improper Privilege Management (Primary)</div><p>The worker ran with privileges and mounted identity beyond its task, the code-layer expression of the excessive-agency mapping, closed directly by PR #3368.</p></div>
+            <div class="cwe"><div class="cid"><a href="https://cwe.mitre.org/data/definitions/522.html" target="_blank" rel="noopener">CWE-522 / 540</a> &middot; Reachable Credentials (Contributing)</div><p>Reusable cloud and cluster credentials were reachable from the worker runtime and harvestable after compromise. Static secrets, like the MongoDB password later migrated to IAM auth, widen this.</p></div>
+          </div>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ EXISTING MITIGATIONS ============ -->
+<section class="block" id="existed">
+  <div class="wrap">
+    <div class="s-head reveal">
+      <div class="eyebrow">Already on the shelf</div>
+      <h2 class="s-title">Every control that would have helped already existed.</h2>
+      <p class="s-lede">None of these defenses are exotic. Most are defaults the industry ships right past. The hard part is applying the strict version before an incident, not after. Tap a card for the full note.</p>
+    </div>
+    <div class="mitgrid">
+
+      <div class="mit reveal">
+        <button class="mit-head" aria-expanded="false">
+          <span class="mit-n">01</span>
+          <div class="mit-name">Turn off remote-code dataset loading</div>
+          <div class="mit-line">Disable trust-remote-code style paths by default.</div>
+        </button>
+        <div class="mit-detail"><div class="inner">
+          <div class="drow"><div class="dl">Grounding</div><div class="dv">MITRE M1038, OWASP LLM03/LLM04, CWE-94.</div></div>
+          <div class="drow"><div class="dl">What it disrupts</div><div class="dv">The initial-access and execution step (T1190 / T1059).</div></div>
+          <div class="drow"><div class="dl">Why it was not effective here</div><div class="dv">Coverage and default gap, the loader supported remote code by design.</div></div>
+          <div class="drow note"><div class="dl">The honest reframe</div><div class="dv">Features that execute untrusted logic exist because they make the platform flexible. The hard engineering is turning them off by default without breaking the workflows users depend on.</div></div>
+        </div></div>
+      </div>
+
+      <div class="mit reveal d1">
+        <button class="mit-head" aria-expanded="false">
+          <span class="mit-n">02</span>
+          <div class="mit-name">Allowlist formats and protocols</div>
+          <div class="mit-line">Non-executable parsing, allow-known-good only.</div>
+        </button>
+        <div class="mit-detail"><div class="inner">
+          <div class="drow"><div class="dl">Grounding</div><div class="dv">OWASP ASVS input handling, OWASP LLM03, MITRE M1038.</div></div>
+          <div class="drow"><div class="dl">What it disrupts</div><div class="dv">Narrows what a dataset-controlled field can select (T1190 / T1059).</div></div>
+          <div class="drow"><div class="dl">Why it was not effective here</div><div class="dv">Coverage gap in the template and protocol surface, an fsspec update plus protocol allowlist landed after the incident.</div></div>
+          <div class="drow note"><div class="dl">The honest reframe</div><div class="dv">A parser's real trust surface, every archive handler, template engine, and protocol resolver behind a preview feature, is far wider than it looks until one path is proven executable.</div></div>
+        </div></div>
+      </div>
+
+      <div class="mit reveal">
+        <button class="mit-head" aria-expanded="false">
+          <span class="mit-n">03</span>
+          <div class="mit-name">Sandbox workers as disposable pods</div>
+          <div class="mit-line">Seccomp RuntimeDefault, drop all capabilities.</div>
+        </button>
+        <div class="mit-detail"><div class="inner">
+          <div class="drow"><div class="dl">Grounding</div><div class="dv">MITRE M1048, NIST SP 800-190, CIS Kubernetes Benchmark.</div></div>
+          <div class="drow"><div class="dl">What it disrupts</div><div class="dv">Escape from the worker pod to the node (T1611).</div></div>
+          <div class="drow"><div class="dl">Why it was not effective here</div><div class="dv">Partially implemented, allowPrivilegeEscalation was already false, but RuntimeDefault seccomp and dropping capabilities arrived with PR #3368.</div></div>
+          <div class="drow note"><div class="dl">The honest reframe</div><div class="dv">Standard controls, but applying the strictest posture to the highest-risk pods first is a prioritization problem more than a knowledge problem.</div></div>
+        </div></div>
+      </div>
+
+      <div class="mit reveal d1">
+        <button class="mit-head" aria-expanded="false">
+          <span class="mit-n">04</span>
+          <div class="mit-name">Do not mount tokens workers never use</div>
+          <div class="mit-line">No ServiceAccount token on non-API workloads.</div>
+        </button>
+        <div class="mit-detail"><div class="inner">
+          <div class="drow"><div class="dl">Grounding</div><div class="dv">CIS Kubernetes Benchmark, NIST SP 800-190, MITRE M1018 / M1026.</div></div>
+          <div class="drow"><div class="dl">What it disrupts</div><div class="dv">Credential access and cluster-scoped lateral movement (feeds T1552 / T1550).</div></div>
+          <div class="drow"><div class="dl">Why it was not effective here</div><div class="dv">Auto token mounting was enabled on the worker, the fix removes its ability to talk to the K8s API at all.</div></div>
+          <div class="drow note"><div class="dl">The honest reframe</div><div class="dv">Automatic token mounting is a Kubernetes default, inherited unexamined across thousands of deployments. This is an industry-wide inheritance, not a local oversight.</div></div>
+        </div></div>
+      </div>
+
+      <div class="mit reveal">
+        <button class="mit-head" aria-expanded="false">
+          <span class="mit-n">05</span>
+          <div class="mit-name">Harden cloud metadata access</div>
+          <div class="mit-line">Session-oriented IMDS, block from untrusted workloads.</div>
+        </button>
+        <div class="mit-detail"><div class="inner">
+          <div class="drow"><div class="dl">Grounding</div><div class="dv">Cloud-provider baselines (IMDSv2, low hop limit), MITRE M1035, NIST SP 800-207.</div></div>
+          <div class="drow"><div class="dl">What it disrupts</div><div class="dv">Theft of cloud credentials via the instance metadata endpoint (T1552.005).</div></div>
+          <div class="drow"><div class="dl">Why it was not effective here</div><div class="dv">Metadata and credentials were reachable from the worker runtime. Whether legacy IMDS was in play is not disclosed, the reachability is the confirmed gap.</div></div>
+          <div class="drow note"><div class="dl">The honest reframe</div><div class="dv">Metadata endpoints are reachable by default, and their blast-radius risk is non-obvious until a workload that can reach them is compromised.</div></div>
+        </div></div>
+      </div>
+
+      <div class="mit reveal d1">
+        <button class="mit-head" aria-expanded="false">
+          <span class="mit-n">06</span>
+          <div class="mit-name">Short-lived, audience-bound identity</div>
+          <div class="mit-line">Replace reusable and static credentials.</div>
+        </button>
+        <div class="mit-detail"><div class="inner">
+          <div class="drow"><div class="dl">Grounding</div><div class="dv">NIST SP 800-207 zero trust and SP 800-204, workload-identity federation and IRSA patterns.</div></div>
+          <div class="drow"><div class="dl">What it disrupts</div><div class="dv">Lateral movement (T1550) and the payoff of credential access (T1552). A five-minute token is a far smaller prize.</div></div>
+          <div class="drow"><div class="dl">Why it was not effective here</div><div class="dv">Reusable credentials were harvestable, and at least one static secret existed, the production MongoDB password, migrated to identity-based auth only afterward.</div></div>
+          <div class="drow note"><div class="dl">The honest reframe</div><div class="dv">Static credentials accumulate for rational operational reasons. Migrating to workload identity is genuine multi-system engineering, often already in flight, as the June IRSA work suggests.</div></div>
+        </div></div>
+      </div>
+
+      <div class="mit reveal">
+        <button class="mit-head" aria-expanded="false">
+          <span class="mit-n">07</span>
+          <div class="mit-name">Segment planes, default-deny egress</div>
+          <div class="mit-line">Ingestion must not map the whole platform.</div>
+        </button>
+        <div class="mit-detail"><div class="inner">
+          <div class="drow"><div class="dl">Grounding</div><div class="dv">MITRE M1030 and M1037, CIS Control 13, NIST SP 800-207.</div></div>
+          <div class="drow"><div class="dl">What it disrupts</div><div class="dv">Cross-cluster movement (T1550) and self-migrating C2 that needs outbound reach (T1102).</div></div>
+          <div class="drow"><div class="dl">Why it was not effective here</div><div class="dv">Several internal clusters were reachable from the worker's identity domain, and outbound C2 to public services succeeded, gaps at both the identity and network layers.</div></div>
+          <div class="drow note"><div class="dl">The honest reframe</div><div class="dv">Segmenting many clusters at both layers is architecturally hard, and default-deny egress with an approval broker is among the most operationally demanding controls to run without breaking legitimate traffic.</div></div>
+        </div></div>
+      </div>
+
+      <div class="mit reveal d1">
+        <button class="mit-head" aria-expanded="false">
+          <span class="mit-n">08</span>
+          <div class="mit-name">Behavioral joins, 24/7 paging</div>
+          <div class="mit-line">The control that worked, with one gap.</div>
+        </button>
+        <div class="mit-detail"><div class="inner">
+          <div class="drow"><div class="dl">Grounding</div><div class="dv">MITRE M1047 and M1040, NIST SP 800-53 SI-4 and AU-6, CIS Controls 8 and 13.</div></div>
+          <div class="drow"><div class="dl">What it did</div><div class="dv">Compressed the discovery phase, this is what caught the incident. AI-assisted anomaly correlation produced the detection.</div></div>
+          <div class="drow"><div class="dl">Why it did not limit earlier</div><div class="dv">The detection worked, but the remediation, a high-severity signal that now pages a responder in minutes any day, implies weekend response cadence was slower, and the campaign ran over a weekend.</div></div>
+          <div class="drow note"><div class="dl">The honest reframe</div><div class="dv">This is a genuine success to build on. The gap was response-coverage timing, a staffing-and-automation problem, not a sensor problem.</div></div>
+        </div></div>
+      </div>
+
+      <div class="mit reveal">
+        <button class="mit-head" aria-expanded="false">
+          <span class="mit-n">09</span>
+          <div class="mit-name">A vetted open model, ready in advance</div>
+          <div class="mit-line">Provisioned for response before an incident.</div>
+        </button>
+        <div class="mit-detail"><div class="inner">
+          <div class="drow"><div class="dl">Grounding</div><div class="dv">DFIR tooling-readiness practice, the incident's own stated lesson.</div></div>
+          <div class="drow"><div class="dl">What it disrupts</div><div class="dv">Response latency, removes the mid-incident scramble when hosted-model guardrails reject attack artifacts, and keeps attacker data and credentials in the environment.</div></div>
+          <div class="drow"><div class="dl">Why it was not effective here</div><div class="dv">It was not a pre-provisioned asset. The need surfaced during response, when frontier APIs blocked the workload and the team pivoted to GLM 5.2 on its own infrastructure.</div></div>
+          <div class="drow note"><div class="dl">The honest reframe</div><div class="dv">This gap is only visible under adversarial conditions, which is why most teams have not provisioned for it. The transparency here converts a hard-won lesson into something others can stand up in advance.</div></div>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ RECOMMENDATIONS ============ -->
+<section class="block" id="plan">
+  <div class="wrap">
+    <div class="s-head reveal">
+      <div class="eyebrow">A phased plan</div>
+      <h2 class="s-title">Four horizons, starting in the next two days.</h2>
+      <p class="s-lede">Sorted by how fast you can do them, from emergency changes in the first 48 hours to the multi-quarter work that closes the whole class of weakness.</p>
+    </div>
+    <div class="horizons">
+
+      <div class="hz urgent reveal">
+        <div class="hz-top"><div class="hz-code">H00</div><div class="hz-win">0&ndash;48h</div></div>
+        <div class="hz-title">Immediate: contain the pattern you are exposed to.</div>
+
+        <div class="rec"><div class="rt">Disable remote-code dataset loading everywhere</div><div class="ra">Set loaders to refuse untrusted code across pipelines, CI, and notebooks today.</div><div class="rm"><span>LLM03 / CWE-94</span><span>T1190 / T1059</span><span class="eff">Low effort</span></div></div>
+        <div class="rec"><div class="rt">Strip ServiceAccount tokens from data workers</div><div class="ra">automountServiceAccountToken false on any pod that parses hostile input and never calls the K8s API.</div><div class="rm"><span>LLM06 / CWE-269</span><span>T1552 / T1550</span><span class="eff">Low effort</span></div></div>
+        <div class="rec"><div class="rt">Block cloud metadata from parsing workloads</div><div class="ra">Deny IMDS egress from untrusted workers, or set a restrictive hop limit.</div><div class="rm"><span>LLM06 / CWE-522</span><span>T1552.005</span><span class="eff">Low to moderate</span></div></div>
+        <div class="rec"><div class="rt">Rotate and scope down platform tokens</div><div class="ra">Rotate, revoke old copies, one fine-grained token per workload, review recent activity.</div><div class="rm"><span>LLM06</span><span>T1078 / T1550</span><span class="eff">Low effort</span></div></div>
+        <div class="rec"><div class="rt">Page 24/7 on the behavioral sequence</div><div class="ra">Alert on the join: worker spawns process, touches a token path, queries metadata or cluster API.</div><div class="rm"><span>Detection</span><span>T1552 / T1550</span><span class="eff">Low to moderate</span></div></div>
+      </div>
+
+      <div class="hz reveal d1">
+        <div class="hz-top"><div class="hz-code">H01</div><div class="hz-win">1&ndash;4w</div></div>
+        <div class="hz-title">Short-term: harden the surface this incident implicated.</div>
+
+        <div class="rec"><div class="rt">Roll a worker-hardening baseline to all data workers</div><div class="ra">Seccomp RuntimeDefault, drop all capabilities, non-root, read-only root filesystem.</div><div class="rm"><span>LLM06 / CWE-269</span><span>T1611</span><span class="eff">Sprint-scale</span></div></div>
+        <div class="rec"><div class="rt">Allowlist formats and protocols, non-executing templates</div><div class="ra">Replace block-known-bad with allow-known-good, sandbox or remove the config template engine.</div><div class="rm"><span>LLM03 / CWE-1336</span><span>T1190 / T1059</span><span class="eff">Sprint-scale</span></div></div>
+        <div class="rec"><div class="rt">Build cross-boundary behavioral-join detection</div><div class="ra">Durable identities for dataset, image, node, and cloud principal, correlate across boundaries.</div><div class="rm"><span>Detection</span><span>T1550 / T1102</span><span class="eff">Sprint to quarter</span></div></div>
+        <div class="rec"><div class="rt">Inventory reachable static credentials, convert the worst</div><div class="ra">Find every reusable secret a worker can reach, migrate the highest-risk to short-lived identity.</div><div class="rm"><span>LLM06 / CWE-522</span><span>T1552 / T1550</span><span class="eff">Sprint to start</span></div></div>
+        <div class="rec"><div class="rt">Stand up and smoke-test a self-hosted IR model</div><div class="ra">Prove the path end to end now: model loading, evidence transfer, access control, human validation.</div><div class="rm"><span>Readiness</span><span>Response</span><span class="eff">Sprint-scale</span></div></div>
+      </div>
+
+      <div class="hz reveal">
+        <div class="hz-top"><div class="hz-code">H02</div><div class="hz-win">1&ndash;3m</div></div>
+        <div class="hz-title">Medium-term: close the class of weakness.</div>
+
+        <div class="rec"><div class="rt">Re-architect the data plane around zero ambient authority</div><div class="ra">Disposable rootless sandboxes, no default credentials, per-job identity, default-deny egress, rebuild not clean.</div><div class="rm"><span>LLM06 / CWE-269</span><span>T1611 / T1552 / T1550</span><span class="eff">Quarter-scale</span></div></div>
+        <div class="rec"><div class="rt">Segment ingestion from serving, control, and admin</div><div class="ra">One compromised identity domain must not become a map of the whole platform.</div><div class="rm"><span>LLM06</span><span>T1550</span><span class="eff">Quarter-scale</span></div></div>
+        <div class="rec"><div class="rt">Externalize telemetry to an immutable store</div><div class="ra">Process, network, identity, and provenance evidence must survive a node rebuild.</div><div class="rm"><span>Forensics</span><span>Response</span><span class="eff">Quarter-scale</span></div></div>
+        <div class="rec"><div class="rt">Formalize the local-model IR harness as a runbook</div><div class="ra">Read-only evidence, provenance on every IOC, human approval for containment, validate on a tabletop.</div><div class="rm"><span>Governance</span><span>Response</span><span class="eff">Quarter-scale</span></div></div>
+      </div>
+
+      <div class="hz reveal d1">
+        <div class="hz-top"><div class="hz-code">H03</div><div class="hz-win">3&ndash;12m</div></div>
+        <div class="hz-title">Long-term: change the defaults and the tempo.</div>
+
+        <div class="rec"><div class="rt">Govern the data and model surface as first-class</div><div class="ra">Threat models and review gates that assume untrusted data is executable, with board-level visibility.</div><div class="rm"><span>LLM03 / LLM04</span><span>T1190 class</span><span class="eff">Multi-quarter</span></div></div>
+        <div class="rec"><div class="rt">Make short-lived workload identity the default</div><div class="ra">Static and standing credentials become the documented exception requiring sign-off.</div><div class="rm"><span>LLM06 / CWE-522</span><span>T1552 / T1550</span><span class="eff">Multi-quarter</span></div></div>
+        <div class="rec"><div class="rt">Build machine-speed response to match tempo</div><div class="ra">Automate detection, triage, and containment for common sequences, remove the weekend gap for good.</div><div class="rm"><span>Response</span><span>T1550</span><span class="eff">Multi-quarter</span></div></div>
+        <div class="rec"><div class="rt">Institutionalize model optionality and disclosure playbook</div><div class="ra">A vetted open model and evidence harness as standing DFIR infrastructure, coordinate patches and comms.</div><div class="rm"><span>Resilience</span><span>Governance</span><span class="eff">Multi-quarter</span></div></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- pullquote 2 (sourced) -->
+<section class="pq reveal">
+  <div class="inner">
+    <span class="mark">&ldquo;</span>
+    <blockquote>This matches the agentic attacker scenario the industry has been forecasting.</blockquote>
+    <cite>Hugging Face &middot; <em>incident disclosure</em></cite>
+  </div>
+</section>
+
+<!-- ============ FINAL CALLOUT ============ -->
+<section class="callout">
+  <div class="wrap-narrow">
+    <div class="box reveal">
+      <div class="tag">The takeaway</div>
+      <p class="thesis">The Hugging Face break-in was not a story about a clever new exploit. The chain was textbook and the bugs were ordinary. What made it serious was where the limits sat, and each was a design decision. The sharpest example came during the response, not the attack. When the defenders turned frontier AI on the attacker's own payloads and command-and-control, the hosted model's safety policy did what it is built to do and refused to process material that looks malicious. Reasonable in isolation, that refusal collides with legitimate forensics. Only a self-hosted, open-weight model, subject to no such refusal, could analyze the evidence, and it kept that evidence in-house as a bonus. <b>The lesson for any enterprise that plans to defend against AI with AI: you need a capable model that will actually engage hostile material, provisioned in-house before an incident, not discovered mid-response.</b> Providers are getting feedback to tell defensive analysis apart from misuse, but until that gap closes, an unrestricted in-house option is not optional.</p>
+      <div class="kicker">To fight AI with AI, your model cannot be the only one with a leash.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SOURCES ============ -->
+<section class="sources" id="sources">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">Show the work</div>
+      <h2 class="s-title" style="font-size:clamp(28px,4vw,42px)">Everything above traces back to here.</h2>
+      <p class="src-intro">This is the material the analysis was built from. Every claim above can be followed back to a primary disclosure, a verifiable artifact, or a public framework. Links open in a new tab.</p>
+    </div>
+
+    <div class="src-group reveal">
+      <h3>Primary disclosures &amp; artifacts</h3>
+      <div class="src-item" id="s1"><div class="src-num">1</div><div class="meta"><span class="pub">Hugging Face</span> &middot; Security incident disclosure, July 2026 (primary disclosure) &middot; <span class="dt">16 Jul 2026</span><br><a class="lnk" href="https://huggingface.co/blog/security-incident-july-2026" target="_blank" rel="noopener">huggingface.co/blog/security-incident-july-2026</a></div></div>
+      <div class="src-item" id="s2"><div class="src-num">2</div><div class="meta"><span class="pub">huggingface/blog</span> &middot; GitHub source of the disclosure (primary mirror)<br><a class="lnk" href="https://github.com/huggingface/blog/blob/main/security-incident-july-2026.md" target="_blank" rel="noopener">github.com/huggingface/blog</a></div></div>
+      <div class="src-item" id="s3"><div class="src-num">3</div><div class="meta"><span class="pub">huggingface/dataset-viewer</span> &middot; PR #3368, worker pod security-context hardening (verified) &middot; <span class="dt">merged 13 Jul 2026</span><br><a class="lnk" href="https://github.com/huggingface/dataset-viewer/pull/3368" target="_blank" rel="noopener">github.com/huggingface/dataset-viewer/pull/3368</a></div></div>
+      <div class="src-item" id="s4"><div class="src-num">4</div><div class="meta"><span class="pub">huggingface/dataset-viewer</span> &middot; Related hardening PRs #3367, #3375, #3372 (protocol allowlist, IAM auth, JWT rotation)<br><a class="lnk" href="https://github.com/huggingface/dataset-viewer/pull/3367" target="_blank" rel="noopener">pull/3367</a> &middot; <a class="lnk" href="https://github.com/huggingface/dataset-viewer/pull/3375" target="_blank" rel="noopener">pull/3375</a> &middot; <a class="lnk" href="https://github.com/huggingface/dataset-viewer/pull/3372" target="_blank" rel="noopener">pull/3372</a></div></div>
+    </div>
+
+    <div class="src-group reveal">
+      <h3>Researcher analysis</h3>
+      <div class="src-item" id="s5"><div class="src-num">5</div><div class="meta"><span class="pub">Rohit Ramachandran</span> &middot; Hugging Face's Agentic Intrusion: The Dataset Pipeline Was the Attack Surface &middot; <span class="dt">17 Jul 2026</span><br><a class="lnk" href="https://rohitai.com/blog/hugging-face-agentic-intrusion-dataset-pipeline" target="_blank" rel="noopener">rohitai.com/blog/hugging-face-agentic-intrusion-dataset-pipeline</a></div></div>
+    </div>
+
+    <div class="src-group reveal">
+      <h3>Journalist &amp; vendor coverage</h3>
+      <div class="src-item" id="s6"><div class="src-num">6</div><div class="meta"><span class="pub">AI Weekly</span> &middot; Hugging Face discloses AI-agent-driven breach of internal clusters<br><a class="lnk" href="https://aiweekly.co/alerts/hugging-face-discloses-ai-agent-driven-breach-of-internal-clusters" target="_blank" rel="noopener">aiweekly.co/alerts/hugging-face-discloses-ai-agent-driven-breach-of-internal-clusters</a></div></div>
+      <div class="src-item" id="s7"><div class="src-num">7</div><div class="meta"><span class="pub">CybersecurityNews</span> &middot; Hugging Face Confirms AI-Driven Breach<br><a class="lnk" href="https://cybersecuritynews.com/hugging-face-confirms-ai-driven-breach/" target="_blank" rel="noopener">cybersecuritynews.com/hugging-face-confirms-ai-driven-breach</a></div></div>
+      <div class="src-item" id="s8"><div class="src-num">8</div><div class="meta"><span class="pub">Cryptika</span> &middot; Attackers used autonomous agents, defenders countered with AI<br><a class="lnk" href="https://www.cryptika.com/hugging-face-confirms-ai-driven-breach-attackers-used-autonomous-agents-defenders-countered-with-ai/" target="_blank" rel="noopener">cryptika.com &middot; Hugging Face confirms AI-driven breach</a></div></div>
+      <div class="src-item" id="s9"><div class="src-num">9</div><div class="meta"><span class="pub">HyperAI</span> &middot; Hugging Face Responds to Autonomous AI Agent Intrusion<br><a class="lnk" href="https://hyper.ai/en/stories/07a9214c693b875bfc209839e93c8532" target="_blank" rel="noopener">hyper.ai/en/stories</a></div></div>
+      <div class="src-item" id="s10"><div class="src-num">10</div><div class="meta"><span class="pub">GBHackers</span> &middot; Security Breach Exposes Internal Datasets, Credentials, and Tokens (confirms assessment ongoing)<br><a class="lnk" href="https://gbhackers.com/hugging-face-security-breach-exposes-internal-datasets/" target="_blank" rel="noopener">gbhackers.com/hugging-face-security-breach-exposes-internal-datasets</a></div></div>
+    </div>
+
+    <div class="src-group reveal">
+      <h3>Industry precedent &amp; trend</h3>
+      <div class="src-item" id="s11"><div class="src-num">11</div><div class="meta"><span class="pub">Sysdig Threat Research Team</span> &middot; JADEPUFFER: agentic ransomware for automated database extortion (precedent) &middot; <span class="dt">Jul 2026</span><br><a class="lnk" href="https://www.sysdig.com/blog/jadepuffer-agentic-ransomware-for-automated-database-extortion" target="_blank" rel="noopener">sysdig.com/blog/jadepuffer-agentic-ransomware-for-automated-database-extortion</a></div></div>
+      <div class="src-item" id="s12"><div class="src-num">12</div><div class="meta"><span class="pub">CSO Online / Dark Reading / CyberScoop</span> &middot; JADEPUFFER secondary coverage (CVE-2025-3248, 1,342 records)<br><a class="lnk" href="https://www.csoonline.com/article/4193195/this-ai-agent-autonomously-hacked-a-network-adapted-on-the-fly-and-demanded-a-ransom.html" target="_blank" rel="noopener">CSO Online</a> &middot; <a class="lnk" href="https://www.darkreading.com/cyberattacks-data-breaches/jadepuffer-first-complete-llm-driven-ransomware-attack" target="_blank" rel="noopener">Dark Reading</a></div></div>
+      <div class="src-item" id="s13"><div class="src-num">13</div><div class="meta"><span class="pub">Anthropic</span> &middot; Disrupting the first reported AI-orchestrated cyber espionage campaign (GTG-1002 precedent) &middot; <span class="dt">Nov 2025</span><br><a class="lnk" href="https://www.anthropic.com/news/disrupting-AI-espionage" target="_blank" rel="noopener">anthropic.com/news/disrupting-AI-espionage</a></div></div>
+      <div class="src-item" id="s15"><div class="src-num">15</div><div class="meta"><span class="pub">Check Point Research</span> &middot; AI Security Report 2026, vulnerability-to-exploit window compressed to hours &middot; <span class="dt">14 Jul 2026</span><br><a class="lnk" href="https://research.checkpoint.com/2026/ai-security-report-2026/" target="_blank" rel="noopener">research.checkpoint.com/2026/ai-security-report-2026</a></div></div>
+    </div>
+
+    <div class="src-group reveal">
+      <h3>Framework references</h3>
+      <div class="src-item" id="s14"><div class="src-num">14</div><div class="meta"><span class="pub">MITRE ATT&amp;CK</span> &middot; Technique and Mitigations catalog, and Campaign C0062<br><a class="lnk" href="https://attack.mitre.org/" target="_blank" rel="noopener">attack.mitre.org</a> &middot; <a class="lnk" href="https://attack.mitre.org/campaigns/C0062/" target="_blank" rel="noopener">C0062</a></div></div>
+      <div class="src-item" id="s16"><div class="src-num">16</div><div class="meta"><span class="pub">OWASP</span> &middot; Top 10 for LLM Applications 2025, and the Agentic Security Initiative<br><a class="lnk" href="https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/" target="_blank" rel="noopener">genai.owasp.org &middot; LLM Top 10 2025</a></div></div>
+      <div class="src-item" id="s17"><div class="src-num">17</div><div class="meta"><span class="pub">NIST</span> &middot; SP 800-series (800-53, 800-207 Zero Trust, 800-190 Container Security)<br><a class="lnk" href="https://csrc.nist.gov/publications/sp800" target="_blank" rel="noopener">csrc.nist.gov/publications/sp800</a></div></div>
+      <div class="src-item" id="s18"><div class="src-num">18</div><div class="meta"><span class="pub">CIS</span> &middot; Critical Security Controls v8.1<br><a class="lnk" href="https://www.cisecurity.org/controls" target="_blank" rel="noopener">cisecurity.org/controls</a></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Built by <a href="https://www.linkedin.com/in/kahalewai/" target="_blank" rel="noopener">Kahalewai</a>, Claude did the heavy lifting</p>
+</footer>
+
+</main>
+
+<script>
+(function(){
+  // ---- theme toggle (in-memory only, no storage) ----
+  var root=document.documentElement, btn=document.getElementById('themeBtn'),
+      txt=document.getElementById('thTxt'), icon=document.getElementById('thIcon');
+  var sunP='<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+  var moonP='<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
+  function apply(t){
+    root.setAttribute('data-theme',t);
+    if(t==='dark'){txt.textContent='Light';icon.innerHTML=sunP;}
+    else{txt.textContent='Dark';icon.innerHTML=moonP;}
+  }
+  var current='dark';
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches){current='light';}
+  apply(current);
+  btn.addEventListener('click',function(){current=(current==='dark')?'light':'dark';apply(current);});
+
+  // ---- reveal on scroll ----
+  var reduce=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var revs=document.querySelectorAll('.reveal:not(.in)');
+  if(reduce || !('IntersectionObserver' in window)){
+    revs.forEach(function(el){el.classList.add('in');});
+  } else {
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+    },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+    revs.forEach(function(el){io.observe(el);});
+  }
+
+  // ---- expand helpers ----
+  function toggle(el,cls){ el.classList.toggle(cls); }
+
+  // timeline cards
+  document.querySelectorAll('.tcard').forEach(function(c){
+    function act(){ var open=c.classList.toggle('open'); c.setAttribute('aria-expanded',open?'true':'false'); }
+    c.addEventListener('click',act);
+    c.addEventListener('keydown',function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); act(); } });
+  });
+
+  // technique cards
+  document.querySelectorAll('.tech-head').forEach(function(h){
+    h.addEventListener('click',function(){
+      var card=h.closest('.tech'); var open=card.classList.toggle('open');
+      h.setAttribute('aria-expanded',open?'true':'false');
+    });
+  });
+
+  // risk cards
+  document.querySelectorAll('.r-head').forEach(function(h){
+    h.addEventListener('click',function(){
+      var card=h.closest('.rcard'); var open=card.classList.toggle('open');
+      h.setAttribute('aria-expanded',open?'true':'false');
+    });
+  });
+
+  // mitigation cards
+  document.querySelectorAll('.mit-head').forEach(function(h){
+    h.addEventListener('click',function(){
+      var card=h.closest('.mit'); var open=card.classList.toggle('open');
+      h.setAttribute('aria-expanded',open?'true':'false');
+    });
+  });
+
+  // supporting dropdown
+  document.querySelectorAll('.support-head').forEach(function(h){
+    h.addEventListener('click',function(){
+      var s=h.closest('.support'); var open=s.classList.toggle('open');
+      h.setAttribute('aria-expanded',open?'true':'false');
+    });
+  });
+})();
+</script>
+</body>
+</html>
