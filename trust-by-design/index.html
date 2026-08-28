@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trust by Design, AI Ethics and Guardrails for the Travel Industry</title>
+<meta name="description" content="An interactive field report on AI ethics and guardrails for travel teams: the incidents, the standards, the pillars, and a phased roadmap.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#0D0F12; --bg-2:#12151A; --bg-3:#181C23;
+  --ink:#EDE8E0; --ink-soft:#B9B2A6; --ink-faint:#7E7A72;
+  --line:#262B33; --line-soft:#1C2129;
+  --ember:#E4572E; --teal:#2EC4B6; --gold:#F4B942;
+  --ember-soft:rgba(228,87,46,.14); --teal-soft:rgba(46,196,182,.13); --gold-soft:rgba(244,185,66,.13);
+  --card:#12151A; --card-hover:#161A21;
+  --shadow:0 18px 50px rgba(0,0,0,.45);
+  --radius:14px;
+  --display:'Fraunces',serif; --body:'Newsreader',serif; --mono:'JetBrains Mono',monospace;
+  --w-body:860px; --w-hero:920px; --w-callout:720px;
+}
+html[data-theme="light"]{
+  --bg:#FAF7F2; --bg-2:#F2EDE4; --bg-3:#EAE3D7;
+  --ink:#231F1A; --ink-soft:#5C554A; --ink-faint:#8B8375;
+  --line:#DDD5C7; --line-soft:#E7E0D4;
+  --ember:#C6431C; --teal:#0E9488; --gold:#B07E14;
+  --ember-soft:rgba(198,67,28,.10); --teal-soft:rgba(14,148,136,.10); --gold-soft:rgba(176,126,20,.12);
+  --card:#FFFEFB; --card-hover:#FFFFFF;
+  --shadow:0 14px 40px rgba(60,45,20,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:19px;line-height:1.72;
+  font-optical-sizing:auto;-webkit-font-smoothing:antialiased;transition:background .4s ease,color .4s ease;overflow-x:hidden}
+::selection{background:var(--gold);color:#111}
+a{color:var(--teal);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+a:hover{border-bottom-color:var(--teal)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:4px}
+
+/* ============ AMBIENT BACKGROUND ============ */
+.ambient{position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(1100px 700px at 85% -10%, var(--gold-soft), transparent 60%),
+    radial-gradient(900px 700px at -10% 30%, var(--teal-soft), transparent 55%),
+    radial-gradient(1000px 800px at 60% 110%, var(--ember-soft), transparent 60%);}
+
+/* ============ THEME TOGGLE ============ */
+.theme-toggle{position:fixed;top:20px;right:20px;z-index:60;display:flex;align-items:center;gap:8px;
+  background:var(--card);border:1px solid var(--line);color:var(--ink-soft);
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  padding:10px 16px;border-radius:999px;cursor:pointer;transition:all .25s;box-shadow:var(--shadow)}
+.theme-toggle:hover{color:var(--ink);border-color:var(--gold)}
+.theme-toggle .dot{width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px var(--gold)}
+
+/* ============ LAYOUT PRIMITIVES ============ */
+.container{max-width:var(--w-body);margin:0 auto;padding:0 24px}
+section.body-section{padding:110px 0 90px}
+.eyebrow{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:22px;display:flex;align-items:center;gap:14px}
+.eyebrow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--line),transparent)}
+h2.sec-title{font-family:var(--display);font-weight:560;font-size:clamp(30px,4.6vw,46px);line-height:1.14;
+  letter-spacing:-.01em;margin-bottom:22px;color:var(--ink)}
+p.lede{font-size:clamp(19px,2.3vw,22px);line-height:1.62;color:var(--ink-soft);
+  font-style:italic;margin-bottom:44px;max-width:56ch}
+.prose p{margin-bottom:1.35em;color:var(--ink);max-width:66ch}
+.prose p:last-child{margin-bottom:0}
+.prose strong{font-weight:640;color:var(--ink)}
+.prose em{font-style:italic}
+.cite{font-family:var(--mono);font-size:.62em;vertical-align:super;color:var(--gold);border:none;
+  padding:0 2px;letter-spacing:0}
+.cite:hover{color:var(--ember);border:none}
+
+/* ============ REVEAL ANIMATIONS ============ */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}
+.reveal.d4{transition-delay:.32s}.reveal.d5{transition-delay:.4s}
+
+/* ============ HERO ============ */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;position:relative;
+  padding:90px 24px 70px;overflow:hidden}
+.hero-inner{max-width:var(--w-hero);margin:0 auto;width:100%;text-align:center;position:relative;z-index:2}
+.hero-kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--ink-soft);margin-bottom:30px}
+.hero-kicker b{color:var(--gold);font-weight:500}
+h1.hero-title{font-family:var(--display);font-weight:720;font-size:clamp(56px,11vw,124px);line-height:.98;
+  letter-spacing:-.025em;margin-bottom:30px;
+  background:linear-gradient(100deg,var(--gold) 5%,var(--ember) 60%,var(--ember) 95%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--ember)}
+.hero-deck{font-size:clamp(19px,2.5vw,23px);line-height:1.6;color:var(--ink-soft);max-width:46ch;margin:0 auto 46px}
+.hero-fig{max-width:820px;margin:0 auto}
+.hero-fig svg{width:100%;height:auto;display:block}
+.hero-caption{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--ink-faint);
+  margin-top:26px;text-transform:uppercase}
+.scroll-cue{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:3;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-faint);
+  display:flex;flex-direction:column;align-items:center;gap:10px}
+.scroll-cue .bar{width:1px;height:44px;background:linear-gradient(180deg,var(--gold),transparent);
+  animation:cue 2.2s ease-in-out infinite}
+@keyframes cue{0%,100%{opacity:.25;transform:scaleY(.6)}50%{opacity:1;transform:scaleY(1)}}
+/* hero svg animation */
+.gate-glow{animation:gatepulse 3.4s ease-in-out infinite;transform-origin:center}
+@keyframes gatepulse{0%,100%{opacity:.35}50%{opacity:.95}}
+.scanline{animation:scan 7.5s linear infinite}
+@keyframes scan{0%{transform:translateX(0)}100%{transform:translateX(834px)}}
+.ringpulse{animation:ringp 6s ease-in-out infinite}
+@keyframes ringp{0%,100%{opacity:.55}50%{opacity:1}}
+
+/* ============ STAT GRID ============ */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:52px 0 60px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:30px 26px 26px;position:relative;overflow:hidden;transition:transform .25s,border-color .25s,box-shadow .25s}
+.stat::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--stat-accent,var(--gold))}
+.stat:hover{transform:translateY(-4px);border-color:var(--stat-accent,var(--gold));box-shadow:var(--shadow)}
+.stat .num{font-family:var(--display);font-weight:640;font-size:clamp(34px,4.4vw,50px);line-height:1;
+  letter-spacing:-.02em;color:var(--stat-accent,var(--gold));margin-bottom:12px}
+.stat .lbl{font-size:15.5px;line-height:1.5;color:var(--ink);margin-bottom:14px;min-height:3.1em}
+.stat .src{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--ink-faint);line-height:1.55}
+.stat.teal{--stat-accent:var(--teal)}.stat.ember{--stat-accent:var(--ember)}.stat.gold{--stat-accent:var(--gold)}
+
+/* ============ CHART FRAMES ============ */
+.chartframe{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:34px 30px 24px;margin:20px 0 10px;box-shadow:var(--shadow)}
+.chartframe svg{width:100%;height:auto;display:block}
+.chart-note{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--ink-faint);
+  margin-top:14px;line-height:1.6}
+
+/* ============ PULLQUOTES ============ */
+.pull{padding:120px 24px;position:relative;background:
+  radial-gradient(800px 400px at 50% 0%, var(--gold-soft), transparent 70%)}
+.pull-inner{max-width:var(--w-body);margin:0 auto;position:relative}
+.pull .mark{font-family:var(--display);font-size:150px;line-height:.6;color:var(--gold);opacity:.28;
+  position:absolute;top:-18px;left:-8px;font-weight:800}
+.pull blockquote{font-family:var(--display);font-style:italic;font-weight:480;
+  font-size:clamp(27px,4.4vw,42px);line-height:1.28;letter-spacing:-.008em;color:var(--ink);
+  padding-left:52px;max-width:24ch}
+.pull .attr{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-soft);margin-top:26px;padding-left:52px}
+.pull .attr b{color:var(--gold);font-weight:500}
+.pull.emberline{background:radial-gradient(800px 400px at 50% 0%, var(--ember-soft), transparent 70%)}
+.pull.emberline .mark,.pull.emberline .attr b{color:var(--ember)}
+.pull.tealline{background:radial-gradient(800px 400px at 50% 0%, var(--teal-soft), transparent 70%)}
+.pull.tealline .mark,.pull.tealline .attr b{color:var(--teal)}
+
+/* ============ TIMELINE ============ */
+.timeline{position:relative;margin-top:56px}
+.timeline::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);
+  background:linear-gradient(180deg,var(--gold),var(--ember) 45%,var(--teal));
+  box-shadow:0 0 18px rgba(244,185,66,.35)}
+.tl-phase{position:relative;text-align:center;margin:64px 0 40px;z-index:2}
+.tl-phase span{font-family:var(--mono);font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;
+  background:var(--bg);border:1px solid var(--line);color:var(--gold);
+  padding:9px 20px;border-radius:999px;display:inline-block}
+.tl-item{position:relative;width:calc(50% - 42px);margin-bottom:42px}
+.tl-item[data-side="left"]{margin-right:auto;text-align:right}
+.tl-item[data-side="right"]{margin-left:auto;text-align:left}
+.tl-item .node{position:absolute;top:14px;width:13px;height:13px;border-radius:50%;
+  background:var(--bg);border:3px solid var(--gold);box-shadow:0 0 12px rgba(244,185,66,.5)}
+.tl-item[data-side="left"] .node{right:-49px}
+.tl-item[data-side="right"] .node{left:-49px}
+.tl-item .tl-date{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--gold);
+  text-transform:uppercase;margin-bottom:8px}
+.tl-item h3{font-family:var(--display);font-weight:600;font-size:21px;line-height:1.3;margin-bottom:10px;
+  letter-spacing:-.008em}
+.tl-item .tl-body{font-size:16px;line-height:1.66;color:var(--ink-soft)}
+.tl-item .tl-meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink-faint);
+  margin-top:10px;text-transform:uppercase}
+.tl-item .tl-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:24px 26px;transition:border-color .25s,box-shadow .25s,transform .25s}
+.tl-item .tl-card:hover{border-color:var(--gold);box-shadow:var(--shadow);transform:translateY(-3px)}
+
+/* ============ EXPANDABLE CARD SYSTEM ============ */
+.cardgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:48px}
+.xcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  position:relative;overflow:hidden;transition:border-color .25s,box-shadow .25s,transform .25s}
+.xcard::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--x-accent,var(--teal))}
+.xcard:hover{border-color:var(--x-accent,var(--teal));box-shadow:var(--shadow);transform:translateY(-3px)}
+.xcard.gold{--x-accent:var(--gold)}.xcard.ember{--x-accent:var(--ember)}.xcard.teal{--x-accent:var(--teal)}
+.xhead{width:100%;background:none;border:none;color:var(--ink);text-align:left;cursor:pointer;
+  padding:26px 26px 22px;font-family:inherit;display:block}
+.xhead .xkick{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--x-accent,var(--teal));margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.xhead .xkick .chev{transition:transform .3s;font-size:12px;color:var(--ink-faint)}
+.xcard.open .xhead .chev{transform:rotate(180deg)}
+.xhead h3{font-family:var(--display);font-weight:600;font-size:20.5px;line-height:1.28;letter-spacing:-.008em;margin-bottom:9px}
+.xhead .xsum{font-size:15.5px;line-height:1.6;color:var(--ink-soft);font-family:var(--body)}
+.xbody{max-height:0;overflow:hidden;transition:max-height .55s cubic-bezier(.2,.7,.2,1)}
+.xcard.open .xbody{max-height:3200px}
+.xbody-inner{padding:2px 26px 28px;border-top:1px dashed var(--line-soft);margin:0 0;padding-top:20px}
+.xfield{margin-bottom:16px}
+.xfield:last-child{margin-bottom:0}
+.xfield .fl{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--x-accent,var(--teal));margin-bottom:6px}
+.xfield .fv{font-size:15.5px;line-height:1.66;color:var(--ink)}
+.xfield .fv.soft{color:var(--ink-soft)}
+.conf{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  border:1px solid var(--x-accent,var(--teal));color:var(--x-accent,var(--teal));
+  padding:4px 10px;border-radius:999px}
+
+/* ============ SUPPORTING DROPDOWN ============ */
+.supp{margin-top:26px;border:1px dashed var(--line);border-radius:var(--radius);background:transparent}
+.supp .xhead h3{font-size:18px}
+.supp.open{background:var(--card);border-style:solid}
+.supp .xbody-inner{border-top:none;padding-top:6px}
+.suppitem{padding:16px 0;border-bottom:1px dashed var(--line-soft)}
+.suppitem:last-child{border-bottom:none}
+.suppitem h4{font-family:var(--display);font-weight:600;font-size:17px;margin-bottom:6px}
+.suppitem p{font-size:15px;line-height:1.62;color:var(--ink-soft)}
+.suppitem .tl-meta{margin-top:6px}
+
+/* ============ ROADMAP ============ */
+.horizons{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:48px}
+.hz{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px 26px;
+  position:relative;overflow:hidden;transition:border-color .25s,box-shadow .25s}
+.hz::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--hz-accent,var(--teal))}
+.hz:hover{border-color:var(--hz-accent,var(--teal));box-shadow:var(--shadow)}
+.hz.h00{--hz-accent:var(--gold);grid-column:1/-1;
+  background:linear-gradient(180deg,var(--gold-soft),transparent 55%),var(--card)}
+.hz.h01,.hz.h02{--hz-accent:var(--teal)}
+.hz.h03{--hz-accent:var(--ember);grid-column:1/-1}
+.hz .hz-tag{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.hz .hz-code{font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:.2em;color:var(--hz-accent)}
+.hz .hz-win{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--ink-faint);
+  border:1px solid var(--line);padding:3px 10px;border-radius:999px}
+.hz h3{font-family:var(--display);font-weight:620;font-size:23px;margin-bottom:16px;letter-spacing:-.01em}
+.rec{padding:15px 0;border-bottom:1px dashed var(--line-soft)}
+.rec:last-child{border-bottom:none}
+.rec h4{font-size:16.5px;font-weight:640;line-height:1.42;margin-bottom:5px;font-family:var(--body)}
+.rec p{font-size:14.5px;line-height:1.62;color:var(--ink-soft)}
+.rec .tl-meta{margin-top:7px}
+.hz.h00 .hz-note{font-size:15px;font-style:italic;color:var(--ink-soft);margin-bottom:10px;max-width:60ch}
+
+/* ============ FINAL CALLOUT ============ */
+.callout-wrap{padding:120px 24px 100px}
+.callout{max-width:var(--w-callout);margin:0 auto;border:2px solid var(--gold);border-radius:18px;
+  padding:56px 50px;position:relative;text-align:left;
+  background:linear-gradient(160deg,var(--gold-soft),transparent 55%),var(--card);box-shadow:var(--shadow)}
+.callout .eyebrow{color:var(--gold)}
+.callout h2{font-family:var(--display);font-weight:640;font-size:clamp(27px,3.8vw,38px);line-height:1.2;
+  margin-bottom:22px;letter-spacing:-.012em}
+.callout p{font-size:18.5px;line-height:1.7;color:var(--ink);margin-bottom:1.1em}
+.callout p:last-child{margin-bottom:0}
+.callout .keyphrase{font-family:var(--display);font-style:italic;font-weight:600;
+  background:linear-gradient(95deg,var(--gold),var(--ember));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--ember)}
+
+/* ============ SOURCES ============ */
+.sources{padding:90px 0 70px;background:var(--bg-2);border-top:1px solid var(--line-soft)}
+.sources .container{max-width:var(--w-body)}
+.sources h2{font-family:var(--display);font-weight:600;font-size:clamp(26px,3.4vw,34px);margin-bottom:14px}
+.sources .frame{font-size:16px;color:var(--ink-soft);max-width:64ch;margin-bottom:44px;line-height:1.68}
+.src-group{margin-bottom:38px}
+.src-group h3{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.src-group h3::after{content:"";height:1px;flex:1;background:var(--line-soft)}
+.src{display:grid;grid-template-columns:44px 1fr;gap:14px;padding:13px 0;border-bottom:1px solid var(--line-soft);
+  font-size:14.5px;line-height:1.6}
+.src:last-child{border-bottom:none}
+.src .n{font-family:var(--mono);font-size:12px;color:var(--gold);padding-top:2px}
+.src .t{color:var(--ink)}
+.src .t .pub{font-weight:640}
+.src .t .d{color:var(--ink-faint);font-family:var(--mono);font-size:11px;letter-spacing:.06em;margin-left:6px}
+.src .t .desc{color:var(--ink-soft);display:block;margin-top:2px}
+.src .t a{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;word-break:break-all}
+
+/* ============ FOOTER ============ */
+footer{padding:44px 24px 54px;text-align:center;background:var(--bg-2)}
+footer p{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--ink-faint)}
+footer a{color:var(--gold);border-bottom:1px solid transparent}
+footer a:hover{border-bottom-color:var(--gold)}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width:900px){
+  .cardgrid{grid-template-columns:1fr}
+  .horizons{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:760px){
+  body{font-size:17.5px}
+  .timeline::before{left:14px;transform:none}
+  .tl-item{width:auto;margin-left:44px !important;margin-right:0 !important;text-align:left !important}
+  .tl-item[data-side="left"] .node,.tl-item[data-side="right"] .node{left:-37px;right:auto}
+  .tl-phase{text-align:left;margin-left:44px}
+  .pull blockquote{padding-left:38px;font-size:clamp(24px,6.4vw,32px)}
+  .pull .attr{padding-left:38px}
+  .pull .mark{font-size:110px}
+  .callout{padding:40px 26px}
+  section.body-section{padding:84px 0 66px}
+}
+@media (max-width:520px){
+  .stat-grid{grid-template-columns:1fr}
+  .stat .lbl{min-height:0}
+  .theme-toggle{top:12px;right:12px;padding:8px 12px}
+  .hero{padding:70px 18px 60px}
+  .container{padding:0 18px}
+  .src{grid-template-columns:34px 1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+  .reveal{opacity:1;transform:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<div class="ambient" aria-hidden="true"></div>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme">
+  <span class="dot" aria-hidden="true"></span><span id="themeLabel">Light mode</span>
+</button>
+
+<!-- ==================== HERO ==================== -->
+<header class="hero" id="top">
+  <div class="hero-inner">
+    <p class="hero-kicker reveal"><b>AI Ethics and Guardrails</b> for the Travel Industry</p>
+    <h1 class="hero-title reveal d1">Trust by Design</h1>
+    <p class="hero-deck reveal d2">A field guide for the Teams building travel software in the AI era; what recent industry incidents, new standards, and live regulations are teaching us</p>
+    <figure class="hero-fig reveal d3" aria-label="Diagram: a traveler request passing through four guardrail layers before reaching the commit gate">
+      <svg viewBox="0 0 900 480" role="img" aria-hidden="false">
+        <!-- guardrail rings as arcs, centered, each opening at the top to seat its label -->
+        <path d="M508.0 37.8 A220 220 0 1 1 392.0 37.8" fill="none" stroke="var(--gold)" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round" class="ringpulse"/>
+        <path d="M526.4 82.6 A184 184 0 1 1 373.6 82.6" fill="none" stroke="var(--teal)" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round" class="ringpulse" style="animation-delay:.6s"/>
+        <path d="M535.6 129.3 A148 148 0 1 1 364.4 129.3" fill="none" stroke="var(--ember)" stroke-opacity=".6" stroke-width="1.6" stroke-linecap="round" class="ringpulse" style="animation-delay:1.2s"/>
+        <path d="M526.4 168.1 A112 112 0 1 1 373.6 168.1" fill="none" stroke="var(--gold)" stroke-opacity=".7" stroke-width="1.6" stroke-linecap="round" class="ringpulse" style="animation-delay:1.8s"/>
+        <!-- ring labels, raised to sit on the ring line inside each opening -->
+        <text x="450" y="37.8"  text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="2.6" fill="var(--gold)">DISCLOSURE</text>
+        <text x="450" y="82.6"  text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="2.6" fill="var(--teal)">GROUNDED&#160;TRUTH</text>
+        <text x="450" y="127.3" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="2.6" fill="var(--ember)">AUTHORITY&#160;LIMITS</text>
+        <text x="450" y="165.1" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="2.6" fill="var(--gold)">HUMAN&#160;OVERRIDE</text>
+        <!-- entry: traveler request -->
+        <text x="22" y="226" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="2.6" fill="var(--ink-soft)">TRAVELER&#160;REQUEST</text>
+        <line x1="22" y1="250" x2="450" y2="250" stroke="var(--ink-faint)" stroke-width="1.4" stroke-dasharray="3 5"/>
+        <!-- checkpoint ticks where the request crosses each ring -->
+        <circle cx="230" cy="250" r="4" fill="var(--gold)"/>
+        <circle cx="266" cy="250" r="4" fill="var(--teal)"/>
+        <circle cx="302" cy="250" r="4" fill="var(--ember)"/>
+        <circle cx="338" cy="250" r="4" fill="var(--gold)"/>
+        <!-- animated scan dot -->
+        <circle cx="22" cy="250" r="5.5" fill="var(--gold)" class="scanline"/>
+        <!-- action gate: pulsing halo clearly separated from the core disc -->
+        <circle cx="450" cy="250" r="78" fill="none" stroke="var(--gold)" stroke-width="2" class="gate-glow"/>
+        <circle cx="450" cy="250" r="66" fill="var(--ember-soft)" stroke="var(--ember)" stroke-width="1.8"/>
+        <text x="450" y="246" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12.5" font-weight="700" letter-spacing="3" fill="var(--ink)">ACTION</text>
+        <text x="450" y="264" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8.5" letter-spacing="1.6" fill="var(--ink-soft)">PAYMENT&#160;&#183;&#160;BOOKING</text>
+        <!-- exit: traveler experience, mirrored spacing -->
+        <text x="870" y="226" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="2.6" fill="var(--teal)">TRAVELER&#160;EXPERIENCE</text>
+        <line x1="528" y1="250" x2="856" y2="250" stroke="var(--teal)" stroke-width="1.6"/>
+        <polygon points="856,245 870,250 856,255" fill="var(--teal)"/>
+      </svg>
+      <figcaption class="hero-caption">The operating model, a request clears every guardrail layer before anything real happens</figcaption>
+    </figure>
+  </div>
+  <div class="scroll-cue" aria-hidden="true"><span>Scroll</span><span class="bar"></span></div>
+</header>
+
+<!-- ==================== SECTION 2: BY THE NUMBERS ==================== -->
+<section class="body-section" id="numbers">
+  <div class="container">
+    <p class="eyebrow reveal">By the numbers</p>
+    <h2 class="sec-title reveal d1">AI adoption sprinted ahead. Industry governance is still being designed and implemented.</h2>
+    <p class="lede reveal d2">Half of travelers already plan with AI; barely a quarter of the organizations serving them have a documented AI strategy. Every number below is a gap someone will close, deliberately, or by incident.</p>
+
+    <div class="stat-grid">
+      <div class="stat teal reveal"><div class="num">54%</div>
+        <div class="lbl">of travelers have already used AI to plan travel, and 75% intend to for future trips.</div>
+        <div class="src">Mindtrip / Sabre / Sojern / MMGY, fieldwork Apr 2026 <a class="cite" href="#src14">14</a></div></div>
+      <div class="stat ember reveal d1"><div class="num">26%</div>
+        <div class="lbl">of destination organizations have a documented AI strategy. Just 22% offer AI trip-planning on their websites.</div>
+        <div class="src">Same study, DMO leader sample <a class="cite" href="#src14">14</a></div></div>
+      <div class="stat ember reveal d2"><div class="num">66%</div>
+        <div class="lbl">of travelers say they wouldn&rsquo;t trust AI to buy or book anything on their behalf.</div>
+        <div class="src">Expedia Group / YouGov, &ldquo;The AI Trust Gap,&rdquo; Mar 2026 <a class="cite" href="#src21">21</a></div></div>
+      <div class="stat gold reveal"><div class="num">7,851%</div>
+        <div class="lbl">one-year growth in AI-agent and agentic-browser traffic, travel among the three sectors absorbing over 95% of it.</div>
+        <div class="src">HUMAN Security telemetry, 2025&ndash;26 <a class="cite" href="#src16">16</a></div></div>
+      <div class="stat gold reveal d1"><div class="num">$812<span style="font-size:.55em">.02</span></div>
+        <div class="lbl">CAD, the total tribunal award that established a company owns what its AI says.</div>
+        <div class="src">Moffatt v. Air Canada, 2024 BCCRT 149 <a class="cite" href="#src12">12</a></div></div>
+      <div class="stat ember reveal d2"><div class="num">&euro;35M</div>
+        <div class="lbl">or 7% of global turnover, the EU AI Act&rsquo;s penalty ceiling, whichever is higher.</div>
+        <div class="src">Regulation (EU) 2024/1689 <a class="cite" href="#src9">9</a> <a class="cite" href="#src2">2</a></div></div>
+    </div>
+
+    <div class="chartframe reveal">
+      <p class="eyebrow" style="margin-bottom:18px">Fig. B, the readiness gap</p>
+      <svg viewBox="0 0 800 250" role="img" aria-label="Bar chart showing 54 percent traveler adoption against 26 and 22 percent organizational readiness">
+        <!-- axis -->
+        <line x1="150" y1="30" x2="150" y2="212" stroke="var(--line)" stroke-width="1.4"/>
+        <!-- traveler bar -->
+        <text x="140" y="66" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.2" fill="var(--ink-soft)">TRAVELERS</text>
+        <rect x="150" y="48" width="335" height="30" rx="4" fill="var(--teal)"/>
+        <text x="495" y="69" font-family="Fraunces, serif" font-weight="640" font-size="22" fill="var(--teal)">54%</text>
+        <text x="150" y="96" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1" fill="var(--ink-faint)">have used AI to plan travel</text>
+        <!-- org bars -->
+        <text x="140" y="146" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.2" fill="var(--ink-soft)">ORGS</text>
+        <rect x="150" y="128" width="161" height="30" rx="4" fill="var(--ember)"/>
+        <text x="321" y="149" font-family="Fraunces, serif" font-weight="640" font-size="22" fill="var(--ember)">26%</text>
+        <text x="150" y="176" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1" fill="var(--ink-faint)">documented AI strategy</text>
+        <rect x="150" y="186" width="136" height="14" rx="3" fill="var(--ember)" opacity=".45"/>
+        <text x="296" y="198" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--ember)" opacity=".8">22% offer AI trip-planning</text>
+        <!-- the gap: shaded span between bar ends, single annotation -->
+        <rect x="311" y="44" width="174" height="118" fill="var(--gold)" opacity=".07"/>
+        <line x1="311" y1="44" x2="311" y2="162" stroke="var(--gold)" stroke-width="1" stroke-dasharray="2 4"/>
+        <line x1="485" y1="44" x2="485" y2="162" stroke="var(--gold)" stroke-width="1" stroke-dasharray="2 4"/>
+        <text x="398" y="36" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" letter-spacing="1.6" fill="var(--gold)">THE GAP, 28 POINTS</text>
+      </svg>
+      <p class="chart-note">This shows the gap between traveler adoption and organizational readiness. Sources: Mindtrip / Sabre / Sojern / MMGY, Aug 2026 <a class="cite" href="#src14">14</a>. A year earlier, separate U.S. research put traveler use near 40% <a class="cite" href="#src15">15</a>, the gap is widening from the demand side.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PULLQUOTE 1 ==================== -->
+<aside class="pull" aria-label="Pull quote">
+  <div class="pull-inner reveal">
+    <span class="mark" aria-hidden="true">&ldquo;</span>
+    <blockquote>Travelers don&rsquo;t experience your ethics policy. They experience your defaults.&nbsp;&nbsp;</blockquote>
+    <p class="attr"><b>The thesis of this report</b> &middot; in ten words</p>
+  </div>
+</aside>
+
+<!-- ==================== SECTION 3: THE ARGUMENT ==================== -->
+<section class="body-section" id="argument">
+  <div class="container">
+    <p class="eyebrow reveal">The argument</p>
+    <h2 class="sec-title reveal d1">Every AI ethics failure is a design decision, made or missed.</h2>
+    <p class="lede reveal d2">Bias, hallucination, runaway autonomy, each traces back to a choice: what data, what authority, what oversight. Which means every one of them is preventable at the drawing board.</p>
+    <div class="prose reveal d3">
+      <p>Strip the vocabulary away and the pattern is hard to miss. A pricing model that quietly disadvantages certain travelers is a <strong>data and feature decision</strong>, what the system was trained on, and what it was allowed to weigh <a class="cite" href="#src1">1</a> <a class="cite" href="#src3">3</a>. A chatbot that invents a refund policy is a <strong>grounding decision</strong>, the model was permitted to answer from fluent guesswork instead of governed content <a class="cite" href="#src12">12</a>. A customer-facing assistant that &ldquo;agrees&rdquo; to sell a $58,000 vehicle for a dollar is an <strong>authority decision</strong>, nothing outside the model limited what it could commit to <a class="cite" href="#src17">17</a>. A service bot that turns on its own company after an update is a <strong>verification decision</strong>, the guardrails were tested once and trusted forever <a class="cite" href="#src18">18</a>. None of these organizations set out to behave unethically. Each shipped a default, and the default became the ethics.</p>
+      <p>For a company that builds travel software, the stakes arrive from three directions at once. <strong>Individual travelers get hurt:</strong> people have driven hundreds of kilometers to attractions that existed only in AI-generated video, and been routed by itinerary tools toward a destination that was never real, with financial loss and physical risk in the reporting <a class="cite" href="#src13">13</a>, and a bereaved passenger denied the fare his airline&rsquo;s own chatbot described <a class="cite" href="#src12">12</a>. <strong>Reputations absorb the blast:</strong> an AI mistake becomes a viral screenshot in hours and a tribunal record forever, and the research shows the damage compounds, when quality and ethical concerns become salient, traveler acceptance of AI recommendations measurably drops <a class="cite" href="#src5">5</a>. <strong>And systems act without authorization:</strong> the industry itself now says so in legal filings, with a major travel platform warning investors that agentic booking capabilities lacking strong consent controls could significantly increase fraud risk <a class="cite" href="#src20">20</a>, the risk class security standards call <em>excessive agency</em> <a class="cite" href="#src10">10</a>.</p>
+      <p>Here is the finding that reframes all of it: ethics is not the tax on the product. It is the gate on whether the product works. Across the sector&rsquo;s empirical research, <strong>perceived ethics is the single strongest predictor</strong> of whether hotel guests will let AI make decisions for them, ahead of perceived benefits, and far ahead of convenience <a class="cite" href="#src4">4</a>. Ethical and quality concerns suppress acceptance through trustworthiness <a class="cite" href="#src5">5</a>, and trust is the mechanism through which ethical practice converts into adoption at all <a class="cite" href="#src6">6</a>. The market has already voted: customers extend agency to systems they judge fair, and withdraw it from systems they don&rsquo;t.</p>
+      <p>Which is why this report treats guardrails as product architecture rather than policy garnish. The security literature is blunt about the mechanism: instructions inside a prompt are suggestions, so behavioral limits must be <strong>enforced outside the model</strong>, least privilege, independent controls, the final commitment held back from the machine <a class="cite" href="#src10">10</a>. Disclosure, grounded truth, authority limits, human override: the four rings in the diagram above are not compliance furniture. They are the design decisions that manufacture trust, or, left unmade, quietly spend it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 4: TIMELINE ==================== -->
+<section class="body-section" id="history">
+  <div class="container">
+    <p class="eyebrow reveal">How we got here</p>
+    <h2 class="sec-title reveal d1">A timeline of the AI Ethics and Guardrails journey for the Industry.</h2>
+    <p class="lede reveal d2">A decade of hard lessons became the frameworks, laws, and precedents below. The pattern to notice: the rules formalized fastest wherever a traveler got hurt first.</p>
+
+    <div class="timeline">
+      <div class="tl-phase reveal"><span>Phase 1 &middot; Origins</span></div>
+
+      <div class="tl-item reveal" data-side="left"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">2016&ndash;2018</p><h3>GDPR lays the data-protection substrate</h3>
+        <p class="tl-body">The EU adopts and applies the General Data Protection Regulation: lawfulness, fairness, transparency, and individual rights, access, rectification, erasure, portability, objection, become the enforcement floor AI ethics would build on, and the backstop later used against AI data malpractice in digital marketing.</p>
+        <p class="tl-meta">Sources <a class="cite" href="#src2">2</a> <a class="cite" href="#src3">3</a> + public framework &middot; Confirmed</p></div></div>
+
+      <div class="tl-item reveal" data-side="right"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">2018&ndash;2020</p><h3>AI ethics moves from seminar to engineering problem</h3>
+        <p class="tl-body">Documented algorithmic bias makes ethics concrete. In travel specifically, EU border-AI systems of this era, risk profiling, facial recognition, are later flagged by scholarship for potential discriminatory treatment of travelers from developing countries: the sector&rsquo;s earliest hard ethics case, arriving while the field is still converging on shared principles.</p>
+        <p class="tl-meta">Source <a class="cite" href="#src3">3</a> &middot; Confirmed</p></div></div>
+
+      <div class="tl-phase reveal"><span>Phase 2 &middot; Formalization</span></div>
+
+      <div class="tl-item reveal" data-side="left"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">Nov 2022</p><h3>Generative AI becomes consumer-facing overnight</h3>
+        <p class="tl-body">ChatGPT reaches 100 million users in two months, and travelers immediately begin planning real trips with it, moving AI ethics from a back-office model-governance question to a front-desk customer-experience question.</p>
+        <p class="tl-meta">Source <a class="cite" href="#src5">5</a> &middot; Confirmed</p></div></div>
+
+      <div class="tl-item reveal" data-side="right"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">Jan 2023</p><h3>NIST AI RMF 1.0 gives the field its operating grammar</h3>
+        <p class="tl-body">Four functions, Govern, Map, Measure, Manage, plus named trustworthy-AI characteristics become the de facto U.S. anchor: voluntary, non-certifiable, and the shared vocabulary nearly every later framework maps to. Extended to generative-AI risks by the AI 600-1 profile in July 2024.</p>
+        <p class="tl-meta">Source <a class="cite" href="#src7">7</a> &middot; Confirmed</p></div></div>
+
+      <div class="tl-item reveal" data-side="left"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">2023</p><h3>Ethics becomes a measured adoption variable</h3>
+        <p class="tl-body">Empirical travel research lands twice in one year: perceived ethics proves the <em>strongest</em> predictor of hotel guests&rsquo; willingness to let AI decide for them, and salient ethical or quality concerns measurably depress traveler acceptance of AI recommendations, mediated by trustworthiness. Ethics is now quantifiably commercial.</p>
+        <p class="tl-meta">Sources <a class="cite" href="#src4">4</a> <a class="cite" href="#src5">5</a> &middot; Confirmed</p></div></div>
+
+      <div class="tl-item reveal" data-side="right"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">Dec 2023</p><h3>ISO/IEC 42001 makes AI governance certifiable</h3>
+        <p class="tl-body">The first auditable AI management-system standard: lifecycle clauses plus 38 Annex A controls, third-party certification, the ISO 27001-style answer to &ldquo;prove you govern your AI.&rdquo;</p>
+        <p class="tl-meta">Source <a class="cite" href="#src8">8</a> &middot; Confirmed</p></div></div>
+
+      <div class="tl-phase reveal"><span>Phase 3 &middot; Adoption drivers</span></div>
+
+      <div class="tl-item reveal" data-side="left"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">Feb 14, 2024</p><h3>Moffatt v. Air Canada: an organization owns what its AI chatbot says</h3>
+        <p class="tl-body">The BC Civil Resolution Tribunal holds the airline liable for its website chatbot&rsquo;s incorrect bereavement-fare guidance, rejecting the argument that the chatbot was a separate entity responsible for its own statements. Small dollar amount, CAD $650.88 in damages within an $812.02 total award, industry-wide precedent. The defining event of this era.</p>
+        <p class="tl-meta">Source <a class="cite" href="#src12">12</a> &middot; Confirmed</p></div></div>
+
+      <div class="tl-item reveal" data-side="right"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">Aug 2024</p><h3>The EU AI Act enters into force</h3>
+        <p class="tl-body">The world&rsquo;s first comprehensive AI law sorts systems into four risk tiers with direct travel mappings, banned guest social-scoring, high-risk biometric boarding, limited-risk chatbots requiring AI disclosure, with penalties up to &euro;35M or 7% of global turnover. Prohibitions and the AI-literacy duty begin applying February 2025.</p>
+        <p class="tl-meta">Sources <a class="cite" href="#src9">9</a> <a class="cite" href="#src2">2</a> &middot; Confirmed</p></div></div>
+
+      <div class="tl-item reveal" data-side="left"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">Jan 2025</p><h3>The travel sector gets its own baseline</h3>
+        <p class="tl-body">UN Tourism and Saxion University launch <em>Artificial Intelligence Adoption in Tourism, Key Considerations for Sector Stakeholders</em> at FITUR, responsible-adoption guidance addressed to the tourism supply chain specifically, not adapted from another industry.</p>
+        <p class="tl-meta">Source <a class="cite" href="#src11">11</a> &middot; Confirmed</p></div></div>
+
+      <div class="tl-phase reveal"><span>Phase 4 &middot; Recent developments</span></div>
+
+      <div class="tl-item reveal" data-side="right"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">Jun&ndash;Sep 2025</p><h3>Synthetic content produces real travelers in real vans</h3>
+        <p class="tl-body">An elderly couple drives over 300&nbsp;km to ride Malaysia&rsquo;s &ldquo;Kuak Skyride&rdquo;, a cable car existing only in a hyper-realistic AI-generated video styled as news. Months later, LLM itinerary tools route travelers to Peru&rsquo;s nonexistent &ldquo;Sacred Canyon of Humantay,&rdquo; with reporting citing stranding risk and altitude danger. Both are logged by international AI-incident registries: fabricated travel content has crossed from novelty to consumer harm.</p>
+        <p class="tl-meta">Source <a class="cite" href="#src13">13</a> &middot; Confirmed (events); details reported</p></div></div>
+
+      <div class="tl-item reveal" data-side="left"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">Nov 2025 &ndash; Feb 2026</p><h3>Agentic AI arrives, and the industry names the risk itself</h3>
+        <p class="tl-body">Google confirms an agentic booking tool built <em>with</em> Booking.com, Expedia, Marriott, IHG and others; machine traffic surges, with agentic and browser-agent traffic up 7,851% year over year, travel among the three sectors absorbing over 95% of AI-driven traffic; and Expedia&rsquo;s 10-K formally warns investors that agentic booking capabilities lacking strong consent controls raise fraud risk. The ethics surface shifts from what AI <em>says</em> to what AI <em>does</em>.</p>
+        <p class="tl-meta">Sources <a class="cite" href="#src19">19</a> <a class="cite" href="#src16">16</a> <a class="cite" href="#src20">20</a> &middot; Confirmed</p></div></div>
+
+      <div class="tl-item reveal" data-side="right"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">Jul&ndash;Aug 2026</p><h3>The rules bend to reality: deferral plus live transparency</h3>
+        <p class="tl-body">The Digital Omnibus enters into force (July 27), deferring high-risk obligations to December 2027 (Annex III) and August 2028 (Annex I) because the compliance ecosystem wasn&rsquo;t ready, while Article 50 transparency duties take effect <strong>August 2, 2026</strong>: as of this month, disclosing AI interaction and labeling synthetic media are live legal obligations in the EU.</p>
+        <p class="tl-meta">Source <a class="cite" href="#src9">9</a> &middot; Confirmed</p></div></div>
+
+      <div class="tl-phase reveal"><span>Phase 5 &middot; Current state</span></div>
+
+      <div class="tl-item reveal" data-side="left"><span class="node"></span><div class="tl-card">
+        <p class="tl-date">Aug 2026</p><h3>Mainstream use, thin governance, and a trust cliff at the transaction</h3>
+        <p class="tl-body">54% of travelers have used AI to plan (up from roughly 40% in separate U.S. research a year earlier) and 75% intend to, yet only 22% of destination organizations offer AI trip-planning and 26% have a documented AI strategy. Trust collapses where money moves: most travelers still want a human checkpoint before booking. Sector scholarship consolidates around lifecycle governance, contestability, and human override as the design requirements for what comes next.</p>
+        <p class="tl-meta">Sources <a class="cite" href="#src14">14</a> <a class="cite" href="#src15">15</a> <a class="cite" href="#src16">16</a> <a class="cite" href="#src21">21</a> <a class="cite" href="#src3">3</a> &middot; Confirmed</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PULLQUOTE 2 (SOURCED) ==================== -->
+<aside class="pull tealline" aria-label="Pull quote">
+  <div class="pull-inner reveal">
+    <span class="mark" aria-hidden="true">&ldquo;</span>
+    <blockquote>Privacy by design beats privacy by notice.&nbsp;&nbsp;</blockquote>
+    <p class="attr"><b>World Travel Market</b> &middot; the lesson of the Iberia biometric rollout <a class="cite" href="#src2">2</a></p>
+  </div>
+</aside>
+
+<!-- ==================== SECTION 5: PILLARS ==================== -->
+<section class="body-section" id="pillars">
+  <div class="container">
+    <p class="eyebrow reveal">The operating model</p>
+    <h2 class="sec-title reveal d1">Seven pillars hold up the users trust.</h2>
+    <p class="lede reveal d2">Trust isn&rsquo;t a pillar, it&rsquo;s the roof. These seven are the load-bearing structure underneath it, each grounded in a standard and proven by an incident where it was missing.</p>
+
+    <div class="cardgrid">
+      <article class="xcard teal reveal"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Pillar 01 &middot; Fairness</span><span class="chev">&#9660;</span></span>
+        <h3>Fairness &amp; non-discrimination</h3>
+        <p class="xsum">AI must not produce systematically worse prices, options, or screening outcomes based on who a traveler is.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it is</p><p class="fv">In travel the exposure is unusually direct because AI touches prices, access, and movement: what a room costs you, which options you&rsquo;re shown, how you&rsquo;re screened at a border. Bias enters through unrepresentative data, feature choices, and developer influence, and compounds silently at scale.</p></div>
+          <div class="xfield"><p class="fl">Standards grounding</p><p class="fv soft">NIST names &ldquo;fair, with harmful bias managed&rdquo; as a trustworthy-AI characteristic <a class="cite" href="#src7">7</a>. The EU AI Act makes the severe versions illegal outright, the sector risk mapping classifies price adjustment by ethnicity or socioeconomic status as unacceptable risk, and passenger scoring on political views as a fundamental-rights violation <a class="cite" href="#src3">3</a> <a class="cite" href="#src9">9</a>. ISO 42001&rsquo;s controls make fairness an auditable system property <a class="cite" href="#src8">8</a>.</p></div>
+          <div class="xfield"><p class="fl">In practice</p><p class="fv soft">Fairness testing on recommenders and dynamic pricing; representative training data; regulator attention to algorithmic discrimination against specific nationalities or disabled travelers in hourly rate-setting <a class="cite" href="#src2">2</a>; documented bias sources with audits as the countermeasure <a class="cite" href="#src1">1</a>. The border-AI literature shows the failure mode at scale: risk-profiling that disadvantages travelers from developing countries <a class="cite" href="#src3">3</a>.</p></div>
+          <div class="xfield"><p class="fl">Evidence &amp; confidence</p><p class="fv soft">Sources <a class="cite" href="#src1">1</a> <a class="cite" href="#src2">2</a> <a class="cite" href="#src3">3</a> <a class="cite" href="#src7">7</a> <a class="cite" href="#src8">8</a> <a class="cite" href="#src9">9</a> &nbsp;<span class="conf">High</span></p></div>
+        </div></div></article>
+
+      <article class="xcard teal reveal d1"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Pillar 02 &middot; Transparency</span><span class="chev">&#9660;</span></span>
+        <h3>Transparency &amp; disclosure</h3>
+        <p class="xsum">People must know when they&rsquo;re dealing with AI and when content is synthetic, now live law in the EU.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it is</p><p class="fv">Disclosure of AI interaction, labeling of synthetic media, and, for consequential decisions, a workable account of why the system decided what it did. Transparency is the pillar that converted from best practice to legal obligation most recently: as of August 2, 2026, it is in force in the EU.</p></div>
+          <div class="xfield"><p class="fl">Standards grounding</p><p class="fv soft">EU AI Act Article 50 requires disclosure of AI interaction and labeling of AI-generated media <a class="cite" href="#src9">9</a>; limited-risk chatbots must effectively say &ldquo;I am an AI&rdquo; <a class="cite" href="#src2">2</a>. NIST lists accountable-and-transparent and explainable-and-interpretable among trustworthy characteristics <a class="cite" href="#src7">7</a>. The academic synthesis identifies hidden justification as the epistemic failure behind accountability collapse: you cannot contest a decision you cannot see <a class="cite" href="#src3">3</a>.</p></div>
+          <div class="xfield"><p class="fl">In practice</p><p class="fv soft">Chatbot self-identification; watermarking AI-generated excursion videos and marketing imagery <a class="cite" href="#src2">2</a> <a class="cite" href="#src9">9</a>; explainability tooling for recommendation logic and model &ldquo;nutrition labels&rdquo; for guest-facing features <a class="cite" href="#src1">1</a> <a class="cite" href="#src2">2</a>. The absence case is instructive: part of what made the fabricated-destination incidents harmful was synthetic content presenting itself as authentic news coverage <a class="cite" href="#src13">13</a>.</p></div>
+          <div class="xfield"><p class="fl">Evidence &amp; confidence</p><p class="fv soft">Sources <a class="cite" href="#src1">1</a> <a class="cite" href="#src2">2</a> <a class="cite" href="#src3">3</a> <a class="cite" href="#src7">7</a> <a class="cite" href="#src9">9</a> <a class="cite" href="#src13">13</a> &nbsp;<span class="conf">High</span></p></div>
+        </div></div></article>
+
+      <article class="xcard teal reveal"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Pillar 03 &middot; Privacy</span><span class="chev">&#9660;</span></span>
+        <h3>Privacy &amp; data minimization</h3>
+        <p class="xsum">Collect only what you can defend, keep it only as long as you must, travel handles the trifecta of movement, payment, and biometrics.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it is</p><p class="fv">Real control for travelers over personal data, with minimization as the operating mantra. Travel is a lightning-rod sector because it handles movement patterns, payment data, and immutable biometric identifiers together <a class="cite" href="#src2">2</a>.</p></div>
+          <div class="xfield"><p class="fl">Standards grounding</p><p class="fv soft">GDPR is the substrate, lawfulness, fairness, transparency, and the rights of access, rectification, erasure, portability, and objection <a class="cite" href="#src3">3</a>. NIST includes privacy-enhanced as a trustworthy characteristic <a class="cite" href="#src7">7</a>. The academic synthesis frames privacy violation as excessive knowledge extraction, surveillance as the ethical outcome <a class="cite" href="#src3">3</a>. EU data-protection guidance on airport biometrics pushes proportionality and minimization even with consent <a class="cite" href="#src2">2</a>.</p></div>
+          <div class="xfield"><p class="fl">In practice</p><p class="fv soft">Privacy by design beats privacy by notice: the Iberia biometric-boarding exemplar stored encrypted images accessible only during boarding events, with manual boarding always available <a class="cite" href="#src2">2</a>. Edge storage of guest preferences on-device <a class="cite" href="#src2">2</a>; anonymization and differential privacy <a class="cite" href="#src1">1</a>; recognition that loyalty programs tracking spend, sleep, health, and geolocation are prime cybercrime targets <a class="cite" href="#src2">2</a>.</p></div>
+          <div class="xfield"><p class="fl">Evidence &amp; confidence</p><p class="fv soft">Sources <a class="cite" href="#src1">1</a> <a class="cite" href="#src2">2</a> <a class="cite" href="#src3">3</a> <a class="cite" href="#src7">7</a> + GDPR &nbsp;<span class="conf">High</span></p></div>
+        </div></div></article>
+
+      <article class="xcard teal reveal d1"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Pillar 04 &middot; Accuracy</span><span class="chev">&#9660;</span></span>
+        <h3>Accuracy &amp; information integrity</h3>
+        <p class="xsum">What your AI tells customers must be true, because legally and reputationally, you said it.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it is</p><p class="fv">The pillar the travel industry learned by tribunal: generative systems confabulate fluently, and travelers make real financial and safety decisions on their outputs. There is no error message when the model is wrong, only consequences later.</p></div>
+          <div class="xfield"><p class="fl">Standards grounding</p><p class="fv soft">NIST&rsquo;s first trustworthy characteristic is valid-and-reliable, and its Generative AI Profile treats confabulation and information integrity as first-class risks <a class="cite" href="#src7">7</a>. OWASP codifies Misinformation as a top-ten application risk <a class="cite" href="#src10">10</a>. The academic synthesis found misinformation and trust to be the most frequently discussed ethics theme in the entire sector literature, false knowledge claims whose ethical outcome is deception <a class="cite" href="#src3">3</a>.</p></div>
+          <div class="xfield"><p class="fl">In practice</p><p class="fv soft">Moffatt v. Air Canada is the operating precedent: a chatbot&rsquo;s incorrect bereavement-fare guidance was the company&rsquo;s misrepresentation, full stop, the tribunal rejected the idea that customers should cross-check one part of a company&rsquo;s website against another <a class="cite" href="#src12">12</a>. The fabricated-destination incidents show the consumer-harm ceiling <a class="cite" href="#src13">13</a>, and the commercial evidence closes the loop: salient quality problems measurably depress traveler acceptance of AI recommendations <a class="cite" href="#src5">5</a>.</p></div>
+          <div class="xfield"><p class="fl">Evidence &amp; confidence</p><p class="fv soft">Sources <a class="cite" href="#src3">3</a> <a class="cite" href="#src5">5</a> <a class="cite" href="#src7">7</a> <a class="cite" href="#src10">10</a> <a class="cite" href="#src12">12</a> <a class="cite" href="#src13">13</a> &nbsp;<span class="conf">High</span></p></div>
+        </div></div></article>
+
+      <article class="xcard teal reveal"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Pillar 05 &middot; Oversight</span><span class="chev">&#9660;</span></span>
+        <h3>Accountability &amp; human oversight</h3>
+        <p class="xsum">A named human, a working override, and a path to contest what the system inferred about you.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it is</p><p class="fv">Accountability answers who is responsible when AI acts; oversight ensures a person can catch and correct the system before harm compounds; contestability gives the affected traveler a way to see and challenge the inference behind a decision.</p></div>
+          <div class="xfield"><p class="fl">Standards grounding</p><p class="fv soft">The EU AI Act requires human oversight for high-risk systems as a design obligation <a class="cite" href="#src9">9</a>. NIST&rsquo;s Govern function establishes accountability as the cross-cutting foundation <a class="cite" href="#src7">7</a>; ISO 42001&rsquo;s leadership clauses make top management answerable for AI policy and roles <a class="cite" href="#src8">8</a>. The academic synthesis goes furthest: the &ldquo;off-the-loop&rdquo; condition, where neither guests nor employees can override, is a harm multiplier, and contestability is elevated to a design requirement alongside real human override at the service encounter <a class="cite" href="#src3">3</a>.</p></div>
+          <div class="xfield"><p class="fl">In practice</p><p class="fv soft">Front-desk agents and border officers retain veto power; opt-outs that actually work; grievance processes with response SLAs <a class="cite" href="#src2">2</a>. The failure mode is equally concrete: in Moffatt, the human escalation path existed but couldn&rsquo;t correct the AI&rsquo;s error, the airline acknowledged the misleading output yet still refused the refund, converting a chatbot mistake into a legal finding <a class="cite" href="#src12">12</a>.</p></div>
+          <div class="xfield"><p class="fl">Evidence &amp; confidence</p><p class="fv soft">Sources <a class="cite" href="#src2">2</a> <a class="cite" href="#src3">3</a> <a class="cite" href="#src7">7</a> <a class="cite" href="#src8">8</a> <a class="cite" href="#src9">9</a> <a class="cite" href="#src12">12</a> &nbsp;<span class="conf">High</span></p></div>
+        </div></div></article>
+
+      <article class="xcard ember reveal d1"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Pillar 06 &middot; Guardrails</span><span class="chev">&#9660;</span></span>
+        <h3>Bounded autonomy &amp; authority limits</h3>
+        <p class="xsum">Hard limits on what AI is permitted to do, enforced outside the model, because in-prompt rules are suggestions.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it is</p><p class="fv">The guardrails pillar. Without it, the risk isn&rsquo;t that AI is unethical in the abstract, it&rsquo;s that it does things nobody authorized: commits to prices, promises refunds, takes actions. The system can inform; it cannot commit.</p></div>
+          <div class="xfield"><p class="fl">Standards grounding</p><p class="fv soft">OWASP is the anchor: prompt injection is risk #1 because models process instructions and data in one channel with no foolproof separation, and excessive agency names the danger of over-permissioned autonomous action. The doctrine that follows: enforce guardrails in external systems, keep least-privilege controls independent of the model, and hold the final commitment, payment, binding statements, outside the model&rsquo;s authority <a class="cite" href="#src10">10</a>. Deployment-stage safeguards in the sector lifecycle framework <a class="cite" href="#src3">3</a>; NIST&rsquo;s Manage function operationalizes ongoing control <a class="cite" href="#src7">7</a>.</p></div>
+          <div class="xfield"><p class="fl">In practice</p><p class="fv soft">The negative cases teach fastest: a dealership chatbot with no authority limits was steered into &ldquo;agreeing&rdquo; to sell a ~$58,000 vehicle for $1 <a class="cite" href="#src17">17</a>. In travel the stakes are now filed with regulators, Expedia&rsquo;s 10-K warns that agentic booking without strong consent controls raises fraud risk <a class="cite" href="#src20">20</a>, while agentic traffic grows 7,851% year over year, with travel among its top destination sectors <a class="cite" href="#src16">16</a>, and the industry&rsquo;s largest players build agentic booking together <a class="cite" href="#src19">19</a>.</p></div>
+          <div class="xfield"><p class="fl">Evidence &amp; confidence</p><p class="fv soft">Sources <a class="cite" href="#src3">3</a> <a class="cite" href="#src7">7</a> <a class="cite" href="#src10">10</a> <a class="cite" href="#src16">16</a> <a class="cite" href="#src17">17</a> <a class="cite" href="#src19">19</a> <a class="cite" href="#src20">20</a> &nbsp;<span class="conf">High</span></p></div>
+        </div></div></article>
+
+      <article class="xcard gold reveal" style="grid-column:1/-1"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Pillar 07 &middot; Lifecycle</span><span class="chev">&#9660;</span></span>
+        <h3>Lifecycle governance, ethics as a design decision, continuously verified</h3>
+        <p class="xsum">Responsible AI is not a launch checklist. It&rsquo;s a management system that makes ethical choices at every stage and re-verifies them as models, prompts, and vendors change.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it is</p><p class="fv">The pillar that carries this report&rsquo;s core claim: design decisions are where responsibility becomes real. Problem definition, data collection, model development, deployment, feedback, each stage embeds choices, and each choice needs re-verification as the system evolves underneath it.</p></div>
+          <div class="xfield"><p class="fl">Standards grounding</p><p class="fv soft">ISO/IEC 42001 exists precisely for this, a certifiable management system covering the full AI lifecycle, in the same clause architecture as ISO 27001 <a class="cite" href="#src8">8</a>. NIST&rsquo;s four functions are explicitly iterative, re-entering Govern with every cycle <a class="cite" href="#src7">7</a>. The sector&rsquo;s five-stage lifecycle framework maps epistemic risks to safeguards, from clarifying whether a system optimizes guest satisfaction or revenue, through continuous refinement on guest feedback <a class="cite" href="#src3">3</a>. Practitioner guidance converges: ethics baked in from initial design through post-deployment monitoring, asking early who a system could harm or exclude <a class="cite" href="#src1">1</a>.</p></div>
+          <div class="xfield"><p class="fl">In practice</p><p class="fv soft">Risk-tiering every AI product before code freeze <a class="cite" href="#src2">2</a>; classifying each use case against the four EU risk tiers <a class="cite" href="#src3">3</a> <a class="cite" href="#src9">9</a>; and treating guardrails as perishable, a UK parcel carrier&rsquo;s chatbot had reportedly operated acceptably for years until a system update introduced the regression that let a customer make it swear and disparage its own company <a class="cite" href="#src18">18</a>. Governance that only ran at launch would have missed it. The regulatory deferral makes the same point at scale: high-risk deadlines moved because the verification ecosystem wasn&rsquo;t ready, not because the requirements were wrong <a class="cite" href="#src9">9</a>.</p></div>
+          <div class="xfield"><p class="fl">Evidence &amp; confidence</p><p class="fv soft">Sources <a class="cite" href="#src1">1</a> <a class="cite" href="#src2">2</a> <a class="cite" href="#src3">3</a> <a class="cite" href="#src7">7</a> <a class="cite" href="#src8">8</a> <a class="cite" href="#src9">9</a> <a class="cite" href="#src18">18</a> &nbsp;<span class="conf">High</span></p></div>
+        </div></div></article>
+    </div>
+
+    <!-- Supporting practices dropdown -->
+    <article class="xcard supp reveal" id="supporting"><button class="xhead" aria-expanded="false">
+      <span class="xkick"><span>Adjacent to the core</span><span class="chev">&#9660;</span></span>
+      <h3>Supporting practices observed</h3>
+      <p class="xsum">Six practices that accompany the concept without defining it, expand for the evidence-backed list.</p></button>
+      <div class="xbody"><div class="xbody-inner">
+        <div class="suppitem"><h4>S1 &middot; AI literacy &amp; workforce training</h4><p>Staff who deploy and supervise AI must understand it. The AI Act&rsquo;s Article 4 literacy duty has applied since February 2025 and was left untouched by the Omnibus <a class="cite" href="#src9">9</a>; national programs train hotel staff in responsible AI, and ethics onboarding for every new hire is recommended practice <a class="cite" href="#src2">2</a>.</p><p class="tl-meta">Confidence: High</p></div>
+        <div class="suppitem"><h4>S2 &middot; Red-teaming &amp; continuous adversarial testing</h4><p>Deliberately attacking your own systems before strangers do, quarterly exercises simulating attacker paths through guest-facing apps <a class="cite" href="#src2">2</a>; the incident record shows exactly what untested systems yield <a class="cite" href="#src17">17</a> <a class="cite" href="#src18">18</a>.</p><p class="tl-meta">Confidence: High</p></div>
+        <div class="suppitem"><h4>S3 &middot; Vendor &amp; supply-chain diligence</h4><p>Most travel companies buy AI rather than build it; supply chain is a named top-ten LLM risk <a class="cite" href="#src10">10</a>, and the dealership incident involved a third-party-deployed bot the brand still wore reputationally <a class="cite" href="#src17">17</a>.</p><p class="tl-meta">Confidence: Medium&ndash;High</p></div>
+        <div class="suppitem"><h4>S4 &middot; Redress &amp; grievance channels</h4><p>A working path for customers affected by AI decisions, clear grievance processes with response SLAs <a class="cite" href="#src2">2</a>; the Moffatt record demonstrates the cost when escalation exists but fails to correct <a class="cite" href="#src12">12</a>.</p><p class="tl-meta">Confidence: High</p></div>
+        <div class="suppitem"><h4>S5 &middot; Workforce-impact management</h4><p>The sector literature devotes a full theme to AI&rsquo;s human cost, displacement risk, emotional alienation in automated service, and the need to pair adoption with reskilling <a class="cite" href="#src3">3</a>.</p><p class="tl-meta">Confidence: Medium</p></div>
+        <div class="suppitem"><h4>S6 &middot; Sustainability &amp; compute transparency</h4><p>Logging compute energy and tying it to climate targets; publishing energy stats alongside latency so clients can meet reporting duties <a class="cite" href="#src2">2</a>; the academic literature links AI ethics to environmental externalities <a class="cite" href="#src3">3</a>.</p><p class="tl-meta">Confidence: Medium</p></div>
+      </div></div></article>
+  </div>
+</section>
+
+<!-- ==================== SECTION 6: TRUST CLIFF ==================== -->
+<section class="body-section" id="cliff">
+  <div class="container">
+    <p class="eyebrow reveal">The trust cliff</p>
+    <h2 class="sec-title reveal d1">Its accepted to use AI to plan, but not to pay (yet).</h2>
+    <p class="lede reveal d2">Comfort with AI collapses at the exact moment money moves. That cliff is the market telling you where guardrails matter most.</p>
+
+    <div class="chartframe reveal">
+      <p class="eyebrow" style="margin-bottom:18px">Fig. A, comfort with AI, by stage of the journey</p>
+      <svg viewBox="0 0 800 320" role="img" aria-label="Schematic cliff chart: traveler comfort is high for AI planning and drops sharply at the booking transaction">
+        <!-- left plateau: planning -->
+        <path d="M70,120 L400,120 L400,272 L70,272 Z" fill="var(--teal)" opacity=".12"/>
+        <line x1="70" y1="120" x2="400" y2="120" stroke="var(--teal)" stroke-width="3"/>
+        <text x="82" y="86" font-family="JetBrains Mono, monospace" font-size="11.5" letter-spacing="1.8" fill="var(--teal)">PLANNING</text>
+        <text x="82" y="104" font-family="JetBrains Mono, monospace" font-size="10.5" letter-spacing=".8" fill="var(--ink-soft)">54% have used AI &#183; 75% intend to</text>
+        <!-- the cliff -->
+        <line x1="400" y1="120" x2="400" y2="210" stroke="var(--gold)" stroke-width="2" stroke-dasharray="4 5"/>
+        <circle cx="400" cy="120" r="6" fill="var(--gold)"/>
+        <text x="400" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11.5" letter-spacing="2" fill="var(--gold)">WHERE MONEY MOVES</text>
+        <line x1="400" y1="68" x2="400" y2="108" stroke="var(--gold)" stroke-width="1" opacity=".6"/>
+        <!-- right plateau: transaction -->
+        <path d="M400,210 L730,210 L730,272 L400,272 Z" fill="var(--ember)" opacity=".12"/>
+        <line x1="400" y1="210" x2="730" y2="210" stroke="var(--ember)" stroke-width="3"/>
+        <text x="430" y="242" font-family="JetBrains Mono, monospace" font-size="11.5" letter-spacing="1.8" fill="var(--ember)">TRANSACTION</text>
+        <text x="430" y="260" font-family="JetBrains Mono, monospace" font-size="10.5" letter-spacing=".8" fill="var(--ink-soft)">66% won&#8217;t let AI buy or book for them</text>
+        <!-- baseline -->
+        <line x1="70" y1="272" x2="730" y2="272" stroke="var(--line)" stroke-width="1.4"/>
+        <text x="70" y="296" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.2" fill="var(--ink-faint)">DREAM &#8594; PLAN</text>
+        <text x="730" y="296" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.2" fill="var(--ink-faint)">PAY &#8594; COMMIT</text>
+      </svg>
+      <p class="chart-note">This shows the cliff between what travelers let AI explore and what they let it do. Schematic step heights; the numbers are the data. Sources: planning adoption <a class="cite" href="#src14">14</a>; the planning-vs-payment trust divide in traffic and survey work <a class="cite" href="#src16">16</a>; and the transaction line from Expedia Group&rsquo;s AI Trust Gap study <a class="cite" href="#src21">21</a>, where, within the same 5,700-person survey, 53% welcome AI suggestions yet 66% refuse AI transactions, citing loss of control (57%) and payment-privacy concerns (57%). Guardrails at the commit step, consent, confirmation, human checkpoint, are what let systems earn their way across this line.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 7: STANDARDS ==================== -->
+<section class="body-section" id="standards">
+  <div class="container">
+    <p class="eyebrow reveal">The rulebook, assembled</p>
+    <h2 class="sec-title reveal d1">The rules arrived in layers, and the layers fit.</h2>
+    <p class="lede reveal d2">A regulatory floor, an operating grammar, an auditable proof layer, an engineering code, a sector lens. Together they answer the question each cannot answer alone.</p>
+
+    <div class="cardgrid">
+      <article class="xcard gold reveal"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Operating grammar &middot; Primary anchor</span><span class="chev">&#9660;</span></span>
+        <h3>NIST AI Risk Management Framework 1.0</h3>
+        <p class="xsum">Govern, Map, Measure, Manage, the voluntary vocabulary nearly everything else maps to.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it prescribes</p><p class="fv soft">An iterative operating model for AI risk: Govern (cross-cutting accountability, policy, culture), Map (context and impact identification), Measure (quantitative and qualitative assessment), Manage (prioritized response), anchored to named trustworthy characteristics: valid and reliable, safe, secure and resilient, accountable and transparent, explainable, privacy-enhanced, fair with harmful bias managed. The Generative AI Profile (AI 600-1) extends it to confabulation and information-integrity risks <a class="cite" href="#src7">7</a>.</p></div>
+          <div class="xfield"><p class="fl">Where industry aligns</p><p class="fv soft">Already the de facto U.S. vocabulary, federal procurement aligns with it, to the point that hotels bidding for federal conference business must show they map, measure, and manage AI hazards <a class="cite" href="#src2">2</a>. Its function language recurs throughout sector guidance and practitioner playbooks <a class="cite" href="#src1">1</a> <a class="cite" href="#src2">2</a>.</p></div>
+          <div class="xfield"><p class="fl">Where practice diverges</p><p class="fv soft">The Govern function is precisely what&rsquo;s thin on the ground: 26% of destination organizations have a documented AI strategy while 54% of their customers already use AI <a class="cite" href="#src14">14</a>, the technology has outrun the framework. Voluntariness means alignment is uneven and self-claimed.</p></div>
+          <div class="xfield"><p class="fl">Weight</p><p class="fv soft"><span class="conf">Primary anchor</span> &nbsp;Organizing grammar for this report&rsquo;s pillars and roadmap.</p></div>
+        </div></div></article>
+
+      <article class="xcard gold reveal d1"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Regulatory floor &middot; Primary anchor</span><span class="chev">&#9660;</span></span>
+        <h3>EU AI Act, as amended (2026)</h3>
+        <p class="xsum">Four risk tiers with direct travel mappings; transparency in force now, high-risk deferred to 2027&ndash;28.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it prescribes</p><p class="fv soft">Prohibited practices (guest social-scoring, manipulative systems, emotion-detection in workforce monitoring); high-risk systems (biometric border and boarding, visa and insurance decisions) requiring conformity assessment, human oversight, and logging; limited-risk systems (chatbots, OTA recommenders) requiring disclosure; minimal-risk tools free but under GDPR. Article 50 transparency, disclose AI interaction, label synthetic media, took effect August 2, 2026; the literacy duty has applied since February 2025. High-risk obligations now apply December 2, 2027 (Annex III) and August 2, 2028 (Annex I). Penalties reach &euro;35M or 7% of global turnover <a class="cite" href="#src9">9</a> <a class="cite" href="#src2">2</a>.</p></div>
+          <div class="xfield"><p class="fl">Where industry aligns</p><p class="fv soft">The risk-tier logic has become the industry&rsquo;s shared mental model, the sector&rsquo;s own academic risk framework is explicitly adapted from the Act&rsquo;s four levels <a class="cite" href="#src3">3</a>, and exemplar deployments embody its proportionality principle ahead of enforcement <a class="cite" href="#src2">2</a>.</p></div>
+          <div class="xfield"><p class="fl">Where practice diverges</p><p class="fv soft">Divergence is documented at regulatory scale: the deferral happened because harmonised standards, notified bodies, and national authorities weren&rsquo;t ready <a class="cite" href="#src9">9</a>. And the newly live transparency duties meet a landscape where unlabeled synthetic travel content still misleads real travelers <a class="cite" href="#src13">13</a>.</p></div>
+          <div class="xfield"><p class="fl">Weight</p><p class="fv soft"><span class="conf">Primary anchor</span> &nbsp;The regulatory floor and this report&rsquo;s risk-tier vocabulary.</p></div>
+        </div></div></article>
+
+      <article class="xcard gold reveal"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Proof layer &middot; Contributing</span><span class="chev">&#9660;</span></span>
+        <h3>ISO/IEC 42001:2023</h3>
+        <p class="xsum">The first certifiable AI management-system standard, the auditable &ldquo;prove it&rdquo; layer.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it prescribes</p><p class="fv soft">Auditable requirements for establishing, operating, and continually improving an AI management system across the full lifecycle, in the Annex SL clause architecture shared with ISO 27001, plus 38 Annex A controls. Applies equally to organizations that build, embed, or merely use AI; third-party certified on a three-year cycle. Maps well onto the AI Act&rsquo;s expectations for risk management, data governance, human oversight, and post-market monitoring, without itself conferring legal conformity <a class="cite" href="#src8">8</a>.</p></div>
+          <div class="xfield"><p class="fl">Where industry aligns</p><p class="fv soft">Certification is real and growing, major AI and cloud providers, the vendors travel companies build on, already hold it <a class="cite" href="#src8">8</a>; organizations with ISO 27001 programs can extend familiar machinery to AI.</p></div>
+          <div class="xfield"><p class="fl">Where practice diverges</p><p class="fv soft">Within travel itself, certification appears rare; most travel companies buy AI rather than build it, so governance evidence lives in vendor contracts rather than their own management systems, exactly the supply-chain gap the security taxonomy flags <a class="cite" href="#src10">10</a> and the third-party-bot incidents illustrate <a class="cite" href="#src17">17</a>.</p></div>
+          <div class="xfield"><p class="fl">Weight</p><p class="fv soft"><span class="conf">Contributing</span> &nbsp;Primary grounding for Pillar 07, lifecycle governance.</p></div>
+        </div></div></article>
+
+      <article class="xcard gold reveal d1"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Engineering code &middot; Contributing</span><span class="chev">&#9660;</span></span>
+        <h3>OWASP Top 10 for LLM Applications (2025)</h3>
+        <p class="xsum">The canonical genAI application-risk taxonomy, and the external-guardrails doctrine.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it prescribes</p><p class="fv soft">Ten canonical risks: prompt injection (#1, instructions and data share one channel, so no foolproof prevention exists), sensitive-information disclosure, supply chain, data and model poisoning, improper output handling, excessive agency, system-prompt leakage, vector and embedding weaknesses, misinformation, unbounded consumption. Core doctrine: enforce guardrails in external systems, keep least-privilege controls independent of the model, treat in-prompt restrictions as unreliable <a class="cite" href="#src10">10</a>.</p></div>
+          <div class="xfield"><p class="fl">Where industry aligns</p><p class="fv soft">The doctrine is visibly being learned, after incidents, systems get authority-limited or withdrawn <a class="cite" href="#src17">17</a> <a class="cite" href="#src18">18</a>; guardrail tooling markets have formed around these categories; and a major travel platform now names consent controls on agentic booking as a material risk in its own filing <a class="cite" href="#src20">20</a>.</p></div>
+          <div class="xfield"><p class="fl">Where practice diverges</p><p class="fv soft">The incident record keeps refilling, and agentic traffic, travel among its top destinations, grows far faster than control maturity <a class="cite" href="#src16">16</a>. Prompt injection remains structurally unsolved; divergence here is partly the technology&rsquo;s own frontier.</p></div>
+          <div class="xfield"><p class="fl">Weight</p><p class="fv soft"><span class="conf">Contributing</span> &nbsp;The engineering backbone of Pillar 06, bounded autonomy.</p></div>
+        </div></div></article>
+
+      <article class="xcard gold reveal"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Sector lens &middot; Contributing</span><span class="chev">&#9660;</span></span>
+        <h3>UN Tourism, AI Adoption in Tourism (2025)</h3>
+        <p class="xsum">The travel sector&rsquo;s own responsible-adoption baseline, addressed to its supply chain.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it prescribes</p><p class="fv soft"><em>Artificial Intelligence Adoption in Tourism, Key Considerations for Sector Stakeholders</em>, with Saxion University: guidance covering ethical AI, legal considerations, education and upskilling, and stakeholder-specific recommendations for operators, destinations, technologists, and policymakers <a class="cite" href="#src11">11</a>.</p></div>
+          <div class="xfield"><p class="fl">Where industry aligns</p><p class="fv soft">Positioned as the go-to checklist for destination organizations piloting AI <a class="cite" href="#src2">2</a>; it gives the sector a shared reference generic frameworks cannot.</p></div>
+          <div class="xfield"><p class="fl">Where practice diverges</p><p class="fv soft">Guidance exists; uptake is thin, 22% of destination organizations offer AI trip-planning and 26% have a documented AI strategy, eighteen months after publication <a class="cite" href="#src14">14</a>.</p></div>
+          <div class="xfield"><p class="fl">Weight</p><p class="fv soft"><span class="conf">Contributing</span> &nbsp;Validates that the pillars translate to travel-specific stakeholders.</p></div>
+        </div></div></article>
+
+      <article class="xcard gold reveal d1"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Substrate &middot; Peripheral</span><span class="chev">&#9660;</span></span>
+        <h3>GDPR (2016/679)</h3>
+        <p class="xsum">The data-protection floor beneath everything above, applying wherever personal data flows.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">What it prescribes</p><p class="fv soft">Lawfulness, fairness, transparency; purpose limitation and minimization; and individual rights of access, rectification, erasure, portability, and objection, applying to AI wherever personal data flows, including minimal-risk systems the AI Act otherwise leaves free <a class="cite" href="#src3">3</a> <a class="cite" href="#src2">2</a>.</p></div>
+          <div class="xfield"><p class="fl">Where industry aligns</p><p class="fv soft">Privacy-by-design exemplars in travel, edge storage of preferences, boarding-window-only biometric retention, working opt-outs, are GDPR proportionality made operational <a class="cite" href="#src2">2</a>.</p></div>
+          <div class="xfield"><p class="fl">Where practice diverges</p><p class="fv soft">The enforcement record includes firms fined for AI-related privacy violations, predominantly manipulation of users&rsquo; data in digital marketing <a class="cite" href="#src3">3</a>.</p></div>
+          <div class="xfield"><p class="fl">Weight</p><p class="fv soft"><span class="conf">Peripheral</span> &nbsp;Grounds Pillar 03; predates and underlies the AI-specific stack.</p></div>
+        </div></div></article>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PULLQUOTE 3 ==================== -->
+<aside class="pull" aria-label="Pull quote">
+  <div class="pull-inner reveal">
+    <span class="mark" aria-hidden="true">&ldquo;</span>
+    <blockquote>The strongest predictor of whether guests accept AI isn&rsquo;t convenience. It&rsquo;s ethics.&nbsp;&nbsp;</blockquote>
+    <p class="attr"><b>What 400 hotel guests taught the industry</b> &middot; editorial, after source <a class="cite" href="#src4">4</a></p>
+  </div>
+</aside>
+
+<!-- ==================== SECTION 8: PRACTICES & GAPS ==================== -->
+<section class="body-section" id="practices">
+  <div class="container">
+    <p class="eyebrow reveal">In practice</p>
+    <h2 class="sec-title reveal d1">What good looks like, and where it quietly breaks down.</h2>
+    <p class="lede reveal d2">Nine established practices, and the specific, recurring way each one fails in the wild. The pattern: partial adoption looks identical to full adoption until the day it doesn&rsquo;t.</p>
+
+    <div class="cardgrid">
+      <article class="xcard teal reveal"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Practice 01</span><span class="chev">&#9660;</span></span>
+        <h3>AI use-case inventory &amp; risk classification</h3>
+        <p class="xsum">One list of every AI touchpoint, tiered by risk, the entry condition for everything else.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">Grounding</p><p class="fv soft">NIST Map function <a class="cite" href="#src7">7</a>; the EU four-tier taxonomy <a class="cite" href="#src9">9</a>; the sector risk framework adapted from those tiers <a class="cite" href="#src3">3</a>; practitioner guidance to classify every AI product before code freeze <a class="cite" href="#src2">2</a>.</p></div>
+          <div class="xfield"><p class="fl">What it delivers</p><p class="fv soft">Pillar 07 and the precondition for proportionate controls: you cannot govern what you haven&rsquo;t listed.</p></div>
+          <div class="xfield"><p class="fl" style="color:var(--ember)">Where it breaks down</p><p class="fv soft">Classification happens after deployment, if at all. Only 26% of destination organizations have a documented AI strategy while 54% of their customers already use AI <a class="cite" href="#src14">14</a>, inventory lags adoption because AI arrives embedded in tools teams already use, not through a procurement gate.</p></div>
+          <div class="xfield"><p class="fl">Why it&rsquo;s hard</p><p class="fv soft">Modern AI enters through a hundred side doors. The realistic goal is a living inventory with an owner, not a perfect one.</p></div>
+        </div></div></article>
+
+      <article class="xcard teal reveal d1"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Practice 02</span><span class="chev">&#9660;</span></span>
+        <h3>AI disclosure &amp; synthetic-media labeling</h3>
+        <p class="xsum">The cheapest trust instrument available, and, in the EU, now the law.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">Grounding</p><p class="fv soft">EU AI Act Article 50, in force August 2, 2026 <a class="cite" href="#src9">9</a>; &ldquo;I am an AI&rdquo; chatbot disclosure and watermarking of AI-generated marketing media <a class="cite" href="#src2">2</a>; transparency as a named trustworthy characteristic <a class="cite" href="#src7">7</a>.</p></div>
+          <div class="xfield"><p class="fl">What it delivers</p><p class="fv soft">Pillar 02. Customers who know they&rsquo;re talking to AI calibrate accordingly.</p></div>
+          <div class="xfield"><p class="fl" style="color:var(--ember)">Where it breaks down</p><p class="fv soft">Disclosure gets treated as fine print rather than interface design; synthetic promotional content ships unlabeled; and the wider ecosystem&rsquo;s unlabeled content sets traveler expectations no single brand controls <a class="cite" href="#src13">13</a>. The legacy-system grace window to December 2026 can become an excuse for drift <a class="cite" href="#src9">9</a>.</p></div>
+          <div class="xfield"><p class="fl">Why it&rsquo;s hard</p><p class="fv soft">Labels feel like admissions. The evidence says the opposite: salient errors and ethical concerns depress acceptance through lost trustworthiness <a class="cite" href="#src5">5</a>, and a hidden AI turns any error into two bad discoveries at once.</p></div>
+        </div></div></article>
+
+      <article class="xcard teal reveal"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Practice 03</span><span class="chev">&#9660;</span></span>
+        <h3>Grounded accuracy: one source of truth</h3>
+        <p class="xsum">The chatbot answers from the same governed content as the policy page, and refuses outside it.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">Grounding</p><p class="fv soft">NIST valid-and-reliable plus the GenAI Profile&rsquo;s confabulation risk <a class="cite" href="#src7">7</a>; misinformation as a top-ten application risk <a class="cite" href="#src10">10</a>; the sector literature&rsquo;s single most-discussed theme <a class="cite" href="#src3">3</a>.</p></div>
+          <div class="xfield"><p class="fl">What it delivers</p><p class="fv soft">Pillar 04. The chatbot and the website become incapable of disagreeing.</p></div>
+          <div class="xfield"><p class="fl" style="color:var(--ember)">Where it breaks down</p><p class="fv soft">The bot and the site drift apart. Moffatt is exactly this failure: the bot said one thing, the linked policy page said another, and the tribunal held that customers cannot be expected to cross-check one part of a company&rsquo;s site against another <a class="cite" href="#src12">12</a>. Content governance covers the CMS; nobody owns what the model says.</p></div>
+          <div class="xfield"><p class="fl">Why it&rsquo;s hard</p><p class="fv soft">Generative systems are fluent even when wrong, there is no error message. The fix is architectural (retrieval from governed sources, refusal outside them), not exhortational.</p></div>
+        </div></div></article>
+
+      <article class="xcard teal reveal d1"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Practice 04</span><span class="chev">&#9660;</span></span>
+        <h3>Authority limits: least privilege for customer-facing AI</h3>
+        <p class="xsum">The system can inform; it cannot commit. Price, payment, and binding statements sit behind confirmation.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">Grounding</p><p class="fv soft">Excessive agency and the external-guardrails doctrine, in-prompt restrictions may not be honored, so enforcement lives outside the model <a class="cite" href="#src10">10</a>; deployment-stage safeguards in the sector lifecycle framework <a class="cite" href="#src3">3</a>.</p></div>
+          <div class="xfield"><p class="fl">What it delivers</p><p class="fv soft">Pillar 06. Nothing real happens on the model&rsquo;s say-so alone.</p></div>
+          <div class="xfield"><p class="fl" style="color:var(--ember)">Where it breaks down</p><p class="fv soft">Bots ship with full generative capability and no action constraints, which is how a dealership&rsquo;s assistant was steered into &ldquo;agreeing&rdquo; to sell a ~$58,000 vehicle for $1 <a class="cite" href="#src17">17</a>. The frontier version is now disclosed risk: agentic booking without strong consent controls, named in a major travel platform&rsquo;s own filing as a driver of significantly increased fraud risk <a class="cite" href="#src20">20</a>, while agentic traffic grows 7,851% year over year, with travel among its top destination sectors <a class="cite" href="#src16">16</a>.</p></div>
+          <div class="xfield"><p class="fl">Why it&rsquo;s hard</p><p class="fv soft">Authority limits reduce the &ldquo;magic&rdquo; that justified the AI budget. The mature framing: limits are what make autonomy sellable, most travelers still want a human checkpoint before money moves <a class="cite" href="#src16">16</a> <a class="cite" href="#src21">21</a>.</p></div>
+        </div></div></article>
+
+      <article class="xcard teal reveal"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Practice 05</span><span class="chev">&#9660;</span></span>
+        <h3>Adversarial testing, re-run on every change</h3>
+        <p class="xsum">Guardrails are perishable. Test suites that don&rsquo;t re-run certify a system that no longer exists.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">Grounding</p><p class="fv soft">The premise that prompt injection has no foolproof prevention, only mitigation and detection <a class="cite" href="#src10">10</a>; quarterly red-team exercises simulating attacker paths through guest-facing apps <a class="cite" href="#src2">2</a>.</p></div>
+          <div class="xfield"><p class="fl">What it delivers</p><p class="fv soft">Pillars 06 and 07. Evidence, before strangers supply it, of how the system behaves under manipulation.</p></div>
+          <div class="xfield"><p class="fl" style="color:var(--ember)">Where it breaks down</p><p class="fv soft">Testing happens once, at launch. A UK parcel carrier&rsquo;s chatbot had reportedly operated acceptably for years until a system update introduced the regression that let a customer make it swear and disparage the company <a class="cite" href="#src18">18</a>. Every model, prompt, or vendor change resets the clock.</p></div>
+          <div class="xfield"><p class="fl">Why it&rsquo;s hard</p><p class="fv soft">A regression produces no alert, only a viral screenshot later. Treating guardrail tests like regression tests, automated on every release, is the honest cost of shipping generative systems.</p></div>
+        </div></div></article>
+
+      <article class="xcard teal reveal d1"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Practice 06</span><span class="chev">&#9660;</span></span>
+        <h3>Human override that can actually correct</h3>
+        <p class="xsum">A person who can catch the error, and the standing to fix it. Escalation without authority is theater.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">Grounding</p><p class="fv soft">EU AI Act human-oversight obligations for high-risk systems <a class="cite" href="#src9">9</a>; veto power for front-line staff <a class="cite" href="#src2">2</a>; the &ldquo;off-the-loop&rdquo; condition identified as a harm multiplier, with contestability elevated to a design requirement <a class="cite" href="#src3">3</a>.</p></div>
+          <div class="xfield"><p class="fl">What it delivers</p><p class="fv soft">Pillar 05. Errors get corrected at the counter, not at the tribunal.</p></div>
+          <div class="xfield"><p class="fl" style="color:var(--ember)">Where it breaks down</p><p class="fv soft">Escalation paths exist but can&rsquo;t overrule the system or the policy behind it. In Moffatt, the human channel acknowledged the chatbot&rsquo;s misleading output, and still refused the refund, converting a correctable service error into a legal finding <a class="cite" href="#src12">12</a>.</p></div>
+          <div class="xfield"><p class="fl">Why it&rsquo;s hard</p><p class="fv soft">Empowering front-line staff to honor what the AI promised costs money in the moment. The tribunal record shows the alternative costs more.</p></div>
+        </div></div></article>
+
+      <article class="xcard teal reveal"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Practice 07</span><span class="chev">&#9660;</span></span>
+        <h3>Privacy by design for biometrics &amp; personalization</h3>
+        <p class="xsum">Store only what you can defend, where the traveler controls it, minimization even with consent.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">Grounding</p><p class="fv soft">GDPR proportionality and minimization <a class="cite" href="#src3">3</a>; EU data-protection guidance on airport biometrics and edge storage of preference profiles <a class="cite" href="#src2">2</a>; anonymization and differential privacy <a class="cite" href="#src1">1</a>.</p></div>
+          <div class="xfield"><p class="fl">What it delivers</p><p class="fv soft">Pillar 03, and a smaller breach surface the security team already wants.</p></div>
+          <div class="xfield"><p class="fl" style="color:var(--ember)">Where it breaks down</p><p class="fv soft">Privacy by notice substitutes for privacy by design, consent is collected, then data is over-retained and over-shared; loyalty programs accumulate spend, sleep, health, and geolocation into a single high-value target <a class="cite" href="#src2">2</a>. The positive exemplar, encrypted images, boarding-window-only access, manual opt-out always available, proves the practice is achievable in production <a class="cite" href="#src2">2</a>.</p></div>
+          <div class="xfield"><p class="fl">Why it&rsquo;s hard</p><p class="fv soft">Personalization genuinely improves travel; the temptation to hoard data is a product instinct, not malice. Frame minimization as risk reduction, and the incentives align.</p></div>
+        </div></div></article>
+
+      <article class="xcard teal reveal d1"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Practice 08</span><span class="chev">&#9660;</span></span>
+        <h3>Fairness auditing of pricing &amp; recommendations</h3>
+        <p class="xsum">Regular tests of whether prices, rankings, and offers differ by protected traits or their proxies.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">Grounding</p><p class="fv soft">Fair-with-harmful-bias-managed <a class="cite" href="#src7">7</a>; prohibited-tier discriminatory pricing under the Act&rsquo;s taxonomy <a class="cite" href="#src3">3</a> <a class="cite" href="#src9">9</a>; regulator attention to algorithmic discrimination in dynamic rates <a class="cite" href="#src2">2</a>; algorithm audits as the practitioner countermeasure <a class="cite" href="#src1">1</a>.</p></div>
+          <div class="xfield"><p class="fl">What it delivers</p><p class="fv soft">Pillar 01, made measurable instead of aspirational.</p></div>
+          <div class="xfield"><p class="fl" style="color:var(--ember)">Where it breaks down</p><p class="fv soft">Nobody owns the audit. Revenue teams optimize the pricing model; legal owns discrimination policy; the intersection, testing the model for discrimination, falls between them. Pricing on digital-footprint proxies can discriminate without any protected attribute in the feature set <a class="cite" href="#src3">3</a>.</p></div>
+          <div class="xfield"><p class="fl">Why it&rsquo;s hard</p><p class="fv soft">Fairness failures are statistical, not anecdotal, no single complaint proves them. That is the argument for auditing: it&rsquo;s the only instrument that can see the problem at all.</p></div>
+        </div></div></article>
+
+      <article class="xcard teal reveal" style="grid-column:1/-1"><button class="xhead" aria-expanded="false">
+        <span class="xkick"><span>Practice 09</span><span class="chev">&#9660;</span></span>
+        <h3>Vendor &amp; supply-chain AI diligence</h3>
+        <p class="xsum">Guardrail requirements written into contracts, because most travel companies buy AI rather than build it.</p></button>
+        <div class="xbody"><div class="xbody-inner">
+          <div class="xfield"><p class="fl">Grounding</p><p class="fv soft">Supply chain as a named top-ten LLM risk <a class="cite" href="#src10">10</a>; ISO/IEC 42001&rsquo;s applicability to organizations that embed or merely use AI, with certification as transferable evidence <a class="cite" href="#src8">8</a>.</p></div>
+          <div class="xfield"><p class="fl">What it delivers</p><p class="fv soft">Supporting practice S3, load-bearing for Pillars 06 and 07: authority limits, test evidence, and update notification as contract terms.</p></div>
+          <div class="xfield"><p class="fl" style="color:var(--ember)">Where it breaks down</p><p class="fv soft">Procurement evaluates features and price, not guardrails; the deploying brand wears the incident regardless of who built the bot, the dealership case involved a third-party-deployed system, and the brand absorbed the reputational cost <a class="cite" href="#src17">17</a>. Vendor model updates ship without notice, silently invalidating prior testing <a class="cite" href="#src18">18</a>.</p></div>
+          <div class="xfield"><p class="fl">Why it&rsquo;s hard</p><p class="fv soft">Buyers can&rsquo;t inspect a vendor&rsquo;s model, an information asymmetry certifications and contractual test-evidence requirements exist to bridge <a class="cite" href="#src8">8</a>. Asking for them is becoming ordinary, not adversarial.</p></div>
+        </div></div></article>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PULLQUOTE 4 ==================== -->
+<aside class="pull emberline" aria-label="Pull quote">
+  <div class="pull-inner reveal">
+    <span class="mark" aria-hidden="true">&ldquo;</span>
+    <blockquote>Guardrails aren&rsquo;t installed. They&rsquo;re maintained.&nbsp;&nbsp;</blockquote>
+    <p class="attr"><b>The maintenance problem</b> &middot; in five words</p>
+  </div>
+</aside>
+
+<!-- ==================== SECTION 9: ROADMAP ==================== -->
+<section class="body-section" id="roadmap">
+  <div class="container">
+    <p class="eyebrow reveal">A phased adoption</p>
+    <h2 class="sec-title reveal d1">An industry roadmap to building trust.</h2>
+    <p class="lede reveal d2">Nineteen concrete moves across four horizons, from a same-week authority audit to a board-level operating model. The first four cost almost nothing except deciding to begin.</p>
+
+    <div class="horizons">
+      <div class="hz h00 reveal">
+        <div class="hz-tag"><span class="hz-code">HORIZON 00</span><span class="hz-win">0&ndash;48h</span></div>
+        <h3>Immediate, the first 48 hours</h3>
+        <p class="hz-note">Four moves that require no budget cycle. Momentum here is the difference between a program and a memo.</p>
+        <div class="rec"><h4>R1, Open the AI use-case inventory: every touchpoint, one list, one owner.</h4>
+          <p>Customer-facing assistants, recommenders, internal copilots, and AI embedded in vendor tools. Don&rsquo;t aim for complete; aim for started and owned.</p>
+          <p class="tl-meta">NIST Map <a class="cite" href="#src7">7</a> &middot; Advances Pillar 07 &middot; Effort: low <a class="cite" href="#src14">14</a></p></div>
+        <div class="rec"><h4>R2, Run a rapid pillar gap-check.</h4>
+          <p>One working session scoring current state against the seven pillars, red, amber, green, with evidence noted. Your first honest map of where you stand.</p>
+          <p class="tl-meta">NIST Govern/Map <a class="cite" href="#src7">7</a> &middot; Advances all pillars &middot; Effort: low (2&ndash;3 hours) <a class="cite" href="#src3">3</a></p></div>
+        <div class="rec"><h4>R3, Verify AI disclosure on every customer-facing conversational surface.</h4>
+          <p>Article 50 is live now in the EU: users must know they&rsquo;re talking to AI, and synthetic media needs labels. Check copy, check interfaces, fix same-day where missing.</p>
+          <p class="tl-meta">EU AI Act Art. 50 <a class="cite" href="#src9">9</a> &middot; Advances Pillar 02 &middot; Effort: low <a class="cite" href="#src2">2</a></p></div>
+        <div class="rec"><h4>R4, Confirm no customer-facing AI can commit without human or hard-coded confirmation.</h4>
+          <p>A 48-hour authority audit: what can each system do, not just say? Anything with commitment power, prices, refunds, bookings, and no external control gets flagged for immediate constraint. The single highest-leverage check on this list.</p>
+          <p class="tl-meta">OWASP excessive agency <a class="cite" href="#src10">10</a> &middot; Advances Pillar 06 &middot; Effort: low to verify <a class="cite" href="#src17">17</a> <a class="cite" href="#src12">12</a> <a class="cite" href="#src20">20</a></p></div>
+      </div>
+
+      <div class="hz h01 reveal">
+        <div class="hz-tag"><span class="hz-code">HORIZON 01</span><span class="hz-win">1&ndash;4w</span></div>
+        <h3>Short-term, inside a sprint or two</h3>
+        <div class="rec"><h4>R5, Risk-classify the inventory against the four EU risk tiers.</h4>
+          <p>Prohibited, high, limited, minimal, using the sector adaptation for travel use cases. Classification before code freeze becomes the rule.</p>
+          <p class="tl-meta">EU AI Act <a class="cite" href="#src9">9</a> <a class="cite" href="#src3">3</a> &middot; Advances Pillar 07 &middot; Effort: medium</p></div>
+        <div class="rec"><h4>R6, Bind your highest-traffic assistant to one governed source of truth.</h4>
+          <p>Retrieval from the same content that feeds policy pages; refusal with human handoff outside that scope. The chatbot and the website must be incapable of disagreeing.</p>
+          <p class="tl-meta">NIST valid &amp; reliable <a class="cite" href="#src7">7</a> &middot; Advances Pillar 04 &middot; Effort: medium <a class="cite" href="#src12">12</a></p></div>
+        <div class="rec"><h4>R7, Ship the AI acceptable-use &amp; disclosure policy, with named system owners.</h4>
+          <p>Short, real, and assigned, every inventoried system gets an accountable human. This is the document that moves you out of the 74% without a strategy.</p>
+          <p class="tl-meta">NIST Govern <a class="cite" href="#src7">7</a>; ISO 42001 leadership <a class="cite" href="#src8">8</a> &middot; Advances Pillars 05, 07 &middot; Effort: medium <a class="cite" href="#src14">14</a></p></div>
+        <div class="rec"><h4>R8, Build the guardrail regression suite and wire it to every change.</h4>
+          <p>Prompt-injection attempts, authority-escalation attempts, tone probes, run automatically on every model, prompt, or vendor update. Start with 20&ndash;30 adversarial cases in CI.</p>
+          <p class="tl-meta">OWASP <a class="cite" href="#src10">10</a> &middot; Advances Pillars 06, 07 &middot; Effort: medium <a class="cite" href="#src18">18</a></p></div>
+        <div class="rec"><h4>R9, Launch AI-literacy quick-start training.</h4>
+          <p>For anyone deploying or supervising AI. The Act&rsquo;s literacy duty has applied since February 2025; practically, staff who understand confabulation and injection stop being the weakest control.</p>
+          <p class="tl-meta">EU AI Act Art. 4 <a class="cite" href="#src9">9</a> &middot; Advances S1; Pillars 04, 05 &middot; Effort: low&ndash;medium <a class="cite" href="#src2">2</a></p></div>
+      </div>
+
+      <div class="hz h02 reveal">
+        <div class="hz-tag"><span class="hz-code">HORIZON 02</span><span class="hz-win">1&ndash;3m</span></div>
+        <h3>Medium-term, quarter-scale work</h3>
+        <div class="rec"><h4>R10, Stand up vendor AI diligence: guardrail evidence in contracts.</h4>
+          <p>Require authority-limit documentation, adversarial-test evidence, and advance notice of model updates; weight ISO 42001-certified vendors. The brand wears the incident regardless of who built the bot.</p>
+          <p class="tl-meta">ISO 42001 <a class="cite" href="#src8">8</a>; OWASP supply chain <a class="cite" href="#src10">10</a> &middot; Advances S3; Pillars 06, 07 &middot; Effort: medium <a class="cite" href="#src17">17</a> <a class="cite" href="#src18">18</a></p></div>
+        <div class="rec"><h4>R11, Run the first fairness audit on pricing and recommendations, with an explicit owner.</h4>
+          <p>Test outcomes across nationality signals, accessibility needs, and digital-footprint proxies. The audit belongs jointly to data science and legal, on the calendar, so it stops falling between them.</p>
+          <p class="tl-meta">NIST fairness <a class="cite" href="#src7">7</a>; EU AI Act <a class="cite" href="#src9">9</a> &middot; Advances Pillar 01 &middot; Effort: medium&ndash;high <a class="cite" href="#src1">1</a> <a class="cite" href="#src3">3</a></p></div>
+        <div class="rec"><h4>R12, Privacy-by-design review of personalization and any biometric flows.</h4>
+          <p>Minimize what&rsquo;s collected, cut retention, move preference data to the edge where feasible, and verify opt-outs actually function. Model on the boarding-window-only exemplar.</p>
+          <p class="tl-meta">GDPR; EDPB-style proportionality <a class="cite" href="#src2">2</a> &middot; Advances Pillar 03 &middot; Effort: medium <a class="cite" href="#src1">1</a> <a class="cite" href="#src3">3</a></p></div>
+        <div class="rec"><h4>R13, Give human override real authority.</h4>
+          <p>Support and front-line staff get a defined threshold up to which they can honor what the AI said, plus a grievance path with a response SLA. Escalation that can&rsquo;t correct is theater.</p>
+          <p class="tl-meta">EU AI Act oversight <a class="cite" href="#src9">9</a> &middot; Advances Pillar 05 &middot; Effort: medium <a class="cite" href="#src12">12</a> <a class="cite" href="#src2">2</a></p></div>
+        <div class="rec"><h4>R14, Run red-team exercise #1 on customer-facing surfaces, include agentic paths.</h4>
+          <p>A structured adversarial exercise across guest-facing apps and any AI that takes actions; findings feed R8&rsquo;s regression suite. Repeat quarterly.</p>
+          <p class="tl-meta">OWASP <a class="cite" href="#src10">10</a>; red-team practice <a class="cite" href="#src2">2</a> &middot; Advances Pillars 06, 07 &middot; Effort: medium&ndash;high <a class="cite" href="#src16">16</a></p></div>
+      </div>
+
+      <div class="hz h03 reveal">
+        <div class="hz-tag"><span class="hz-code">HORIZON 03</span><span class="hz-win">3&ndash;12m</span></div>
+        <h3>Long-term, the operating model</h3>
+        <div class="rec"><h4>R15, Build the AI management system to ISO/IEC 42001 shape; decide on certification.</h4>
+          <p>Extend existing ISO 27001 machinery, same clause architecture, to AI: policy, roles, lifecycle controls, internal audit. Certify if customer or partner demand justifies it; align regardless.</p>
+          <p class="tl-meta">ISO 42001 <a class="cite" href="#src8">8</a> &middot; Advances Pillar 07 &middot; Effort: high (typically 4&ndash;9 months) <a class="cite" href="#src7">7</a></p></div>
+        <div class="rec"><h4>R16, Use the deferral as a runway: high-risk conformity readiness by mid-2027.</h4>
+          <p>For anything classified high-risk in R5, biometrics, eligibility decisions, build toward conformity assessment, logging, and oversight documentation ahead of December 2, 2027. The deadline moved because the ecosystem wasn&rsquo;t ready, not because the requirements changed.</p>
+          <p class="tl-meta">EU AI Act as amended <a class="cite" href="#src9">9</a> &middot; Advances Pillars 01, 03, 05 &middot; Effort: high for high-risk systems; zero for portfolios that classify out</p></div>
+        <div class="rec"><h4>R17, Architect contestability: let customers see, question, and correct AI inferences about them.</h4>
+          <p>Preference-profile transparency, correction flows, and explanation on consequential recommendations. This is where the sector&rsquo;s research frontier says trust is actually won, and almost nobody offers it yet.</p>
+          <p class="tl-meta">Sector lifecycle framework <a class="cite" href="#src3">3</a>; GDPR rights &middot; Advances Pillars 02, 05 &middot; Effort: high; genuine differentiation</p></div>
+        <div class="rec"><h4>R18, Put consent controls and transaction guardrails on anything agentic, before it ships.</h4>
+          <p>Explicit user consent per action class, confirmation on payment, spending limits, full audit logs, and kill switches. The industry&rsquo;s own filings warn that missing consent controls significantly increase fraud risk; build the controls first and the agentic roadmap second.</p>
+          <p class="tl-meta">OWASP excessive agency <a class="cite" href="#src10">10</a> &middot; Advances Pillar 06 &middot; Effort: high, the price of admission to the agentic era <a class="cite" href="#src20">20</a> <a class="cite" href="#src19">19</a> <a class="cite" href="#src16">16</a> <a class="cite" href="#src21">21</a></p></div>
+        <div class="rec"><h4>R19, Institutionalize: board-level AI risk visibility, continuous literacy, reskilling paired with automation.</h4>
+          <p>AI risk reporting joins the board pack; literacy training becomes recurring; roles automation touches get reskilling paths. Responsible AI stops being a program and becomes the default operating model.</p>
+          <p class="tl-meta">NIST Govern <a class="cite" href="#src7">7</a>; ISO 42001 <a class="cite" href="#src8">8</a>; EU AI Act Art. 4 <a class="cite" href="#src9">9</a> &middot; Advances Pillars 05, 07; S1, S5 &middot; Effort: high, ongoing <a class="cite" href="#src2">2</a> <a class="cite" href="#src3">3</a></p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 10: FINAL CALLOUT ==================== -->
+<div class="callout-wrap" id="takeaway">
+  <div class="callout reveal">
+    <p class="eyebrow" style="margin-bottom:16px">The takeaway</p>
+    <h2>The decision is already being made.</h2>
+    <p>AI ethics in travel is not a philosophy debate, it is the set of design decisions that determine what your systems are allowed to say, and to do, in your company&rsquo;s name. The evidence is now unambiguous: perceived ethics is the strongest single predictor of whether travelers accept AI at all, and every landmark failure in the record traces to a guardrail nobody built.</p>
+    <p><span class="keyphrase">Trust is a design decision</span>, and it is being made, deliberately or by default, in every AI feature your teams ship.</p>
+  </div>
+</div>
+
+<!-- ==================== SECTION 11: SOURCES ==================== -->
+<section class="sources" id="sources">
+  <div class="container">
+    <p class="eyebrow reveal">Show the work</p>
+    <h2 class="reveal d1">Sources</h2>
+    <p class="frame reveal d2">This is the source material the report was built from. Every claim above traces back to a numbered entry here or to a named public framework; conflicting figures were resolved toward the most recent authoritative source, and every statistic in the opening grid traces to primary research. All links open in a new tab.</p>
+
+    <div class="src-group reveal">
+      <h3>Standards, frameworks &amp; regulation</h3>
+      <div class="src" id="src7"><span class="n">[7]</span><div class="t"><span class="pub">NIST</span><span class="d">Jan 2023; GenAI Profile Jul 2024</span><span class="desc">AI Risk Management Framework 1.0, Playbook, and Generative AI Profile (AI 600-1), the Govern / Map / Measure / Manage operating grammar.</span><a href="https://www.nist.gov/itl/ai-risk-management-framework" target="_blank" rel="noopener">nist.gov/itl/ai-risk-management-framework</a></div></div>
+      <div class="src" id="src8"><span class="n">[8]</span><div class="t"><span class="pub">ISO/IEC</span><span class="d">Dec 2023</span><span class="desc">ISO/IEC 42001:2023, Artificial intelligence management systems; the first certifiable AI governance standard.</span><a href="https://www.iso.org/standard/42001" target="_blank" rel="noopener">iso.org/standard/42001</a></div></div>
+      <div class="src" id="src9"><span class="n">[9]</span><div class="t"><span class="pub">EU AI Act, as amended</span><span class="d">2024&ndash;2026</span><span class="desc">Regulation (EU) 2024/1689 and the Digital Omnibus on AI (in force Jul 27, 2026), via Gibson Dunn&rsquo;s legal analysis, corroborated by DLA Piper, Winston Taylor, and Secure Privacy analyses ingested for this report.</span><a href="https://www.gibsondunn.com/eu-ai-act-omnibus-agreement-postponed-high-risk-deadlines-and-other-key-changes/" target="_blank" rel="noopener">gibsondunn.com, EU AI Act Omnibus agreement</a></div></div>
+      <div class="src" id="src10"><span class="n">[10]</span><div class="t"><span class="pub">OWASP Foundation</span><span class="d">2025 edition</span><span class="desc">Top 10 for LLM Applications, prompt injection, excessive agency, misinformation, and the external-guardrails doctrine.</span><a href="https://owasp.org/www-project-top-10-for-large-language-model-applications/" target="_blank" rel="noopener">owasp.org, Top 10 for LLM Applications</a></div></div>
+      <div class="src" id="src11"><span class="n">[11]</span><div class="t"><span class="pub">UN Tourism &amp; Saxion University</span><span class="d">Jan 2025</span><span class="desc">Artificial Intelligence Adoption in Tourism, Key Considerations for Sector Stakeholders; launched at FITUR, Madrid.</span><a href="https://www.e-unwto.org/doi/10.18111/9789284426065" target="_blank" rel="noopener">e-unwto.org/doi/10.18111/9789284426065</a></div></div>
+    </div>
+
+    <div class="src-group reveal">
+      <h3>Academic research</h3>
+      <div class="src" id="src3"><span class="n">[3]</span><div class="t"><span class="pub">Binesh &amp; Syah, Frontiers in Artificial Intelligence</span><span class="d">Aug 2026</span><span class="desc">AI ethics in hospitality and tourism: a PRISMA scoping review of 32 studies, nine ethics themes, a sector risk framework, and a lifecycle safeguards model.</span><a href="https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2026.1913343/full" target="_blank" rel="noopener">frontiersin.org, doi:10.3389/frai.2026.1913343</a></div></div>
+      <div class="src" id="src4"><span class="n">[4]</span><div class="t"><span class="pub">Morosan &amp; Dursun-Cengizci, Int&rsquo;l Journal of Contemporary Hospitality Management</span><span class="d">2023/24</span><span class="desc">&ldquo;Letting AI make decisions for me&rdquo;, n=400 US hotel guests; perceived ethics is the strongest predictor of accepting AI decision-making.</span><a href="https://www.emerald.com/ijchm/article/36/3/946/1219172/" target="_blank" rel="noopener">emerald.com, doi:10.1108/IJCHM-08-2022-1041</a></div></div>
+      <div class="src" id="src5"><span class="n">[5]</span><div class="t"><span class="pub">Jeong Hyun Kim, Jungkeun Kim, Changju Kim &amp; Seongseop Sam Kim, Journal of Travel &amp; Tourism Marketing</span><span class="d">2023</span><span class="desc">&ldquo;Do you trust ChatGPTs?&rdquo;, salient ethical and quality concerns significantly reduce traveler acceptance of AI recommendations, mediated by trustworthiness.</span><a href="https://www.tandfonline.com/doi/full/10.1080/10548408.2023.2293006" target="_blank" rel="noopener">tandfonline.com, doi:10.1080/10548408.2023.2293006</a></div></div>
+      <div class="src" id="src6"><span class="n">[6]</span><div class="t"><span class="pub">Koo, Zaman, Ha &amp; Nawaz, Journal of Open Innovation</span><span class="d">2024/25</span><span class="desc">Trust dynamics, personalization &amp; ethical AI practices in smart-tourism adoption, n=319 tourists; trust mediates the ethics-to-adoption path.</span><a href="https://www.sciencedirect.com/science/article/pii/S219985312400249X" target="_blank" rel="noopener">sciencedirect.com, doi:10.1016/j.joitmc.2024.100455</a></div></div>
+    </div>
+
+    <div class="src-group reveal">
+      <h3>Practitioner &amp; industry analysis</h3>
+      <div class="src" id="src1"><span class="n">[1]</span><div class="t"><span class="pub">Jet2 Travel Technologies</span><span class="d">Dec 2024</span><span class="desc">Navigating the Ethical Maze of Artificial Intelligence in Travel, bias sources, explainability tooling, and design-stage ethics.</span><a href="https://jet2traveltech.com/blogs/navigating-the-ethical-maze-of-artificial-intelligence-in-travel-challenges-opportunities-and-the-way-forward/" target="_blank" rel="noopener">jet2traveltech.com, ethical maze of AI in travel</a></div></div>
+      <div class="src" id="src2"><span class="n">[2]</span><div class="t"><span class="pub">World Travel Market</span><span class="d">Aug 2025</span><span class="desc">AI Regulation in Tourism, risk tiers with travel examples, the Iberia biometric exemplar, and practical compliance levers. (Predates the Digital Omnibus; timeline superseded by [9].)</span><a href="https://www.wtm.com/portfolio/en-gb/blog/industry-news/ai-regulation-tourism-global-ethics.html" target="_blank" rel="noopener">wtm.com, AI regulation in tourism</a></div></div>
+    </div>
+
+    <div class="src-group reveal">
+      <h3>Analyst &amp; survey data</h3>
+      <div class="src" id="src14"><span class="n">[14]</span><div class="t"><span class="pub">Mindtrip / Sabre / Sojern / MMGY Travel Intelligence</span><span class="d">Aug 2026</span><span class="desc">Travelers are two years ahead of the industry on AI, 54% have used AI to plan, 75% intend to; 22% of DMOs offer AI planning, 26% have a documented strategy. Fieldwork Apr 2026, n=1,006 travelers + 103 DMO leaders.</span><a href="https://www.sojern.com/press-release/new-research-reveals-travellers-are-two-years-ahead-of-the-travel-industry-on-ai" target="_blank" rel="noopener">sojern.com, traveler AI readiness study</a></div></div>
+      <div class="src" id="src15"><span class="n">[15]</span><div class="t"><span class="pub">Phocuswright</span><span class="d">Nov 2025</span><span class="desc">Search Slips, AI Surges, nearly 40% of U.S. travelers used generative AI to plan trips in 2025, an 11-point jump in one year.</span><a href="https://www.phocuswright.com/Travel-Research/Research-Updates/2025/search-slips-ai-surges" target="_blank" rel="noopener">phocuswright.com, search slips, AI surges</a></div></div>
+      <div class="src" id="src16"><span class="n">[16]</span><div class="t"><span class="pub">HUMAN Security</span><span class="d">2026</span><span class="desc">AI-driven traffic up 187% in 2025; agentic and browser-agent traffic up 7,851% year over year, with travel among the three sectors absorbing over 95% of AI-driven traffic; trust divides sharply at booking.</span><a href="https://www.humansecurity.com/learn/blog/ai-use-for-travel-planning-survey/" target="_blank" rel="noopener">humansecurity.com, AI use for travel planning</a></div></div>
+      <div class="src" id="src21"><span class="n">[21]</span><div class="t"><span class="pub">Expedia Group / YouGov, &ldquo;The AI Trust Gap&rdquo;</span><span class="d">Apr 2026</span><span class="desc">Commissioned by Expedia Group, conducted by YouGov: 5,700+ adults across the U.S., U.K., and India, fieldwork Mar 10&ndash;25, 2026. 66% wouldn&rsquo;t trust AI to buy or book on their behalf; 53% welcome AI trip suggestions; top concerns are loss of control (57%), payment privacy (57%), and data misuse (56%). Corroborated by the company&rsquo;s IR press release and Skift coverage.</span><a href="https://partner.expediagroup.com/en-us/resources/blog/ai-trust-gap-why-travelers-continue-to-choose-trusted-brands" target="_blank" rel="noopener">partner.expediagroup.com, the AI Trust Gap</a></div></div>
+    </div>
+
+    <div class="src-group reveal">
+      <h3>Event &amp; incident coverage</h3>
+      <div class="src" id="src12"><span class="n">[12]</span><div class="t"><span class="pub">ABA Business Law Today</span><span class="d">Feb 2024</span><span class="desc">Moffatt v. Air Canada, 2024 BCCRT 149, the tribunal decision holding a company responsible for its chatbot&rsquo;s statements. Corroborated by McCarthy T&eacute;trault, Dentons, and AI &amp; Society (Springer) analyses ingested for this report.</span><a href="https://www.americanbar.org/groups/business_law/resources/business-law-today/2024-february/bc-tribunal-confirms-companies-remain-liable-information-provided-ai-chatbot/" target="_blank" rel="noopener">americanbar.org, companies remain liable for chatbot information</a></div></div>
+      <div class="src" id="src13"><span class="n">[13]</span><div class="t"><span class="pub">Macao News (via Straits Times)</span><span class="d">Jun 2025 &ndash; Jul 2026</span><span class="desc">AI-fabricated destinations: the Kuak Skyride (Malaysia) and the &ldquo;Sacred Canyon of Humantay&rdquo; (Peru). Cross-logged by the OECD.AI incident monitor and the AI Incident Database (#1636); Icelandair campaign context via Travelers Today.</span><a href="https://macaonews.org/news/around-the-world/ai-fake-cable-car-kuak-hulu-malaysia-elderly-couple/" target="_blank" rel="noopener">macaonews.org, AI fake cable car, Kuak Hulu</a></div></div>
+      <div class="src" id="src17"><span class="n">[17]</span><div class="t"><span class="pub">VentureBeat</span><span class="d">Dec 2023</span><span class="desc">A dealership chatbot with no authority limits &ldquo;agrees&rdquo; to a $1 vehicle sale after prompt manipulation. Corroborated by Cybernews and AI Incident Database (#622).</span><a href="https://venturebeat.com/ai/a-chevy-for-1-car-dealer-chatbots-show-perils-of-ai-for-customer-service" target="_blank" rel="noopener">venturebeat.com, dealer chatbots and the perils of AI</a></div></div>
+      <div class="src" id="src18"><span class="n">[18]</span><div class="t"><span class="pub">Incident-registry summary</span><span class="d">Jan 2024</span><span class="desc">A UK parcel carrier disables its chatbot&rsquo;s AI element after a post-update regression let a customer induce profanity and self-disparagement, guardrails as perishable.</span><a href="https://vibegraveyard.ai/story/dpd-chatbot-sweary-meltdown/" target="_blank" rel="noopener">vibegraveyard.ai, incident registry entry</a></div></div>
+      <div class="src" id="src19"><span class="n">[19]</span><div class="t"><span class="pub">Skift</span><span class="d">Nov 2025</span><span class="desc">Google&rsquo;s agentic booking tool, built with Booking.com, Expedia, Marriott, IHG, Wyndham, and Choice; user-directed now, more autonomy expected.</span><a href="https://skift.com/2025/11/20/google-agentic-ai-travel-booking-no-intention-become-ota/" target="_blank" rel="noopener">skift.com, Google agentic AI travel booking</a></div></div>
+      <div class="src" id="src20"><span class="n">[20]</span><div class="t"><span class="pub">GeekWire</span><span class="d">Feb 2026</span><span class="desc">Expedia&rsquo;s 10-K names generative and agentic AI as a competitive threat and flags fraud risk from agentic booking lacking strong consent controls. Corroborated by Skift&rsquo;s 10-K coverage.</span><a href="https://www.geekwire.com/2026/were-experimenting-aggressively-how-expedia-sees-ai-reshaping-travel-and-its-own-business/" target="_blank" rel="noopener">geekwire.com, how Expedia sees AI reshaping travel</a></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Built by <a href="https://www.linkedin.com/in/kahalewai/" target="_blank" rel="noopener">Kahalewai</a>, Claude did the heavy lifting</p>
+</footer>
+
+<script>
+(function(){
+  // Theme toggle (in-memory only)
+  var root=document.documentElement;
+  var btn=document.getElementById('themeToggle');
+  var lbl=document.getElementById('themeLabel');
+  btn.addEventListener('click',function(){
+    var dark=root.getAttribute('data-theme')==='dark';
+    root.setAttribute('data-theme',dark?'light':'dark');
+    lbl.textContent=dark?'Dark mode':'Light mode';
+  });
+
+  // Expand / collapse cards
+  var heads=document.querySelectorAll('.xhead');
+  for(var i=0;i<heads.length;i++){
+    heads[i].addEventListener('click',function(){
+      var card=this.closest('.xcard');
+      var open=card.classList.toggle('open');
+      this.setAttribute('aria-expanded',open?'true':'false');
+    });
+  }
+
+  // Intersection-observer reveals
+  var els=document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      for(var j=0;j<entries.length;j++){
+        if(entries[j].isIntersecting){
+          entries[j].target.classList.add('in');
+          io.unobserve(entries[j].target);
+        }
+      }
+    },{threshold:0.12,rootMargin:'0px 0px -40px 0px'});
+    for(var k=0;k<els.length;k++){io.observe(els[k]);}
+  }else{
+    for(var m=0;m<els.length;m++){els[m].classList.add('in');}
+  }
+})();
+</script>
+</body>
+</html>
