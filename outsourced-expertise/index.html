@@ -1,0 +1,1449 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outsourced Risk</title>
+<meta name="description" content="A learn-forward report on the ARTEX agentic AI campaign against South Korean and Japanese organizations, and the design decisions that determined who held.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+
+:root, :root[data-theme="dark"]{ --lane:148,163,184; }
+:root[data-theme="light"]{ --lane:71,85,105; }
+:root, :root[data-theme="dark"]{
+  --bg:#0B0C0E; --bg2:#111317; --card:#14161B; --card2:#191C22;
+  --ink:#EDEAE3; --ink2:#A9A59C; --ink3:#77736B;
+  --line:rgba(237,234,227,.11); --line2:rgba(237,234,227,.2);
+  --danger:#FF5A36; --fix:#3DDC97; --pivot:#FFB020;
+  --danger-soft:rgba(255,90,54,.14); --fix-soft:rgba(61,220,151,.13); --pivot-soft:rgba(255,176,32,.14);
+  --glow:0 0 28px rgba(255,90,54,.35);
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 20px 40px -24px rgba(0,0,0,.6);
+}
+:root[data-theme="light"]{
+  --bg:#F4F1EA; --bg2:#ECE7DC; --card:#FBF9F4; --card2:#F1ECE2;
+  --ink:#17171A; --ink2:#55514A; --ink3:#7E796F;
+  --line:rgba(23,23,26,.12); --line2:rgba(23,23,26,.22);
+  --danger:#D23A1C; --fix:#11845A; --pivot:#A86B06;
+  --danger-soft:rgba(210,58,28,.10); --fix-soft:rgba(17,132,90,.10); --pivot-soft:rgba(168,107,6,.11);
+  --glow:0 0 22px rgba(210,58,28,.22);
+  --shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 18px 36px -26px rgba(60,40,10,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Fraunces", Georgia, serif; font-optical-sizing:auto;
+  font-size:18px; line-height:1.62; font-weight:380;
+  background-image:
+    radial-gradient(900px 600px at 85% -10%, var(--danger-soft), transparent 60%),
+    radial-gradient(700px 500px at -10% 40%, var(--pivot-soft), transparent 60%),
+    radial-gradient(800px 600px at 110% 80%, var(--fix-soft), transparent 60%);
+  background-attachment:fixed;
+  overflow-x:hidden;
+}
+a{color:inherit}
+.mono{font-family:"JetBrains Mono", ui-monospace, monospace}
+::selection{background:var(--pivot); color:#111}
+
+/* ---------- top bar ---------- */
+.topbar{position:fixed; top:0; left:0; right:0; z-index:60; height:56px; background:color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:1200px; height:100%; margin:0 auto; padding:0 24px; display:flex; align-items:center; justify-content:space-between; gap:14px}
+.tb-meta{margin:0; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font:500 11.5px/1 "JetBrains Mono", monospace; letter-spacing:.16em; text-transform:uppercase; color:var(--ink2)}
+.tb-meta b{color:var(--danger); font-weight:700}
+.tb-meta .sep{margin:0 .7em; color:var(--ink3)}
+.theme-toggle{flex:0 0 auto; font:500 11px/1 "JetBrains Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--ink); background:var(--card); border:1px solid var(--line2); border-radius:999px; padding:9px 13px; cursor:pointer; transition:border-color .25s, box-shadow .25s}
+.theme-toggle:hover{border-color:var(--pivot); box-shadow:0 0 0 3px var(--pivot-soft)}
+.theme-toggle .dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--pivot); margin-right:8px; vertical-align:1px}
+@media (max-width:560px){ .topbar-inner{padding:0 16px} .tb-meta{font-size:10px; letter-spacing:.08em} .tb-hide{display:none} }
+.section, .pq, .sources{scroll-margin-top:72px}
+
+/* ---------- hero ---------- */
+.hero{position:relative; padding:104px 0 34px; display:flex; flex-direction:column; justify-content:flex-start; overflow:hidden; isolation:isolate; background:var(--bg); border-bottom:1px solid var(--line)}
+.lanes-bg{position:absolute; inset:0; z-index:-1; pointer-events:none; -webkit-mask-image:linear-gradient(180deg, transparent 0, transparent var(--f0, 42%), #000 var(--f1, 54%), #000 var(--f2, 85%), transparent var(--f3, 95%)); mask-image:linear-gradient(180deg, transparent 0, transparent var(--f0, 42%), #000 var(--f1, 54%), #000 var(--f2, 85%), transparent var(--f3, 95%))}
+.lanes-inner{max-width:1200px; height:100%; margin:0 auto; padding:0 24px; display:grid; grid-template-columns:repeat(3,1fr)}
+.lane-bg{position:relative; overflow:hidden; border-left:1px dashed rgba(var(--lane),.22)}
+.lane-bg:last-child{border-right:1px dashed rgba(var(--lane),.22)}
+.lane-bg.l1{background:linear-gradient(180deg, transparent 0%, rgba(var(--lane),.05) 72%, transparent 100%)}
+.lane-bg.l2{background:linear-gradient(180deg, transparent 0%, rgba(var(--lane),.09) 72%, transparent 100%)}
+.lane-bg.l3{background:linear-gradient(180deg, transparent 0%, rgba(var(--lane),.13) 72%, transparent 100%)}
+.scan{position:absolute; left:0; right:0; top:0; height:140px; z-index:-1; pointer-events:none; background:linear-gradient(180deg, transparent, var(--pivot-soft), transparent); animation:scanY 7.5s linear infinite}
+@keyframes scanY{0%{transform:translateY(-140px)}100%{transform:translateY(110vh)}}
+.hero-inner{position:relative; width:100%; max-width:1200px; margin:0 auto; padding:0 24px}
+.hero-text{max-width:912px; margin:0 auto; text-align:left}
+@media (min-width:700px){ .hero h1{white-space:nowrap} }
+.hero h1{margin:0; font-weight:300; letter-spacing:-.035em; line-height:.98; font-size:clamp(46px, 8.6vw, 112px); font-variation-settings:"opsz" 144}
+.hero h1 .solid{color:var(--ink)}
+.hero h1 .grad-ital{margin-right:-.44em}
+.grad-ital{font-style:italic; font-weight:500; background:linear-gradient(100deg, var(--danger) 10%, var(--pivot) 90%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-box-decoration-break:clone; box-decoration-break:clone}
+.hero-copy{padding-top:34px; text-align:left}
+@media (min-width:700px){ .hero-copy{padding-left:8px} }
+.hero-deck{margin:0; max-width:none; font-size:clamp(18px, 1.9vw, 22px); line-height:1.5; font-weight:350; color:var(--ink)}
+.hero-deck strong{display:block; margin-top:10px; font-weight:560; color:var(--danger)}
+.hero-meta{margin-top:18px; display:flex; flex-wrap:wrap; justify-content:flex-start; gap:6px 18px; font:500 11px/1.4 "JetBrains Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--ink3)}
+.swim{margin:64px 0 0}
+.swim-heads{display:grid; grid-template-columns:repeat(3,1fr)}
+.sh{padding:0 14px 14px; display:flex; flex-direction:column; gap:5px}
+.sh-n{font:700 11px/1 "JetBrains Mono", monospace; letter-spacing:.18em; color:var(--ink3)}
+.sh-t{font:600 12.5px/1.25 "JetBrains Mono", monospace; letter-spacing:.14em; text-transform:uppercase}
+.sh.x1 .sh-t{color:var(--danger)} .sh.x2 .sh-t{color:var(--pivot)} .sh.x3 .sh-t{color:var(--ink)}
+.sh-s{font-size:14px; line-height:1.35; color:var(--ink2)}
+.swim-body{position:relative; height:clamp(290px, 36vh, 350px); display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--line2); border-bottom:1px solid var(--line2)}
+.swim-paths{position:absolute; inset:0; width:100%; height:100%; overflow:visible}
+.lane{position:relative; z-index:1; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:space-around}
+.op{position:relative; width:66px; height:66px; border-radius:50%; display:grid; place-items:center; background:radial-gradient(circle at 50% 45%, var(--danger), color-mix(in srgb, var(--danger) 35%, var(--bg)) 72%); box-shadow:0 0 36px var(--danger); color:#fff; font:700 19px/1 "JetBrains Mono", monospace}
+.op-cap{position:absolute; top:calc(100% + 12px); left:50%; transform:translateX(-50%); white-space:nowrap; font:600 10.5px/1 "JetBrains Mono", monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--ink2)}
+.chip{width:min(86%, 220px); height:48px; display:flex; flex-direction:column; justify-content:center; gap:3px; padding:0 12px; border-radius:10px; background:var(--card); border:1px solid color-mix(in srgb, var(--pivot) 55%, var(--line)); box-shadow:var(--shadow)}
+.chip b{font:600 11px/1.15 "JetBrains Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--ink)}
+.chip span{font:500 10px/1.2 "JetBrains Mono", monospace; letter-spacing:.03em; color:var(--ink3)}
+.inst{position:relative; width:22px; height:22px; border-radius:50%; background:var(--card); border:2px solid var(--ink2); display:grid; place-items:center}
+.inst::after{content:""; width:8px; height:8px; border-radius:50%; background:var(--ink)}
+.inst.breached::before{content:""; position:absolute; right:calc(100% + 4px); top:50%; width:7px; height:12px; transform:translateY(-50%); border-radius:2px; background:var(--danger); box-shadow:0 0 10px var(--danger)}
+.inst.held{border-color:var(--fix); box-shadow:0 0 14px var(--fix-soft)}
+.inst.held::after{background:var(--fix)}
+.tag-held{position:absolute; left:calc(100% + 8px); top:50%; transform:translateY(-50%); font:700 9.5px/1 "JetBrains Mono", monospace; letter-spacing:.12em; color:var(--fix)}
+.hub{position:absolute; left:66.667%; top:50%; width:12px; height:12px; margin:-6px 0 0 -6px; border-radius:50%; background:var(--danger); box-shadow:0 0 16px var(--danger); z-index:1}
+.swim-foot{display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:12px; font:500 10.5px/1.5 "JetBrains Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--ink3)}
+.swim-foot a{color:inherit; text-decoration:none}
+.k-door{display:inline-block; width:7px; height:11px; margin-right:7px; vertical-align:-1px; border-radius:2px; background:var(--danger)}
+.k-held{display:inline-block; width:9px; height:9px; margin-right:7px; vertical-align:-1px; border-radius:50%; border:2px solid var(--fix)}
+.atk{stroke-dasharray:5 9; animation:flow 1.6s linear infinite}
+.sup{stroke-dasharray:2 6; animation:flow 2.4s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-28}}
+.atk-glow{animation:pulse 2.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.18}50%{opacity:.6}}
+.scroll-prompt{position:relative; align-self:center; margin-top:130px; white-space:nowrap; text-align:center; text-decoration:none; font:500 11px/1.4 "JetBrains Mono", monospace; letter-spacing:.16em; text-transform:uppercase; color:var(--ink2)}
+.scroll-prompt .chev{display:block; margin:10px auto 0; width:14px; height:14px; border-right:2px solid var(--danger); border-bottom:2px solid var(--danger); transform:rotate(45deg); animation:bob 1.8s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(45deg)}50%{transform:translateY(7px) rotate(45deg)}}
+@media (max-width:480px){ .hero-inner, .lanes-inner{padding:0 16px} }
+@media (max-width:640px){
+  .sh{padding:0 6px 12px} .sh-t{font-size:10px; letter-spacing:.06em} .sh-s{font-size:12px}
+  .chip{height:54px; padding:0 7px} .chip b{font-size:9px; letter-spacing:.03em} .chip span{font-size:8.5px}
+  .op{width:48px; height:48px; font-size:14px} .op-cap{font-size:9px}
+  .tag-held{display:none}
+}
+
+/* ---------- section 01 extras ---------- */
+.era{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:16px; margin:36px 0}
+.era-card{position:relative; border-radius:16px; padding:24px 22px; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow)}
+.era-card.then{border-top:2px solid var(--ink3)}
+.era-card.now{border-top:2px solid var(--danger); background:linear-gradient(180deg, var(--danger-soft), var(--card) 55%)}
+.era-k{margin:0 0 8px; font:600 11px/1.3 "JetBrains Mono", monospace; letter-spacing:.16em; text-transform:uppercase; color:var(--ink3)}
+.era-card.now .era-k{color:var(--danger)}
+.era-card h3{margin:0 0 10px; font-weight:450; font-size:26px; letter-spacing:-.015em}
+.era-card .tx{margin:0; font-size:16.5px; line-height:1.6; color:var(--ink2)}
+.sub-h{margin:56px 0 0; font-weight:420; font-size:clamp(24px, 3vw, 30px); line-height:1.2; letter-spacing:-.015em}
+.analogy{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:16px; margin:26px 0}
+.an{border-radius:14px; padding:20px; border:1px solid var(--line); background:var(--card)}
+.an.lock{border-left:3px solid var(--danger)} .an.lock .era-k{color:var(--danger)}
+.an.wall{border-left:3px solid var(--fix)} .an.wall .era-k{color:var(--fix)}
+.an .tx{margin:0; font-size:16.5px; line-height:1.55}
+.tile.ok::before{background:var(--fix)}
+.tile.ok h3{color:var(--fix)}
+.legend .b.p{background:var(--pivot); color:#111}
+
+/* ---------- body sections ---------- */
+.wrap{max-width:960px; margin:0 auto; padding:0 24px}
+@media (max-width:480px){ .wrap{padding:0 16px} }
+.section{padding:120px 0 40px}
+.eyebrow{display:flex; align-items:center; gap:12px; margin:0 0 18px; font:500 12px/1.3 "JetBrains Mono", monospace; letter-spacing:.2em; text-transform:uppercase; color:var(--pivot)}
+.eyebrow .num{color:var(--ink3)}
+.eyebrow::after{content:""; flex:1; height:1px; background:linear-gradient(90deg, var(--line2), transparent)}
+.section h2{margin:0; font-weight:340; font-size:clamp(32px, 5.2vw, 56px); line-height:1.04; letter-spacing:-.025em; font-variation-settings:"opsz" 120; max-width:20ch}
+.lede{margin:22px 0 0; font-size:clamp(19px, 2.2vw, 22px); line-height:1.55; color:var(--ink2); max-width:56ch; font-weight:350}
+.prose{margin-top:34px; max-width:64ch}
+.prose p{margin:0 0 18px}
+.cite{font:500 .62em/1 "JetBrains Mono", monospace; color:var(--ink3); vertical-align:.38em; margin-left:2px; white-space:nowrap}
+.cite a{text-decoration:none; color:var(--ink3)}
+.cite a:hover{color:var(--pivot)}
+.reveal{opacity:0; transform:translateY(26px); transition:opacity .8s ease, transform .8s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1; transform:none}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1; transform:none; transition:none}
+  .scan,.atk,.sup,.atk-glow,.scroll-prompt .chev,.urgent-dot{animation:none !important}
+}
+
+/* stack tiles */
+.stack{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:14px; margin:34px 0}
+.tile{position:relative; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 18px 18px; box-shadow:var(--shadow)}
+.tile::before{content:""; position:absolute; left:14px; right:14px; top:0; height:2px; background:var(--danger); border-radius:2px}
+.tile h3{margin:0 0 8px; font:600 12px/1.3 "JetBrains Mono", monospace; letter-spacing:.14em; text-transform:uppercase; color:var(--danger)}
+.tile p{margin:0; font-size:16px; line-height:1.5; color:var(--ink)}
+.mitre-quote{margin:30px 0; padding:22px 24px; border-left:3px solid var(--pivot); background:var(--card); border-radius:0 12px 12px 0; font-size:19px}
+.mitre-quote .src{display:block; margin-top:8px; font:500 11.5px/1.4 "JetBrains Mono", monospace; letter-spacing:.06em; color:var(--ink3); text-transform:uppercase}
+.tracks{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:16px; margin-top:28px}
+.track{border-radius:14px; padding:22px; border:1px solid var(--line); background:var(--card)}
+.track.withstand{border-top:2px solid var(--danger)}
+.track.govern{border-top:2px solid var(--fix)}
+.track h3{margin:0 0 8px; font-weight:500; font-size:22px; letter-spacing:-.01em}
+.track p{margin:0; font-size:16px; line-height:1.55; color:var(--ink2)}
+
+/* stats */
+.stats{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:16px; margin-top:44px}
+.stat{position:relative; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:26px 22px 20px; overflow:hidden; box-shadow:var(--shadow); transition:border-color .3s, box-shadow .3s, transform .3s}
+.stat::before{content:""; position:absolute; left:0; right:0; top:0; height:3px; background:var(--danger)}
+.stat.fixline::before{background:var(--fix)}
+.stat.pivotline::before{background:var(--pivot)}
+.stat:hover{border-color:var(--line2); box-shadow:var(--glow); transform:translateY(-2px)}
+.stat .n{font-weight:300; font-size:clamp(54px, 7vw, 76px); line-height:1; letter-spacing:-.04em; font-variation-settings:"opsz" 144}
+.stat .n small{font-size:.42em; letter-spacing:0; margin-left:4px; color:var(--ink2)}
+.stat .l{margin:12px 0 14px; font-size:16.5px; line-height:1.4; color:var(--ink)}
+.stat .s{font:500 10.5px/1.45 "JetBrains Mono", monospace; letter-spacing:.05em; color:var(--ink3); text-transform:uppercase; border-top:1px dashed var(--line); padding-top:10px}
+
+/* pullquotes */
+.pq{position:relative; padding:120px 24px; margin:80px 0 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  background:radial-gradient(70% 90% at 50% 50%, var(--bg2), var(--bg) 75%)}
+.pq-inner{max-width:900px; margin:0 auto; position:relative}
+.pq-mark{position:absolute; left:-12px; top:-90px; font-size:210px; line-height:1; font-style:italic; color:var(--danger); opacity:.32; font-weight:600; pointer-events:none}
+.pq blockquote{margin:0; font-size:clamp(28px, 4.6vw, 52px); line-height:1.16; font-weight:330; letter-spacing:-.02em; font-variation-settings:"opsz" 144}
+.pq-text{font-style:italic; background:linear-gradient(95deg, var(--ink) 0%, var(--ink) 55%, var(--pivot) 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-box-decoration-break:clone; box-decoration-break:clone}
+.pq.sourced .pq-text{background:linear-gradient(95deg, var(--ink) 0%, var(--ink) 50%, var(--danger) 100%); -webkit-background-clip:text; background-clip:text}
+.pq figcaption{margin-top:26px; font:500 12px/1.5 "JetBrains Mono", monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--ink2)}
+.pq figcaption .kind{color:var(--pivot); margin-right:10px}
+
+/* timeline + chain (shared spine) */
+.tl{position:relative; margin-top:52px; padding:10px 0}
+.tl::before{content:""; position:absolute; top:0; bottom:0; left:50%; width:2px; transform:translateX(-1px);
+  background:linear-gradient(180deg, transparent, var(--danger) 8%, var(--pivot) 55%, var(--fix) 95%, transparent);
+  box-shadow:0 0 18px var(--danger-soft), 0 0 2px var(--danger)}
+.tl-phase{position:relative; z-index:2; display:table; margin:34px auto 22px; padding:7px 14px; border-radius:999px; background:var(--bg); border:1px solid var(--line2); font:600 11px/1.2 "JetBrains Mono", monospace; letter-spacing:.16em; text-transform:uppercase; color:var(--pivot)}
+.tl-item{position:relative; width:calc(50% - 40px); margin-bottom:22px}
+.tl-item[data-side="right"]{margin-left:calc(50% + 40px)}
+.tl-item::after{content:""; position:absolute; top:24px; width:12px; height:12px; border-radius:50%; background:var(--bg); border:2px solid var(--danger); box-shadow:0 0 12px var(--danger)}
+.tl-item[data-side="left"]::after{right:-47px}
+.tl-item[data-side="right"]::after{left:-47px}
+.tl-item[data-tone="fix"]::after{border-color:var(--fix); box-shadow:0 0 12px var(--fix)}
+.tl-item[data-tone="pivot"]::after{border-color:var(--pivot); box-shadow:0 0 12px var(--pivot)}
+@media (max-width:760px){
+  .tl::before{left:13px}
+  .tl-phase{margin-left:34px}
+  .tl-item, .tl-item[data-side="right"]{width:auto; margin-left:40px}
+  .tl-item[data-side="left"]::after, .tl-item[data-side="right"]::after{left:-33px; right:auto}
+}
+
+/* cards (shared) */
+.card{position:relative; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 20px 16px; box-shadow:var(--shadow); transition:border-color .3s, box-shadow .3s}
+.card::before{content:""; position:absolute; left:16px; right:16px; top:0; height:2px; border-radius:2px; background:var(--danger)}
+.card.t-fix::before{background:var(--fix)}
+.card.t-pivot::before{background:var(--pivot)}
+.card:hover{border-color:var(--line2); box-shadow:var(--glow)}
+.card.t-fix:hover{box-shadow:0 0 24px var(--fix-soft)}
+.card.open{border-color:var(--line2)}
+.card .k{display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; font:500 11px/1.4 "JetBrains Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--ink3); margin-bottom:8px}
+.card .k .id{color:var(--danger); font-weight:700}
+.card.t-fix .k .id{color:var(--fix)}
+.card h3{margin:0 0 8px; font-weight:500; font-size:21px; line-height:1.25; letter-spacing:-.01em}
+.card .sum{margin:0; font-size:16.5px; line-height:1.55; color:var(--ink2)}
+.badge{display:inline-block; padding:3px 8px; border-radius:999px; border:1px solid var(--line2); font:600 10px/1.3 "JetBrains Mono", monospace; letter-spacing:.08em; text-transform:uppercase}
+.badge.hi{color:var(--danger); border-color:color-mix(in srgb, var(--danger) 45%, transparent)}
+.badge.md{color:var(--pivot); border-color:color-mix(in srgb, var(--pivot) 45%, transparent)}
+.badge.lo{color:var(--ink2)}
+.badge.fx{color:var(--fix); border-color:color-mix(in srgb, var(--fix) 45%, transparent)}
+.more-btn{margin-top:14px; display:inline-flex; align-items:center; gap:8px; background:none; border:1px solid var(--line2); color:var(--ink); border-radius:999px; padding:7px 13px; font:500 11px/1 "JetBrains Mono", monospace; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; transition:border-color .25s, color .25s}
+.more-btn:hover{border-color:var(--pivot); color:var(--pivot)}
+.more-btn .pm{display:inline-block; width:10px; text-align:center}
+.more{margin-top:14px; padding-top:14px; border-top:1px dashed var(--line); font-size:16px; line-height:1.6}
+.more dl{margin:0; display:grid; grid-template-columns:1fr; gap:10px}
+.more dt{font:600 10.5px/1.3 "JetBrains Mono", monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--pivot); margin:0}
+.more dd{margin:2px 0 0}
+.more p{margin:0 0 10px}
+.grid2{display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:16px; margin-top:28px}
+.group-h{margin:56px 0 4px; display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px}
+.group-h h3{margin:0; font-weight:450; font-size:26px; letter-spacing:-.015em}
+.group-h p{margin:0; font-size:16px; color:var(--ink2)}
+
+/* dropdown */
+details.drop{margin-top:30px; border:1px solid var(--line2); border-radius:14px; background:var(--card); overflow:hidden}
+details.drop > summary{cursor:pointer; list-style:none; padding:16px 20px; font:600 12px/1.4 "JetBrains Mono", monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--ink); display:flex; justify-content:space-between; align-items:center; gap:12px}
+details.drop > summary::-webkit-details-marker{display:none}
+details.drop > summary::after{content:"+"; color:var(--pivot); font-size:16px}
+details.drop[open] > summary::after{content:"−"}
+details.drop .drop-body{padding:0 20px 20px}
+.note{margin-top:28px; padding:18px 20px; border-radius:12px; border:1px dashed var(--line2); font-size:16px; color:var(--ink2)}
+.note strong{color:var(--ink); font-weight:550}
+
+/* event log table */
+.log{width:100%; border-collapse:collapse; font-size:14.5px; line-height:1.45}
+.log th, .log td{text-align:left; vertical-align:top; padding:9px 8px; border-bottom:1px solid var(--line)}
+.log th{font:600 10.5px/1.3 "JetBrains Mono", monospace; letter-spacing:.1em; text-transform:uppercase; color:var(--ink3)}
+.log td.d{font-family:"JetBrains Mono", monospace; font-size:12px; color:var(--ink2); white-space:nowrap}
+.log td.c{font-family:"JetBrains Mono", monospace; font-size:11px; color:var(--ink3); white-space:nowrap}
+.log tr.ph td{font:600 11px/1.3 "JetBrains Mono", monospace; letter-spacing:.14em; text-transform:uppercase; color:var(--pivot); padding-top:18px}
+.log-wrap{overflow-x:auto}
+@media (max-width:640px){
+  .log, .log tbody, .log tr, .log td{display:block; width:100%}
+  .log thead{display:none}
+  .log tr{border-bottom:1px solid var(--line); padding:8px 0}
+  .log td{border:0; padding:2px 0}
+  .log td.d, .log td.c{white-space:normal}
+}
+
+/* open questions */
+.record{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:14px; margin-top:12px}
+.record div{padding:16px; border-radius:12px; background:var(--card2); border:1px solid var(--line)}
+.record h4{margin:0 0 8px; font:600 11px/1.3 "JetBrains Mono", monospace; letter-spacing:.12em; text-transform:uppercase}
+.record .r-ok h4{color:var(--fix)} .record .r-rep h4{color:var(--pivot)} .record .r-open h4{color:var(--danger)}
+.record ul{margin:0; padding-left:18px; font-size:15.5px; line-height:1.5}
+.record li{margin-bottom:6px}
+
+/* chart */
+.chart-fig{margin:44px 0 0; padding:24px 20px 20px; border:1px solid var(--line); border-radius:16px; background:var(--card); box-shadow:var(--shadow)}
+.chart-fig .ch-title{margin:0 0 4px; font:600 12px/1.4 "JetBrains Mono", monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--ink)}
+.chart-fig .ch-sub{margin:0 0 16px; font-size:15px; color:var(--ink2)}
+.chart-fig svg{width:100%; height:auto; display:block}
+.legend{list-style:none; margin:18px 0 0; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:10px 18px}
+.legend li{display:grid; grid-template-columns:28px 1fr; gap:10px; font-size:15px; line-height:1.45; color:var(--ink2)}
+.legend .b{width:24px; height:24px; border-radius:50%; display:grid; place-items:center; font:700 12px/1 "JetBrains Mono", monospace; color:#fff; background:var(--danger)}
+.legend .b.g{background:var(--fix); color:#0b0c0e}
+.legend strong{color:var(--ink); font-weight:550}
+@media (max-width:520px){ .chart-fig .ax, .chart-fig .ax text{font-size:17px} .chart-fig .mk text{font-size:18px; transform:translateY(2px); transform-box:fill-box} .chart-fig .mk circle{r:14px} }
+.chart-fig svg{overflow:visible}
+.chart-cap{margin:16px 0 0; font:500 11px/1.5 "JetBrains Mono", monospace; letter-spacing:.04em; color:var(--ink3)}
+
+/* horizons */
+.horizons{display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:18px; margin-top:44px}
+.hz{position:relative; border:1px solid var(--line); border-radius:18px; background:var(--card); padding:24px 20px 18px; box-shadow:var(--shadow)}
+.hz::before{content:""; position:absolute; left:18px; right:18px; top:0; height:3px; border-radius:3px; background:var(--line2)}
+.hz.h00{border-color:color-mix(in srgb, var(--danger) 40%, var(--line)); background:linear-gradient(180deg, var(--danger-soft), var(--card) 40%)}
+.hz.h00::before{background:var(--danger)}
+.hz.h01::before{background:var(--pivot)}
+.hz.h02::before{background:color-mix(in srgb, var(--pivot) 50%, var(--fix))}
+.hz.h03::before{background:var(--fix)}
+.hz-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:4px}
+.hz-id{font:700 12px/1 "JetBrains Mono", monospace; letter-spacing:.18em; text-transform:uppercase; color:var(--ink2)}
+.hz-win{font:700 26px/1 "JetBrains Mono", monospace; letter-spacing:-.02em}
+.hz.h00 .hz-win{color:var(--danger)}
+.hz.h03 .hz-win{color:var(--fix)}
+.hz h3{margin:6px 0 14px; font-weight:450; font-size:21px}
+.urgent-dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--danger); margin-right:8px; vertical-align:2px; animation:pulse 2s ease-in-out infinite}
+.rec{border-top:1px solid var(--line); padding:12px 0 10px}
+.rec-row{display:flex; gap:10px; align-items:flex-start}
+.rec-n{flex:0 0 auto; font:700 11px/1.9 "JetBrains Mono", monospace; color:var(--ink3)}
+.rec-t{margin:0; font-size:16px; line-height:1.5}
+.tag{display:inline-block; margin-left:4px; padding:1px 7px; border-radius:999px; font:600 9.5px/1.6 "JetBrains Mono", monospace; letter-spacing:.08em; text-transform:uppercase; vertical-align:2px}
+.tag.w{color:var(--danger); border:1px solid color-mix(in srgb, var(--danger) 45%, transparent)}
+.tag.g{color:var(--fix); border:1px solid color-mix(in srgb, var(--fix) 45%, transparent)}
+.rec .more-btn{margin-top:8px; padding:5px 10px; font-size:10px}
+
+/* callout */
+.callout-wrap{max-width:760px; margin:130px auto 0; padding:0 24px}
+@media (max-width:480px){ .callout-wrap{padding:0 16px} }
+.callout{position:relative; border:1px solid var(--line2); border-radius:20px; padding:40px 32px 34px; background:linear-gradient(160deg, var(--card2), var(--card)); box-shadow:var(--shadow)}
+.callout::before{content:""; position:absolute; inset:-1px; border-radius:20px; padding:1px; background:linear-gradient(120deg, var(--danger), var(--pivot), var(--fix)); -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none}
+.callout p{margin:0 0 16px; font-size:clamp(19px, 2.3vw, 23px); line-height:1.55; font-weight:360}
+.callout p:last-child{margin-bottom:0}
+.callout strong{font-weight:560}
+.callout .hl{color:var(--danger); font-weight:500}
+.callout .hl2{color:var(--fix); font-weight:500}
+
+/* sources */
+.sources{padding-top:110px}
+.sources h2{font-size:clamp(28px, 4vw, 40px)}
+.src-group{margin-top:34px}
+.src-group h3{margin:0 0 10px; font:600 11px/1.4 "JetBrains Mono", monospace; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2)}
+.src-list{list-style:none; margin:0; padding:0}
+.src-list li{display:grid; grid-template-columns:44px 1fr; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14.5px; line-height:1.45}
+.src-list .sn{font:600 12px/1.6 "JetBrains Mono", monospace; color:var(--ink3)}
+.src-list .pub{color:var(--ink); font-weight:550}
+.src-list .ttl{color:var(--ink2)}
+.src-list .dt{font:500 11px/1.4 "JetBrains Mono", monospace; color:var(--ink3); margin-left:4px}
+.src-list a{color:var(--pivot); text-decoration:none; font:500 11.5px/1.6 "JetBrains Mono", monospace; word-break:break-all}
+.src-list a:hover{text-decoration:underline}
+
+footer{margin-top:90px; padding:32px 24px 48px; border-top:1px solid var(--line); text-align:center; font:500 12px/1.6 "JetBrains Mono", monospace; letter-spacing:.06em; color:var(--ink3)}
+footer a{color:var(--ink2); text-decoration:none; border-bottom:1px solid var(--line2)}
+footer a:hover{color:var(--pivot); border-color:var(--pivot)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <p class="tb-meta"><b>Incident study</b><span class="sep">·</span><span class="tb-hide">ARTEX agentic campaign</span><span class="sep tb-hide">·</span>Sept–Oct 2026</p>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light and dark theme"><span class="dot"></span><span id="themeLabel">Light mode</span></button>
+  </div>
+</div>
+
+<!-- ================= HERO ================= -->
+<header class="hero" id="top">
+  <div class="lanes-bg" aria-hidden="true"><div class="lanes-inner">
+    <div class="lane-bg l1"></div>
+    <div class="lane-bg l2"></div>
+    <div class="lane-bg l3"></div>
+  </div></div>
+  <div class="scan" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <div class="hero-text">
+      <h1><span class="solid">Outsourced</span> <span class="grad-ital">Expertise&nbsp;&nbsp;</span></h1>
+      <div class="hero-copy">
+        <p class="hero-deck">In September 2026, a not particularly technically sophisticated operator borrowed an open-source AI agent, rented models and disposable servers, and breached seven South Korean financial institutions within days. Why is this significant? <strong>This is the AI-generation script kiddie. The risk profile is shifting.</strong></p>
+        <div class="hero-meta"><span>South Korea · Japan</span><span>For security &amp; enterprise teams</span><span>41 sources</span></div>
+      </div>
+    </div>
+    <figure class="swim" role="img" aria-label="Three swimlanes. Lane one: a single operator. Lane two: the expertise that operator outsourced, namely an open-source agent, rented models, rented servers with rotating proxies, and an AI assistant. Lane three: nine targeted institutions. Seven are entered through a side door; two were designed without one, and the attack paths stop short.">
+      <div class="swim-heads" aria-hidden="true">
+        <div class="sh x1"><span class="sh-n">01</span><span class="sh-t">The operator</span><span class="sh-s">Not particularly technically sophisticated</span></div>
+        <div class="sh x2"><span class="sh-n">02</span><span class="sh-t">Outsourced expertise</span><span class="sh-s">Built by others, used as-is</span></div>
+        <div class="sh x3"><span class="sh-n">03</span><span class="sh-t">The targets</span><span class="sh-s">Seven breached · two held by design</span></div>
+      </div>
+      <div class="swim-body" aria-hidden="true">
+        <svg class="swim-paths" viewBox="0 0 300 100" preserveAspectRatio="none"><g fill="none" stroke="var(--pivot)" stroke-width="1.4" opacity=".75" class="sup"><path vector-effect="non-scaling-stroke" d="M50 50 C 95 50, 105 12.5, 150 12.5"/><path vector-effect="non-scaling-stroke" d="M50 50 C 95 50, 105 37.5, 150 37.5"/><path vector-effect="non-scaling-stroke" d="M50 50 C 95 50, 105 62.5, 150 62.5"/><path vector-effect="non-scaling-stroke" d="M50 50 C 95 50, 105 87.5, 150 87.5"/><path vector-effect="non-scaling-stroke" d="M150 12.5 C 178 12.5, 185 50, 200 50"/><path vector-effect="non-scaling-stroke" d="M150 37.5 C 178 37.5, 185 50, 200 50"/><path vector-effect="non-scaling-stroke" d="M150 62.5 C 178 62.5, 185 50, 200 50"/><path vector-effect="non-scaling-stroke" d="M150 87.5 C 178 87.5, 185 50, 200 50"/></g><g fill="none" stroke="var(--danger)" stroke-width="7" stroke-linecap="round" class="atk-glow"><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 5.56, 250 5.56"/><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 16.67, 250 16.67"/><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 38.89, 250 38.89"/><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 50.0, 250 50.0"/><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 61.11, 250 61.11"/><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 83.33, 250 83.33"/><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 94.44, 250 94.44"/></g><g fill="none" stroke="var(--danger)" stroke-width="1.8" stroke-linecap="round" class="atk"><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 5.56, 250 5.56"/><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 16.67, 250 16.67"/><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 38.89, 250 38.89"/><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 50.0, 250 50.0"/><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 61.11, 250 61.11"/><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 83.33, 250 83.33"/><path vector-effect="non-scaling-stroke" d="M200 50 C 226 50, 228 94.44, 250 94.44"/></g><g fill="none" stroke="var(--fix)" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="3 6" opacity=".8"><path vector-effect="non-scaling-stroke" d="M200 50 C 220 50, 224 27.78, 236 27.78"/><path vector-effect="non-scaling-stroke" d="M200 50 C 220 50, 224 72.22, 236 72.22"/></g><g stroke="var(--fix)" stroke-width="2.4" stroke-linecap="round"><path vector-effect="non-scaling-stroke" d="M238.5 23.78 L238.5 31.78"/><path vector-effect="non-scaling-stroke" d="M238.5 68.22 L238.5 76.22"/></g></svg>
+        <div class="hub"></div>
+        <div class="lane"><div class="op">&gt;_<span class="op-cap">One operator</span></div></div>
+        <div class="lane">
+          <div class="chip"><b>Open-source agent</b><span>ARTEX, used unmodified</span></div>
+          <div class="chip"><b>Rented models</b><span>via an API reseller</span></div>
+          <div class="chip"><b>Rented servers</b><span>rotating proxy IPs</span></div>
+          <div class="chip"><b>AI assistant</b><span>research &amp; advice</span></div>
+        </div>
+        <div class="lane"><div class="inst breached"></div><div class="inst breached"></div><div class="inst held"><span class="tag-held">HELD</span></div><div class="inst breached"></div><div class="inst breached"></div><div class="inst breached"></div><div class="inst held"><span class="tag-held">HELD</span></div><div class="inst breached"></div><div class="inst breached"></div></div>
+      </div>
+      <figcaption class="swim-foot"><span><i class="k-door"></i>Side door · partner or employee lookup</span><span><i class="k-held"></i>Designed without the flaw</span><span>As reported in <a href="#src1">[1]</a> <a href="#src8">[8]</a> <a href="#src23">[23]</a></span></figcaption>
+    </figure>
+  </div>
+  <a class="scroll-prompt" href="#s01">Scroll · the side door is open<span class="chev"></span></a>
+</header>
+
+<main>
+
+<!-- ================= 01 FRAMING ================= -->
+<section class="section" id="s01">
+  <div class="wrap">
+    <p class="eyebrow reveal"><span class="num">01</span> How attacks are changing</p>
+    <h2 class="reveal">Nothing here was new except who supplied the expertise.</h2>
+    <p class="lede reveal">The weaknesses were ordinary: side systems outside the main login, lookups that trusted a bare ID, limits keyed to IP addresses. Finding and using them used to take an expert. This time the expertise was outsourced to tooling, rented models and disposable servers.</p>
+    <div class="prose reveal">
+      <p>None of the confirmed intrusions required a new class of vulnerability. The entry points were internet-reachable services built for loan brokers, employees and partners, and every technique in the chain predates generative AI.<span class="cite">[<a href="#src1">1</a>,<a href="#src11">11</a>]</span> What changed is who could do the work.</p>
+    </div>
+    <div class="era reveal">
+      <div class="era-card then">
+        <p class="era-k">Then · the script kiddie</p>
+        <h3>Borrowed an exploit</h3>
+        <p class="tx">Security teams remember script kiddies, or “skids”: attackers with little skill who got hold of someone else’s exploit and fired it at everything they could reach. The exploit was borrowed, but reconnaissance, judgment and follow-through still had to come from the person, and that limited how far they got.</p>
+      </div>
+      <div class="era-card now">
+        <p class="era-k">Now · the new script kiddie</p>
+        <h3>Borrows the expert</h3>
+        <p class="tx">The borrowed piece is no longer a single script. It is the full stack an experienced attacker would bring: an agent that maps targets and chooses attack paths, models that reason, infrastructure that rotates on demand, even advice on where to sell the data.<span class="cite">[<a href="#src25">25</a>,<a href="#src1">1</a>]</span> CrowdStrike’s Adam Meyers described this operator as not particularly technically sophisticated, and the attacks still worked.<span class="cite">[<a href="#src23">23</a>]</span></p>
+      </div>
+    </div>
+    <div class="stack reveal" aria-label="The outsourced stack">
+      <div class="tile"><h3>The tool</h3><p>ARTEX, an open-source multi-agent penetration-testing framework released publicly in July and used without modification.<span class="cite">[<a href="#src1">1</a>,<a href="#src14">14</a>]</span></p></div>
+      <div class="tile"><h3>The models</h3><p>DeepSeek v4.1-flash as the main backend through a likely API reseller, with GLM-5.3 and Grok 4.6 in additional Claude Code sessions.<span class="cite">[<a href="#src1">1</a>]</span></p></div>
+      <div class="tile"><h3>The infrastructure</h3><p>Rented servers and rotating proxy addresses, replaced as fast as defenders blocked them.<span class="cite">[<a href="#src1">1</a>,<a href="#src8">8</a>]</span></p></div>
+      <div class="tile"><h3>The research</h3><p>Even questions about where to sell stolen Korean data went to an AI assistant.<span class="cite">[<a href="#src1">1</a>]</span></p></div>
+    </div>
+    <div class="mitre-quote reveal">MITRE describes the pattern directly: with a public model, an adversary is “essentially outsourcing or automating certain tasks to the tool.”<span class="src">MITRE ATT&amp;CK T1588.007 · Obtain Capabilities: Artificial Intelligence <a href="#src5" class="cite" style="vertical-align:0">[5]</a></span></div>
+    <div class="prose reveal">
+      <p><strong>Why the risk is higher now.</strong> When expertise can be borrowed, the number of people able to run this level of attack is no longer limited by how many experts exist. Anthropic’s threat intelligence team reached the same conclusion from its own investigations: sophisticated attacks no longer require sophisticated attackers, and the capabilities it documented should be assumed available to anyone motivated to use them.<span class="cite">[<a href="#src4">4</a>]</span> CrowdStrike expects adversaries to keep adding AI tooling to raise their tempo and capability.<span class="cite">[<a href="#src1">1</a>]</span></p>
+    </div>
+    <h3 class="sub-h reveal">Design decisions are becoming the defense that lasts.</h3>
+    <div class="prose reveal">
+      <p>Many of the controls that failed here were never strong. They worked because few people had the skill to get past them: a portal no one could find, an IP block that took effort to dodge, a lookup no one bothered to enumerate. Those controls quietly depended on skilled attackers being rare.</p>
+    </div>
+    <div class="analogy reveal">
+      <div class="an lock"><p class="era-k">A lock</p><p class="tx">Takes an expert an hour to pick. It protects you only while experts are rare. Against borrowed expertise, it is just a delay.</p></div>
+      <div class="an wall"><p class="era-k">A wall with no door</p><p class="tx">Nothing to pick, at any skill level. It protects you from the expert and the script kiddie alike.</p></div>
+    </div>
+    <div class="prose reveal">
+      <p>The two banks that held were the wall. Investigators say their systems had been built without the flaw the attacker was hunting:<span class="cite">[<a href="#src8">8</a>]</span> a design decision, deliberate or not, that removed the path instead of slowing it down. No detection race, no blocking contest. As expertise becomes something anyone can rent, design decisions like these are becoming the most durable layer of defense an enterprise has.</p>
+    </div>
+    <div class="tracks reveal">
+      <div class="track withstand"><h3>Withstand the AI aimed at you</h3><p>Design exposed systems as if every attacker has expert help: complete inventory, server-side authorization, identity-keyed limits, behaviour-based detection. Grounded in this incident’s evidence.</p></div>
+      <div class="track govern"><h3>Govern the AI you run</h3><p>Your own AI keys, agents and testing tools are expertise too. Left ungoverned, they can be stolen and lent to someone else. Grounded in provider and ecosystem evidence.<span class="cite">[<a href="#src4">4</a>,<a href="#src27">27</a>]</span></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 02 STATS ================= -->
+<section class="section" id="s02">
+  <div class="wrap">
+    <p class="eyebrow reveal"><span class="num">02</span> By the numbers</p>
+    <h2 class="reveal">Seven institutions breached in a campaign concentrated over five days.</h2>
+    <p class="lede reveal">The two banks that held weren’t faster at detection. Their systems had been designed without the flaw the attacker was hunting, whether by deliberate choice or not.</p>
+    <div class="stats">
+      <div class="stat reveal"><div class="n">68,000<small>+</small></div><p class="l">People affected in South Korea’s ARTEX-linked breach wave</p><div class="s">Financial Services Commission, via AFP <a href="#src15">[15]</a></div></div>
+      <div class="stat reveal"><div class="n">7</div><p class="l">Financial institutions breached</p><div class="s">MSIT / KISA, via Kyunghyang Shinmun <a href="#src10">[10]</a></div></div>
+      <div class="stat pivotline reveal"><div class="n">3<small>days</small></div><p class="l">From ARTEX’s latest public release to the first bank attack</p><div class="s">Kyunghyang Shinmun <a href="#src9">[9]</a></div></div>
+      <div class="stat reveal"><div class="n">~43<small>h</small></div><p class="l">Longest reported undetected dwell at an affected bank</p><div class="s">Tech Times (reported) <a href="#src18">[18]</a></div></div>
+      <div class="stat pivotline reveal"><div class="n">~20</div><p class="l">Japanese companies targeted from one ARTEX attack infrastructure</p><div class="s">GMO Cybersecurity by Ierae <a href="#src2">[2]</a></div></div>
+      <div class="stat fixline reveal"><div class="n">2</div><p class="l">Banks targeted but not breached, because their design lacked the flaw being hunted</p><div class="s">Financial Security Institute, via The Herald Business <a href="#src8">[8]</a></div></div>
+    </div>
+    <p class="note reveal"><strong>Scope note.</strong> On October 14, regulators reported incidents at 16 financial firms involving around 100,000 cases. That broader count is still under investigation, and not all of it is attributed to ARTEX.<span class="cite">[<a href="#src23">23</a>]</span> Figures above refer to the ARTEX-linked wave.</p>
+  </div>
+</section>
+
+<!-- ================= PULLQUOTE P4 (editorial) ================= -->
+<figure class="pq reveal" aria-label="Editorial pullquote">
+  <div class="pq-inner">
+    <span class="pq-mark" aria-hidden="true">“</span>
+    <blockquote><span class="pq-text">Once, low-skill attackers borrowed an exploit. Now they borrow the expert.&nbsp;&nbsp;</span></blockquote>
+    <figcaption><span class="kind">Editorial</span>The new approach of modern attackers</figcaption>
+  </div>
+</figure>
+
+<!-- ================= 03 TIMELINE ================= -->
+<section class="section" id="s03">
+  <div class="wrap">
+    <p class="eyebrow reveal"><span class="num">03</span> The sequence</p>
+    <h2 class="reveal">Sixty-three days from public release to a breached bank.</h2>
+    <p class="lede reveal">ARTEX went public on July 26; the first bank attack began September 27. Its latest version shipped three days before that. Discovery came from shared indicators; attribution came from the attacker’s own exposed AI logs.</p>
+
+    <div class="tl" id="timeline">
+      <div class="tl-phase reveal">Before the attack</div>
+
+      <article class="tl-item reveal" data-side="left" data-tone="pivot">
+        <div class="card t-pivot">
+          <div class="k"><span class="id">Dec 2025 – Aug 2026</span><span class="badge md">Confirmed</span></div>
+          <h3>Autonomous attack scaffolding goes public</h3>
+          <p class="sum">A model provider documents offensive agent frameworks anyone can download, and a market for stolen AI keys and sessions.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>Anthropic’s threat report describes public frameworks reproducing much of the scaffolding for autonomous intrusion, and a criminal supply chain that farms AI API keys and session tokens for loot, compute and cover. It assesses that sophistication is no longer a reliable signal of who is attacking. The report predates and does not mention ARTEX.<span class="cite">[<a href="#src4">4</a>]</span></p></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="right">
+        <div class="card">
+          <div class="k"><span class="id">2026-07-26</span><span class="badge hi">Confirmed</span></div>
+          <h3>ARTEX is released openly</h3>
+          <p class="sum">An LLM-driven, multi-agent penetration-testing system is published on GitHub under AGPL-3.0.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>The tool connects to external models (DeepSeek, OpenAI and Anthropic among them). A planner agent directs worker agents that run commands and handle HTTP traffic.<span class="cite">[<a href="#src9">9</a>,<a href="#src15">15</a>,<a href="#src25">25</a>]</span> Its project page limited use to learning and local verification, not testing of live online systems. That was a notice, not a control enforced in the software.<span class="cite">[<a href="#src12">12</a>]</span></p></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="left">
+        <div class="card">
+          <div class="k"><span class="id">2026-09-03</span><span class="badge md">Reported</span></div>
+          <h3>First place among ~150 teams</h3>
+          <p class="sum">ARTEX wins overall first place at a Baidu-hosted offense-and-defense competition.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>Korean reporting notes the competition result as evidence of the tool’s capability ahead of the campaign. A DeepSeek-powered web search feature was reportedly added on September 13.<span class="cite">[<a href="#src9">9</a>,<a href="#src15">15</a>]</span></p></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="right" data-tone="pivot">
+        <div class="card t-pivot">
+          <div class="k"><span class="id">2026-09-24</span><span class="badge md">Reported</span></div>
+          <h3>Latest public version ships</h3>
+          <p class="sum">Three days later, the first bank attack begins.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>The gap between a capability’s release and its use in the field was measured in days, not review cycles.<span class="cite">[<a href="#src9">9</a>]</span></p></div>
+        </div>
+      </article>
+
+      <div class="tl-phase reveal">Initial compromise</div>
+
+      <article class="tl-item reveal" data-side="left">
+        <div class="card">
+          <div class="k"><span class="id">Before Sept 27</span><span class="badge hi">Confirmed</span></div>
+          <h3>A two-server setup, assembled from rented parts</h3>
+          <p class="sum">A Hong Kong control node plus a VPS hosting ARTEX, with models reached through a likely reseller.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>The control node held Claude Code session histories, ARTEX configuration files and agent memory files. DeepSeek v4.1-flash was the primary backend; GLM-5.3 and Grok 4.6 supported additional Claude Code sessions.<span class="cite">[<a href="#src1">1</a>]</span></p></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="right">
+        <div class="card">
+          <div class="k"><span class="id">Sept 27 – Oct 1</span><span class="badge hi">Confirmed</span></div>
+          <h3>Five days of concentrated activity</h3>
+          <p class="sum">The attack on KB Kookmin begins September 27; activity across institutions concentrates Sunday through Thursday.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>Leaks were reported at Shinhan Bank, KB Kookmin Bank, Hana Bank, BNK Busan Bank, Yegaram Savings Bank, Hyundai Capital and Welcome Savings Bank. Woori Bank and NH NongHyup Bank were targeted and not breached.<span class="cite">[<a href="#src8">8</a>,<a href="#src9">9</a>,<a href="#src10">10</a>]</span></p></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="left">
+        <div class="card">
+          <div class="k"><span class="id">Sept 27 – 30</span><span class="badge md">Reported · method disputed</span></div>
+          <h3>Entry through the side doors</h3>
+          <p class="sum">A loan-broker inquiry service, an employee mobile work-support system and a staff sales-support system: never the customer banking channels.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>At one bank an attacker bypassed identity verification in a mobile inquiry service used by loan agents.<span class="cite">[<a href="#src11">11</a>]</span> Korean reporting describes random values fed into the service to find valid customer numbers before linked records were pulled.<span class="cite">[<a href="#src9">9</a>]</span> An independent analysis points to insufficient server-side validation in legacy systems.<span class="cite">[<a href="#src24">24</a>]</span> Sources describe the mechanism differently, and no step-by-step forensic account has been published.<span class="cite">[<a href="#src14">14</a>]</span></p></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="right">
+        <div class="card">
+          <div class="k"><span class="id">During the campaign</span><span class="badge md">Reported</span></div>
+          <h3>Rotation, not takeover</h3>
+          <p class="sum">Data was extracted by querying. Blocked addresses were simply replaced.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>Investigators found no system takeover; the attacker got in and extracted information through queries. Two to three attacker IPs overlapped at each bank, and blocking one led to another.<span class="cite">[<a href="#src8">8</a>]</span> In separate sessions, the operator asked an AI assistant where Korean breach data is sold and how to find Telegram data-sales groups.<span class="cite">[<a href="#src1">1</a>]</span></p></div>
+        </div>
+      </article>
+
+      <div class="tl-phase reveal">Discovery</div>
+
+      <article class="tl-item reveal" data-side="left" data-tone="pivot">
+        <div class="card t-pivot">
+          <div class="k"><span class="id">Sept 29 – 30</span><span class="badge md">Reported</span></div>
+          <h3>Detection, hours behind</h3>
+          <p class="sum">The first affected institution detects the anomaly more than 15 hours after first access; reported dwell before blocking ran ~30–43 hours.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>Dwell figures come from a single outlet and are treated as reported, not confirmed.<span class="cite">[<a href="#src18">18</a>]</span> Banks blocked the attacker’s IPs and suspended affected services on detection.<span class="cite">[<a href="#src11">11</a>]</span></p></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="right" data-tone="fix">
+        <div class="card t-fix">
+          <div class="k"><span class="id">Oct 1 – 3</span><span class="badge fx">Reported</span></div>
+          <h3>Shared indicators surface hidden breaches</h3>
+          <p class="sum">Attacker IPs from the first investigation are shared sector-wide; other institutions find their own breaches in their logs.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>Collective sharing, not individual telemetry, revealed most of the wave. On October 2, a Korean security firm reported the ARTEX “autonomous penetration test console” title on an attack server. On October 3, the Financial Security Institute said logs at Shinhan Bank showed ARTEX use, identified by a traffic signature.<span class="cite">[<a href="#src8">8</a>,<a href="#src9">9</a>]</span></p></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="left">
+        <div class="card">
+          <div class="k"><span class="id">2026-10-07</span><span class="badge hi">Confirmed</span></div>
+          <h3>The attacker’s own AI logs tell the story</h3>
+          <p class="sum">Exposed open directories reveal session histories, configurations and memory files.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>CrowdStrike reconstructed the infrastructure and model stack from directories the operator left browsable. It assesses, with moderate confidence, a Chinese-speaking, financially motivated actor not tied to a named group.<span class="cite">[<a href="#src1">1</a>]</span> The AI tooling that accelerated the campaign also recorded it.</p></div>
+        </div>
+      </article>
+
+      <div class="tl-phase reveal">Disclosure &amp; response</div>
+
+      <article class="tl-item reveal" data-side="right">
+        <div class="card">
+          <div class="k"><span class="id">Oct 1 – 4</span><span class="badge hi">Confirmed</span></div>
+          <h3>Disclosures and an emergency posture</h3>
+          <p class="sum">About 25,700 customers at one bank, then 119, 89 and 11 at others; seven institutions confirmed by October 4.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>Exposed data at the largest bank included names, phone numbers, annual income and calculated loan limits, plus 66 resident registration numbers and 97 identity-verification identifiers.<span class="cite">[<a href="#src8">8</a>,<a href="#src11">11</a>]</span> The FSC ordered checks of externally accessible systems, explicitly including AI systems, along with stronger authentication, tighter access control and faster sharing.<span class="cite">[<a href="#src11">11</a>,<a href="#src26">26</a>]</span> KISA activated a 24-hour emergency posture and sent inspection advisories to about 28,000 companies.<span class="cite">[<a href="#src10">10</a>]</span></p></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="left" data-tone="pivot">
+        <div class="card t-pivot">
+          <div class="k"><span class="id">2026-10-08</span><span class="badge hi">Confirmed</span></div>
+          <h3>The tool goes closed-source</h3>
+          <p class="sum">The developer halts releases, citing misuse, and says the tool was built for learning and authorized testing.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>Closing the source stops new releases but cannot recall copies cloned during the months the code was public.<span class="cite">[<a href="#src13">13</a>,<a href="#src15">15</a>]</span> A Korean-language fork reportedly appeared the same day; it is unverified.<span class="cite">[<a href="#src14">14</a>]</span></p></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="right">
+        <div class="card">
+          <div class="k"><span class="id">Oct 15 – 19</span><span class="badge hi">Confirmed</span></div>
+          <h3>Japan: the same tool, on different servers</h3>
+          <p class="sum">GMO Cybersecurity by Ierae confirms ARTEX on one attack infrastructure that targeted about 20 Japanese companies.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>Nine of those targets were in the same industry. GMO found six further AI-using attack infrastructures focused on Japan, spanning retail, education, insurance and finance, e-commerce, media and logistics. Eight targeted companies had already published leak notices.<span class="cite">[<a href="#src2">2</a>]</span> In an earlier advisory, GMO described attackers switching IPs just under WAF thresholds across hundreds of addresses.<span class="cite">[<a href="#src3">3</a>]</span></p></div>
+        </div>
+      </article>
+
+      <div class="tl-phase reveal">Ongoing</div>
+
+      <article class="tl-item reveal" data-side="left" data-tone="fix">
+        <div class="card t-fix">
+          <div class="k"><span class="id">Now</span><span class="badge fx">Confirmed</span></div>
+          <h3>Copies persist; the lesson is in the design</h3>
+          <p class="sum">Attribution is unresolved, a broader 16-firm probe continues, and leaked income data carries long-tail phishing risk.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><p>Regulators warned consumers about phishing and loan scams using the leaked data.<span class="cite">[<a href="#src13">13</a>]</span> GMO is investigating whether countries beyond Japan and South Korea are targeted.<span class="cite">[<a href="#src2">2</a>]</span> The tool remains in circulation regardless of its source status.<span class="cite">[<a href="#src14">14</a>]</span></p></div>
+        </div>
+      </article>
+    </div>
+
+    <p class="note reveal"><strong>Two months from release to abuse.</strong> Nothing in this sequence is unique to ARTEX. Public offensive agent frameworks already reproduce much of the same attack scaffolding for anyone who downloads them,<span class="cite">[<a href="#src4">4</a>]</span> and a fork reportedly appeared the same day the original closed.<span class="cite">[<a href="#src14">14</a>]</span> The next capability will arrive the same way, and nothing stops someone else from repeating this path with it. Plan for the next 63 days, not the last ones.</p>
+
+    <details class="drop reveal">
+      <summary>What the record establishes, and what it doesn’t</summary>
+      <div class="drop-body">
+        <div class="record">
+          <div class="r-ok"><h4>Established</h4><ul>
+            <li>Infrastructure, model stack and exposed AI session logs.<span class="cite">[<a href="#src1">1</a>]</span></li>
+            <li>Entry through peripheral, internet-reachable employee and partner systems.<span class="cite">[<a href="#src1">1</a>,<a href="#src11">11</a>]</span></li>
+            <li>ARTEX traces in one bank’s logs, per the Financial Security Institute.<span class="cite">[<a href="#src8">8</a>]</span></li>
+            <li>ARTEX on one Japan-focused attack infrastructure.<span class="cite">[<a href="#src2">2</a>]</span></li>
+          </ul></div>
+          <div class="r-rep"><h4>Reported, not forensically published</h4><ul>
+            <li>The exact entry mechanism: accounts range from identity-verification bypass to identifier enumeration to weak server-side validation.<span class="cite">[<a href="#src9">9</a>,<a href="#src11">11</a>,<a href="#src24">24</a>]</span></li>
+            <li>Dwell times of ~30–43 hours.<span class="cite">[<a href="#src18">18</a>]</span></li>
+          </ul></div>
+          <div class="r-open"><h4>Unresolved, or sources disagree</h4><ul>
+            <li>How much ARTEX did autonomously versus under direction.<span class="cite">[<a href="#src14">14</a>]</span></li>
+            <li>The operator’s identity; no adversary is named.<span class="cite">[<a href="#src1">1</a>]</span></li>
+            <li>Whether the Japanese activity is the same operator: same tool, actor not established.<span class="cite">[<a href="#src2">2</a>]</span></li>
+            <li>Whether all six Japanese AI-using infrastructures ran ARTEX: one wire report says yes; GMO’s own post names ARTEX for one.<span class="cite">[<a href="#src19">19</a>,<a href="#src2">2</a>]</span></li>
+            <li>Japanese target counts beyond ~20: one outlet reports ~80; GMO’s post does not.<span class="cite">[<a href="#src21">21</a>,<a href="#src22">22</a>]</span></li>
+            <li>A government-wide determination of AI’s role remains pending.<span class="cite">[<a href="#src23">23</a>]</span></li>
+          </ul></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="drop reveal">
+      <summary>Complete event log · 62 events</summary>
+      <div class="drop-body log-wrap">
+        <table class="log">
+          <thead><tr><th>Date</th><th>Event</th><th>Sources</th><th>Confidence</th></tr></thead>
+          <tbody id="eventLog"></tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ================= 04 ATTACK CHAIN ================= -->
+<section class="section" id="s04">
+  <div class="wrap">
+    <p class="eyebrow reveal"><span class="num">04</span> The chain, mapped</p>
+    <h2 class="reveal">Six familiar techniques. The operator outsourced the expertise to run them.</h2>
+    <p class="lede reveal">Every technique in this chain predates AI. What changed sits in resource development, outside any victim’s view, where an agent and rented models turned one operator into a parallel campaign.</p>
+
+    <div class="tl">
+      <div class="tl-phase reveal">Resource development · outside the victim’s view</div>
+
+      <article class="tl-item reveal" data-side="left">
+        <div class="card">
+          <div class="k"><span class="id">T1588.007</span><span>Resource Development</span><span class="badge hi">High</span></div>
+          <h3>Obtain Capabilities: Artificial Intelligence</h3>
+          <p class="sum">The keystone. An open-source agent and rented models turned one operator into a multi-target campaign.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Full analysis</button>
+          <div class="more" hidden><dl>
+            <dt>What happened here</dt><dd>The operator obtained ARTEX and ran it on DeepSeek v4.1-flash through a likely API reseller, with GLM-5.3 and Grok 4.6 in additional Claude Code sessions.<span class="cite">[<a href="#src1">1</a>,<a href="#src25">25</a>]</span> CrowdStrike’s Adam Meyers characterized the effect as one person targeting many organizations in a very short period.<span class="cite">[<a href="#src12">12</a>]</span></dd>
+            <dt>Defender note</dt><dd>MITRE lists no preventive mitigation for this technique beyond “pre-compromise”: it happens outside enterprise visibility. Defensive leverage sits in the techniques below.<span class="cite">[<a href="#src5">5</a>]</span></dd>
+            <dt>Evidence</dt><dd>[1] [5] [12] [25]</dd>
+          </dl></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="right">
+        <div class="card">
+          <div class="k"><span class="id">T1583.003</span><span>Resource Development</span><span class="badge hi">High</span></div>
+          <h3>Acquire Infrastructure: Virtual Private Server</h3>
+          <p class="sum">Disposable, rented servers: one to control, one to run the agent.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Full analysis</button>
+          <div class="more" hidden><dl>
+            <dt>What happened here</dt><dd>A Hong Kong control node stored session histories, configurations and agent memory; a separate VPS hosted the ARTEX instance. Both had browsable open directories, which is how researchers reconstructed the operation.<span class="cite">[<a href="#src1">1</a>,<a href="#src14">14</a>]</span></dd>
+            <dt>Evidence</dt><dd>[1] [14]</dd>
+          </dl></div>
+        </div>
+      </article>
+
+      <div class="tl-phase reveal">Against the victim · where design decisions bite</div>
+
+      <article class="tl-item reveal" data-side="left">
+        <div class="card">
+          <div class="k"><span class="id">T1595 · .002</span><span>Reconnaissance</span><span class="badge md">Medium</span></div>
+          <h3>Active Scanning: Vulnerability Scanning</h3>
+          <p class="sum">Broad probing for one class of weakness, then focus on whoever had it.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Full analysis</button>
+          <div class="more" hidden><dl>
+            <dt>What happened here</dt><dd>Investigators say far more institutions, including some outside banking, were attacked than suffered incidents.<span class="cite">[<a href="#src8">8</a>]</span> Authorities describe the pattern as AI randomly attacking many firms, with the weaker-defended ones breached, rather than a strike on specific targets.<span class="cite">[<a href="#src9">9</a>]</span> ARTEX’s planner-and-worker design exists to map targets and choose attack paths.<span class="cite">[<a href="#src25">25</a>]</span></dd>
+            <dt>Confidence note</dt><dd>That broad probing occurred is well supported. Specific scanning behaviour is inferred from the tool’s design and the breadth of targeting, not from published forensics.</dd>
+            <dt>Evidence</dt><dd>[8] [9] [25] [14] [3]</dd>
+          </dl></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="right">
+        <div class="card">
+          <div class="k"><span class="id">T1190</span><span>Initial Access</span><span class="badge hi">Medium-High</span></div>
+          <h3>Exploit Public-Facing Application</h3>
+          <p class="sum">Peripheral apps built for brokers and staff, reachable from the internet.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Full analysis</button>
+          <div class="more" hidden><dl>
+            <dt>What happened here</dt><dd>Entry points were a loan-broker mobile inquiry service (identity verification bypassed), an employee mobile work-support system and a staff sales-support system.<span class="cite">[<a href="#src1">1</a>,<a href="#src11">11</a>]</span> An independent analysis attributes access to insufficient server-side validation in legacy systems.<span class="cite">[<a href="#src24">24</a>]</span> Customer channels, which use authentication beyond IDs and passwords, were not breached.<span class="cite">[<a href="#src9">9</a>]</span></dd>
+            <dt>Confidence note</dt><dd>Exploitation of public-facing peripheral apps is confirmed; the exact flaw is described differently across sources.</dd>
+            <dt>Evidence</dt><dd>[1] [8] [9] [11] [24]</dd>
+          </dl></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="left">
+        <div class="card">
+          <div class="k"><span class="id">T1119</span><span>Collection</span><span class="badge md">Medium</span></div>
+          <h3>Automated Collection</h3>
+          <p class="sum">The data left inside the application’s own responses.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Full analysis</button>
+          <div class="more" hidden><dl>
+            <dt>What happened here</dt><dd>Random values reportedly found valid customer numbers, and linked records were then pulled: name, phone, income, loan limit.<span class="cite">[<a href="#src9">9</a>]</span> Investigators say the attacker extracted data by querying, without taking over systems, so no separate exfiltration channel is evidenced.<span class="cite">[<a href="#src8">8</a>]</span> Volume reached about 25,700 records at one bank and 68,000+ people across the wave.<span class="cite">[<a href="#src8">8</a>,<a href="#src15">15</a>]</span></dd>
+            <dt>Evidence</dt><dd>[8] [9] [11] [15] [37]</dd>
+          </dl></div>
+        </div>
+      </article>
+
+      <article class="tl-item reveal" data-side="right">
+        <div class="card">
+          <div class="k"><span class="id">T1090</span><span>Command &amp; Control</span><span class="badge hi">High</span></div>
+          <h3>Proxy</h3>
+          <p class="sum">Rotating addresses turned IP blocking into a speed bump.</p>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Full analysis</button>
+          <div class="more" hidden><dl>
+            <dt>What happened here</dt><dd>CrowdStrike recovered nine proxy IPs from the operator’s sessions.<span class="cite">[<a href="#src1">1</a>]</span> At the banks, two to three IPs overlapped per institution and were replaced when blocked.<span class="cite">[<a href="#src8">8</a>]</span> Suspected attack IPs spanned up to 12 countries.<span class="cite">[<a href="#src26">26</a>]</span> In Japan, separately, GMO observed IPs switched just under WAF per-IP thresholds across hundreds of addresses.<span class="cite">[<a href="#src3">3</a>]</span></dd>
+            <dt>Evidence</dt><dd>[1] [3] [8] [26]</dd>
+          </dl></div>
+        </div>
+      </article>
+    </div>
+
+    <details class="drop reveal">
+      <summary>Supporting technique observed · 1</summary>
+      <div class="drop-body">
+        <div class="card t-pivot">
+          <div class="k"><span class="id" style="color:var(--pivot)">T1682</span><span>Reconnaissance</span><span class="badge md">Medium</span></div>
+          <h3>Query Public AI Services</h3>
+          <p class="sum">The operator asked an AI assistant where Korean breach data is typically sold, and for help finding Korean Telegram data-sales groups. This was AI-assisted research into monetization, not into victims.<span class="cite">[<a href="#src1">1</a>,<a href="#src29">29</a>]</span> Whether data was sold is not documented. Regulators warned it could feed phishing and loan scams.<span class="cite">[<a href="#src13">13</a>]</span></p>
+        </div>
+      </div>
+    </details>
+
+    <p class="note reveal"><strong>Where defenders act.</strong> The first two techniques happen outside any victim’s view. The last four are where design decisions determine the outcome: inventory, authentication, authorization, identity-keyed limits and behavioural detection.</p>
+  </div>
+</section>
+
+<!-- ================= PULLQUOTE P1 (sourced) ================= -->
+<figure class="pq sourced reveal" aria-label="Sourced pullquote">
+  <div class="pq-inner">
+    <span class="pq-mark" aria-hidden="true">“</span>
+    <blockquote><span class="pq-text">Blocking IPs is little more than emergency first aid.&nbsp;&nbsp;</span></blockquote>
+    <figcaption><span class="kind">Sourced</span>Financial Security Institute official, via The Herald Business <a href="#src8" style="color:inherit">[8]</a></figcaption>
+  </div>
+</figure>
+
+<!-- ================= 05 CHART ================= -->
+<section class="section" id="s05">
+  <div class="wrap">
+    <p class="eyebrow reveal"><span class="num">05</span> The most defended sector</p>
+    <h2 class="reveal">Banks carry the heaviest security mandates. Agentic capability reached them anyway.</h2>
+    <p class="lede reveal">ARTEX sat in public for 63 days before its first bank attack, and seven institutions confirmed breaches within the week that followed. If the most regulated sector was reachable this fast, treat it as the floor for everyone else.</p>
+
+    <figure class="chart-fig reveal">
+      <p class="ch-title">Sixty-three quiet days, then seven breaches in a week</p>
+      <p class="ch-sub">Financial institutions publicly confirmed breached in South Korea, plotted against days since ARTEX went public.</p>
+      <svg viewBox="0 0 720 392" role="img" aria-labelledby="chart2Desc">
+        <desc id="chart2Desc">Step line. The count of institutions confirmed breached stays at zero for 63 days after ARTEX's public release, then rises to one on day 67, four on day 68 and seven by day 70. Numbered markers mark the release, a competition win, a feature update, the latest version and first attack, the public report and closure of the source, and confirmation in Japan.</desc>
+        <g stroke="var(--line)" stroke-width="1">
+          <line x1="70" y1="250" x2="690" y2="250"/><line x1="70" y1="180" x2="690" y2="180"/><line x1="70" y1="110" x2="690" y2="110"/><line x1="70" y1="40" x2="690" y2="40"/>
+        </g>
+        <line x1="70" y1="320" x2="690" y2="320" stroke="var(--line2)" stroke-width="1.5"/>
+        <g class="ax" font-family="JetBrains Mono, ui-monospace, monospace" font-size="12" fill="var(--ink3)" text-anchor="end">
+          <text x="58" y="324">0</text><text x="58" y="254">2</text><text x="58" y="184">4</text><text x="58" y="114">6</text><text x="58" y="44">8</text>
+        </g>
+        <rect x="504.0" y="40" width="27.6" height="280" fill="var(--danger-soft)"/>
+        <path d="M504.0 320 H531.6 V285 H538.4 V180 H552.2 V75 H690 V320 Z" fill="var(--danger-soft)"/>
+        <path d="M70 320 H504.0" stroke="var(--pivot)" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+        <path d="M504.0 320 H531.6 V285 H538.4 V180 H552.2 V75 H690" stroke="var(--danger)" stroke-width="3.2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+        <g fill="var(--danger)"><circle cx="531.6" cy="285" r="4.5"/><circle cx="538.4" cy="180" r="4.5"/><circle cx="552.2" cy="75" r="6"/></g>
+        <text class="ax" x="80" y="302" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="700" letter-spacing="1" fill="var(--pivot)">63 DAYS IN PUBLIC</text>
+        <text class="ax" x="690" y="58" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="700" letter-spacing="1" fill="var(--danger)" text-anchor="end">7 CONFIRMED IN A WEEK</text>
+        <g class="mk" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" font-weight="700" text-anchor="middle"><circle cx="70.0" cy="345" r="9.5" fill="var(--pivot)"/><text x="70.0" y="349" fill="#111">1</text><circle cx="338.7" cy="345" r="9.5" fill="var(--pivot)"/><text x="338.7" y="349" fill="#111">2</text><circle cx="407.6" cy="345" r="9.5" fill="var(--pivot)"/><text x="407.6" y="349" fill="#111">3</text><circle cx="493.7" cy="345" r="9.5" fill="var(--danger)"/><text x="493.7" y="349" fill="#fff">4</text><circle cx="576.3" cy="345" r="9.5" fill="var(--fix)"/><text x="576.3" y="349" fill="#0b0c0e">5</text><circle cx="655.6" cy="345" r="9.5" fill="var(--danger)"/><text x="655.6" y="349" fill="#fff">6</text></g>
+        <g class="ax" font-family="JetBrains Mono, ui-monospace, monospace" font-size="12" fill="var(--ink3)" text-anchor="middle">
+          <text x="70.0" y="382">JUL 26</text><text x="276.7" y="382">AUG 25</text><text x="483.3" y="382">SEP 24</text><text x="690.0" y="382">OCT 24</text>
+        </g>
+      </svg>
+      <ol class="legend">
+        <li><span class="b p">1</span><span><strong>Jul 26 · day 0.</strong> ARTEX published openly on GitHub.<span class="cite">[<a href="#src9">9</a>,<a href="#src15">15</a>]</span></span></li>
+        <li><span class="b p">2</span><span><strong>Sep 3 · day 39.</strong> Wins first place among ~150 teams at a Baidu-hosted competition.<span class="cite">[<a href="#src9">9</a>]</span></span></li>
+        <li><span class="b p">3</span><span><strong>Sep 13 · day 49.</strong> DeepSeek-powered web search added.<span class="cite">[<a href="#src15">15</a>]</span></span></li>
+        <li><span class="b">4</span><span><strong>Sep 24–27 · days 60–63.</strong> Latest version ships; three days later the first bank attack begins.<span class="cite">[<a href="#src9">9</a>]</span></span></li>
+        <li><span class="b g">5</span><span><strong>Oct 7–8 · days 73–74.</strong> CrowdStrike publishes, and the developer takes the tool closed-source, after the damage was done.<span class="cite">[<a href="#src1">1</a>,<a href="#src13">13</a>]</span></span></li>
+        <li><span class="b">6</span><span><strong>Oct 19 · day 85.</strong> ARTEX confirmed on a Japan-focused attack infrastructure that targeted about 20 companies.<span class="cite">[<a href="#src2">2</a>]</span></span></li>
+      </ol>
+      <p class="chart-cap">The step line counts institutions publicly confirmed breached in South Korea, by disclosure date: one on October 1 (day 67), four by October 2 (day 68), seven by October 4 (day 70).<span class="cite">[<a href="#src11">11</a>,<a href="#src10">10</a>]</span> Shaded band: the concentrated attack window, September 27 to October 1.<span class="cite">[<a href="#src8">8</a>,<a href="#src9">9</a>]</span> Day counts are calculated from the sourced dates.</p>
+    </figure>
+
+    <div class="group-h reveal"><h3>What the sector already had</h3><p>Korean financial institutions operate under requirements most enterprises never face.</p></div>
+    <div class="stack reveal">
+      <div class="tile ok"><h3>Network separation</h3><p>Since 2014, rules under the Electronic Financial Transactions Act required internal business networks to be physically isolated from the internet. Regulators began relaxing them in 2026 for AI security tooling.<span class="cite">[<a href="#src39">39</a>,<a href="#src8">8</a>]</span></p></div>
+      <div class="tile ok"><h3>A sector security institute</h3><p>The Financial Security Institute traced the attack through bank logs and shared attacker IPs across the sector within days.<span class="cite">[<a href="#src8">8</a>]</span></p></div>
+      <div class="tile ok"><h3>Supervisors who moved fast</h3><p>The FSC and FSS convened emergency meetings and ordered checks of externally accessible systems, AI systems included.<span class="cite">[<a href="#src11">11</a>,<a href="#src26">26</a>]</span></p></div>
+      <div class="tile ok"><h3>AI-assisted testing</h3><p>Major banks were already building AI penetration-testing and detection programs before the campaign.<span class="cite">[<a href="#src36">36</a>]</span></p></div>
+    </div>
+    <div class="prose reveal">
+      <p>Regulators elsewhere already mandate the exact controls that broke down here. New York’s Part 500 requires multi-factor authentication for any user accessing any information system, plus a maintained inventory of information systems, both in force since November 1, 2025.<span class="cite">[<a href="#src41">41</a>]</span> The EU’s Digital Operational Resilience Act, applicable since January 17, 2025, requires ICT risk management and threat-led penetration testing for banks and other financial entities.<span class="cite">[<a href="#src40">40</a>]</span></p>
+      <p>Mandates set a baseline for the systems an institution can see. Investigators said the breached systems sat across so many management points that institutions had difficulty identifying where the weaknesses were.<span class="cite">[<a href="#src8">8</a>]</span> What separated the banks that held was not a mandate but a design outcome: their systems were built without the flaw.<span class="cite">[<a href="#src8">8</a>]</span> <strong>Compliance sets the floor. Design decided the outcome.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 06 RISK MAP ================= -->
+<section class="section" id="s06">
+  <div class="wrap">
+    <p class="eyebrow reveal"><span class="num">06</span> Where the risk lived</p>
+    <h2 class="reveal">The breach lived in side doors no inventory remembered.</h2>
+    <p class="lede reveal">Five API weaknesses explain the entry. Three agentic risks explain how AI, including your own, becomes attack infrastructure.</p>
+
+    <div class="group-h reveal"><h3>OWASP API Security Top 10 · 2023</h3><p>Names the weaknesses an agent finds fastest in internet-reachable services.<span class="cite">[<a href="#src6">6</a>]</span></p></div>
+    <div class="grid2">
+      <article class="card reveal">
+        <div class="k"><span class="id">API9:2023</span><span class="badge hi">Primary driver</span></div>
+        <h3>Improper Inventory Management</h3>
+        <p class="sum">The compromised systems were exposed for operational convenience and sat outside the main authentication architecture.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Why it applies</dt><dd>The structural condition that let everything else happen: services the security program wasn’t tracking.</dd>
+          <dt>Specific weakness</dt><dd>Loan-broker inquiry services, employee mobile apps and a staff sales-support system, all internet-reachable. Investigators acknowledged employee-facing systems had received less rigorous management, and that institutions struggled to locate the weaknesses. The regulator’s first order was to identify every externally accessible asset, including AI systems.<span class="cite">[<a href="#src8">8</a>,<a href="#src11">11</a>,<a href="#src26">26</a>]</span></dd>
+          <dt>Citations</dt><dd>[8] [11] [14] [26]</dd>
+        </dl></div>
+      </article>
+      <article class="card reveal">
+        <div class="k"><span class="id">API2:2023</span><span class="badge hi">Primary driver</span></div>
+        <h3>Broken Authentication</h3>
+        <p class="sum">Entry depended on authentication that could be bypassed from the client side.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Why it applies</dt><dd>The peripheral systems lacked the multi-layer authentication used on customer channels.</dd>
+          <dt>Specific weakness</dt><dd>Identity verification was bypassed in a mobile inquiry service used by loan agents.<span class="cite">[<a href="#src11">11</a>]</span> An independent analysis cites insufficient server-side validation and authentication flaws in legacy systems.<span class="cite">[<a href="#src24">24</a>]</span> The exact flaw varies by institution and has not been forensically published.</dd>
+          <dt>Citations</dt><dd>[9] [11] [24]</dd>
+        </dl></div>
+      </article>
+      <article class="card reveal">
+        <div class="k"><span class="id">API1:2023</span><span class="badge hi">Primary driver</span></div>
+        <h3>Broken Object Level Authorization</h3>
+        <p class="sum">Records were returned on the strength of an identifier alone.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Why it applies</dt><dd>Nothing tied the requester to the record being requested.</dd>
+          <dt>Specific weakness</dt><dd>Random values reportedly surfaced valid customer numbers, and linked personal and financial data followed.<span class="cite">[<a href="#src9">9</a>]</span> Practitioner analysis prescribes server-side checks of identity, role and object ownership on every sensitive query, never trusting a customer ID or front-end login state.<span class="cite">[<a href="#src28">28</a>]</span> Medium confidence.</dd>
+          <dt>Citations</dt><dd>[8] [9] [24] [28]</dd>
+        </dl></div>
+      </article>
+      <article class="card reveal">
+        <div class="k"><span class="id">API6:2023</span><span class="badge md">Contributing factor</span></div>
+        <h3>Unrestricted Access to Sensitive Business Flows</h3>
+        <p class="sum">A legitimate lookup flow ran at machine speed with no control on volume or pattern.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Why it applies</dt><dd>The business flow was safe at human pace and unsafe at agent pace.</dd>
+          <dt>Specific weakness</dt><dd>Tens of thousands of records were pulled by automated querying; per-IP blocking was routed around as addresses rotated.<span class="cite">[<a href="#src8">8</a>,<a href="#src18">18</a>]</span> In Japan, separately, attackers stayed just under WAF per-IP thresholds across hundreds of addresses.<span class="cite">[<a href="#src3">3</a>]</span></dd>
+          <dt>Citations</dt><dd>[3] [8] [18]</dd>
+        </dl></div>
+      </article>
+      <article class="card reveal">
+        <div class="k"><span class="id">API3:2023</span><span class="badge md">Contributing factor</span></div>
+        <h3>Broken Object Property Level Authorization</h3>
+        <p class="sum">A status-check service returned far more than its purpose needed, which set the blast radius.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Why it applies</dt><dd>Excessive data exposure determined how much each successful query yielded.</dd>
+          <dt>Specific weakness</dt><dd>A loan-progress inquiry exposed annual income and calculated loan limits, plus 66 resident registration numbers and 97 identity-verification identifiers.<span class="cite">[<a href="#src11">11</a>]</span> A data-minimization review of exactly these fields is recommended.<span class="cite">[<a href="#src14">14</a>]</span></dd>
+          <dt>Citations</dt><dd>[11] [14]</dd>
+        </dl></div>
+      </article>
+    </div>
+
+    <div class="group-h reveal"><h3>OWASP Top 10 for Agentic Applications · 2026</h3><p>Names how agentic tooling, the attacker’s and your own, becomes a source of risk.<span class="cite">[<a href="#src30">30</a>]</span></p></div>
+    <div class="grid2">
+      <article class="card t-pivot reveal">
+        <div class="k"><span class="id" style="color:var(--pivot)">ASI04:2026</span><span class="badge md">Contributing factor</span></div>
+        <h3>Agentic Supply Chain Vulnerabilities</h3>
+        <p class="sum">The attack ran on a supply chain of agent components no one governed.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Why it applies</dt><dd>An openly released agentic testing framework was used for intrusion without modification, with model access routed through a likely reseller.<span class="cite">[<a href="#src1">1</a>]</span></dd>
+          <dt>Specific weakness</dt><dd>Closing the source did not close the chain: a Korean-language fork reportedly appeared the same day.<span class="cite">[<a href="#src14">14</a>]</span> In the enterprise mirror, unauthorized resellers and spoofed AI clients are a documented route for harvesting credentials. Adopting unvetted agent frameworks or discount model access imports that risk.<span class="cite">[<a href="#src4">4</a>]</span></dd>
+          <dt>Citations</dt><dd>[1] [4] [14]</dd>
+        </dl></div>
+      </article>
+      <article class="card t-pivot reveal">
+        <div class="k"><span class="id" style="color:var(--pivot)">ASI03:2026</span><span class="badge lo">Peripheral here · central to your AI estate</span></div>
+        <h3>Identity and Privilege Abuse</h3>
+        <p class="sum">Agentic campaigns run on AI credentials, and enterprises are a primary source of them.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Why it applies</dt><dd>Stolen AI keys and sessions give attackers resale value, free compute, and cover, because activity is attributed to the legitimate owner.<span class="cite">[<a href="#src4">4</a>]</span></dd>
+          <dt>Specific weakness</dt><dd>Infostealers lift authenticated AI sessions, bypassing password and two-factor authentication.<span class="cite">[<a href="#src27">27</a>]</span> Prompt injection against AI gateway deployments has been used to extract production keys.<span class="cite">[<a href="#src4">4</a>]</span> Cross-reference: LLM10:2025 Unbounded Consumption.<span class="cite">[<a href="#src31">31</a>]</span></dd>
+          <dt>Citations</dt><dd>[4] [27] [31]</dd>
+        </dl></div>
+      </article>
+      <article class="card t-pivot reveal">
+        <div class="k"><span class="id" style="color:var(--pivot)">ASI02:2026</span><span class="badge lo">Peripheral here · forward-critical</span></div>
+        <h3>Tool Misuse and Exploitation</h3>
+        <p class="sum">A legitimate testing agent, pointed at targets it was never authorized to touch.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Why it applies</dt><dd>The tool’s own page restricted use to local verification, and nothing in the software enforced it.<span class="cite">[<a href="#src12">12</a>]</span></dd>
+          <dt>Specific weakness</dt><dd>Organizations are now adopting agentic testing themselves, including Korean institutions under a regulatory relaxation for AI security testing.<span class="cite">[<a href="#src8">8</a>]</span> Any such agent without enforced target scope, rate limits and human sign-off before exploitation can drift onto systems it shouldn’t touch.<span class="cite">[<a href="#src14">14</a>,<a href="#src15">15</a>]</span></dd>
+          <dt>Citations</dt><dd>[8] [12] [14] [15]</dd>
+        </dl></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 07 EXISTING MITIGATIONS ================= -->
+<section class="section" id="s07">
+  <div class="wrap">
+    <p class="eyebrow reveal"><span class="num">07</span> What already existed</p>
+    <h2 class="reveal">Every control that would have helped already existed.</h2>
+    <p class="lede reveal">What made them hard was coverage and design assumptions, not knowledge. Each was built for a world where skilled attackers were rare.</p>
+
+    <div class="grid2" id="mitigations">
+      <article class="card t-fix reveal">
+        <div class="k"><span class="id">01</span><span>CIS 1 &amp; 2 · CSF ID.AM-02 · API9</span></div>
+        <h3>A live inventory of every externally reachable app</h3>
+        <p class="sum">Puts partner and employee services on the security team’s map, the precondition for every other control.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Grounding</dt><dd>CIS Controls v8.1, Controls 1 and 2; NIST CSF 2.0 ID.AM-02; OWASP API9:2023.<span class="cite">[<a href="#src32">32</a>,<a href="#src35">35</a>,<a href="#src6">6</a>]</span></dd>
+          <dt>What it would have done</dt><dd>Disrupt T1595 and T1190 by bringing the broker inquiry service, employee apps and sales-support system into scope.</dd>
+          <dt>Why it wasn’t effective here</dt><dd>Coverage gap. Institutions had difficulty identifying where the weaknesses sat.<span class="cite">[<a href="#src8">8</a>]</span> External scanning often can’t determine software versions and avoids intrusive tests, constraints attackers don’t share.<span class="cite">[<a href="#src3">3</a>]</span></dd>
+          <dt>Design note</dt><dd>Systems exposed for operational convenience accumulate outside the view of the team that hardened the flagship channels. A team can only defend what it knows exists.</dd>
+        </dl></div>
+      </article>
+      <article class="card t-fix reveal">
+        <div class="k"><span class="id">02</span><span>CSF PR.AA-03 · CIS 6 · API2</span></div>
+        <h3>Consistent server-side authentication on every exposed service</h3>
+        <p class="sum">Removes the identity-verification bypass that opened the broker service.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Grounding</dt><dd>NIST CSF 2.0 PR.AA-03; CIS Control 6; OWASP API2:2023.<span class="cite">[<a href="#src35">35</a>,<a href="#src32">32</a>,<a href="#src6">6</a>]</span></dd>
+          <dt>What it would have done</dt><dd>Disrupt T1190 and close API2.</dd>
+          <dt>Why it wasn’t effective here</dt><dd>Partially implemented. Customer channels used authentication beyond IDs and passwords; peripheral systems didn’t.<span class="cite">[<a href="#src9">9</a>,<a href="#src11">11</a>]</span></dd>
+          <dt>Design note</dt><dd>Investment followed perceived risk, so the strongest controls went to customer channels. Automated tools rank targets the opposite way, by where controls are thinnest.</dd>
+        </dl></div>
+      </article>
+      <article class="card t-fix reveal">
+        <div class="k"><span class="id">03</span><span>OWASP API1</span></div>
+        <h3>Object-level authorization on every record request</h3>
+        <p class="sum">Makes enumerated customer numbers useless: nothing returns unless the requester owns it.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Grounding</dt><dd>OWASP API1:2023 prevention guidance; practitioner guidance on server-side identity, role and ownership checks.<span class="cite">[<a href="#src6">6</a>,<a href="#src28">28</a>]</span></dd>
+          <dt>What it would have done</dt><dd>Disrupt T1119 and close API1.</dd>
+          <dt>Why it wasn’t effective here</dt><dd>Reported as not implemented in legacy systems.<span class="cite">[<a href="#src24">24</a>,<a href="#src9">9</a>]</span></dd>
+          <dt>Design note</dt><dd>Lookup services built for a small, trusted audience often treat “authenticated” as “authorized”. The assumption held only until someone tested it at machine speed.</dd>
+        </dl></div>
+      </article>
+      <article class="card t-fix reveal">
+        <div class="k"><span class="id">04</span><span>NIST 800-63B-4 · OAT-011 · API6</span></div>
+        <h3>Rate limits keyed to identity and behaviour, not IP</h3>
+        <p class="sum">Caps lookups per session, account or behavioural fingerprint, turning tens of thousands of records into a handful.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Grounding</dt><dd>NIST SP 800-63B-4 throttling; OWASP Automated Threats OAT-011 Scraping, OAT-014 Vulnerability Scanning, OAT-018 Footprinting; OWASP API6:2023.<span class="cite">[<a href="#src33">33</a>,<a href="#src34">34</a>,<a href="#src6">6</a>]</span></dd>
+          <dt>What it would have done</dt><dd>Disrupt T1119 and blunt T1090 evasion.</dd>
+          <dt>Why it wasn’t effective here</dt><dd>Bypassed. Per-IP blocking was routed around by rotation, in Korea and, separately, in Japan.<span class="cite">[<a href="#src8">8</a>,<a href="#src3">3</a>]</span></dd>
+          <dt>Design note</dt><dd>IP-centric controls were designed for a time when rotating infrastructure took real attacker effort. Disposable proxies and agentic tooling removed that effort, and the design assumption expired quietly.</dd>
+        </dl></div>
+      </article>
+      <article class="card t-fix reveal">
+        <div class="k"><span class="id">05</span><span>OWASP API3 · CIS 3 · CSF ID.AM-07</span></div>
+        <h3>Data minimization on lookup responses</h3>
+        <p class="sum">A status service returns status, so each compromised query yields far less.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Grounding</dt><dd>OWASP API3:2023; CIS Control 3; NIST CSF 2.0 ID.AM-07.<span class="cite">[<a href="#src6">6</a>,<a href="#src32">32</a>,<a href="#src35">35</a>]</span></dd>
+          <dt>What it would have done</dt><dd>Shrink the impact of T1119 and close API3.</dd>
+          <dt>Why it wasn’t effective here</dt><dd>Not implemented on the affected flow, which exposed income, loan limits and national identifiers.<span class="cite">[<a href="#src11">11</a>]</span></dd>
+          <dt>Design note</dt><dd>Returning the full record is the fastest way to build a helpful screen. Minimization is a design decision that rarely gets revisited after launch.</dd>
+        </dl></div>
+      </article>
+      <article class="card t-fix reveal">
+        <div class="k"><span class="id">06</span><span>CIS 16 &amp; 18</span></div>
+        <h3>Testing the whole external surface, with adversary-like automation</h3>
+        <p class="sum">Finds what the attacker’s agent finds, first.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Grounding</dt><dd>CIS Controls 16 and 18; CSA’s recommendation to run agentic tools in an organization’s own assessments.<span class="cite">[<a href="#src32">32</a>,<a href="#src14">14</a>]</span></dd>
+          <dt>What it would have done</dt><dd>Disrupt T1595 and T1190; close API1, API2 and API9.</dd>
+          <dt>Why it wasn’t effective here</dt><dd>Coverage gap (inferred). Major Korean banks were building AI-assisted testing before the incident; the breached systems were the less-scrutinized peripheral ones.<span class="cite">[<a href="#src36">36</a>,<a href="#src8">8</a>]</span> No source links any bank’s testing program to its outcome.</dd>
+          <dt>Design note</dt><dd>Testing programs scope to known, prioritized assets, so they inherit every blind spot in the inventory.</dd>
+        </dl></div>
+      </article>
+      <article class="card t-fix reveal">
+        <div class="k"><span class="id">07</span><span>CSF ID.RA-02</span></div>
+        <h3>Sector threat sharing, including near-misses</h3>
+        <p class="sum">Early warning from the first institution probed reaches the rest before their dwell windows close.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Grounding</dt><dd>NIST CSF 2.0 ID.RA-02; Korea’s existing C-TAS sharing platform.<span class="cite">[<a href="#src35">35</a>,<a href="#src10">10</a>]</span></dd>
+          <dt>What it would have done</dt><dd>Disrupt T1090 and T1595 at sector level.</dd>
+          <dt>Why it wasn’t effective here</dt><dd>Partially implemented. Sharing worked after the first breach. But attempts that cause no damage carry no reporting obligation, so the defences that held generated no early signal.<span class="cite">[<a href="#src8">8</a>]</span></dd>
+          <dt>Design note</dt><dd>Sharing frameworks are designed around incidents. The most useful signal, “we were probed and held”, has no path.</dd>
+        </dl></div>
+      </article>
+      <article class="card t-fix reveal">
+        <div class="k"><span class="id">08</span><span>CSF DE.CM · CIS 8 &amp; 13</span></div>
+        <h3>Behavioural detection on business applications</h3>
+        <p class="sum">Flags systematic, evenly paced enumeration in minutes rather than hours.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Grounding</dt><dd>NIST CSF 2.0 DE.CM; CIS Controls 8 and 13.<span class="cite">[<a href="#src35">35</a>,<a href="#src32">32</a>]</span></dd>
+          <dt>What it would have done</dt><dd>Disrupt T1119.</dd>
+          <dt>Why it wasn’t effective here</dt><dd>Coverage gap on peripheral systems; reported dwell of ~30–43 hours.<span class="cite">[<a href="#src18">18</a>,<a href="#src14">14</a>]</span></dd>
+          <dt>Design note</dt><dd>Monitoring typically sits on systems that move money. A lookup service that only reads data looks low-risk until someone reads all of it.</dd>
+        </dl></div>
+      </article>
+      <article class="card t-pivot reveal">
+        <div class="k"><span class="id" style="color:var(--pivot)">09</span><span>CIS 5 · CSF PR.AA-01 · ASI03</span></div>
+        <h3>AI keys and sessions governed as production credentials</h3>
+        <p class="sum">Denies attackers the loot, compute and cover that stolen AI credentials provide.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Grounding</dt><dd>Provider guidance to treat AI keys and agent integrations like production credentials and buy access only through authorized channels; CIS Control 5; NIST CSF PR.AA-01; OWASP ASI03.<span class="cite">[<a href="#src4">4</a>,<a href="#src32">32</a>,<a href="#src35">35</a>,<a href="#src30">30</a>]</span></dd>
+          <dt>What it would have done</dt><dd>Disrupt T1588.007 at the supply end.</dd>
+          <dt>Why it wasn’t effective here</dt><dd>An ecosystem-wide gap rather than one reported at these victims. Keys leak through apps, repositories and containers; infostealers lift authenticated sessions.<span class="cite">[<a href="#src4">4</a>,<a href="#src27">27</a>]</span></dd>
+          <dt>Design note</dt><dd>AI keys were adopted as developer conveniences before anyone classed them as high-value credentials. Secret management hasn’t caught up with how fast AI integrations multiply.</dd>
+        </dl></div>
+      </article>
+      <article class="card t-pivot reveal">
+        <div class="k"><span class="id" style="color:var(--pivot)">10</span><span>OWASP ASI02 &amp; ASI04 · CSF ID.RA-09 · CIS 15</span></div>
+        <h3>Governance of agentic tools and model-access supply chains</h3>
+        <p class="sum">Keeps testing agents scope-bound and model access off unvetted intermediaries.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Grounding</dt><dd>OWASP Agentic Top 10 “least agency”; NIST CSF ID.AM-04 and ID.RA-09; CIS Control 15.<span class="cite">[<a href="#src30">30</a>,<a href="#src35">35</a>,<a href="#src32">32</a>]</span></dd>
+          <dt>What it would have done</dt><dd>Close ASI02 and ASI04; make enforced scope the expected norm for agentic testing tools.</dd>
+          <dt>Why it wasn’t effective here</dt><dd>Not implemented in the ecosystem: the tool’s usage restriction was a notice, model access ran through a likely reseller, and spoofed AI clients are an established harvesting channel.<span class="cite">[<a href="#src12">12</a>,<a href="#src1">1</a>,<a href="#src4">4</a>]</span></dd>
+          <dt>Design note</dt><dd>Dual-use testing tools have long run on an honor system that worked while using them took real skill. Agentic packaging removed the skill barrier the honor system silently relied on.</dd>
+        </dl></div>
+      </article>
+      <article class="card t-pivot reveal">
+        <div class="k"><span class="id" style="color:var(--pivot)">11</span><span>Provider safeguards · MITRE M1056</span></div>
+        <h3>Model-provider abuse detection and enforcement</h3>
+        <p class="sum">Disrupts model access before or during a campaign, but no single provider sees the whole operation.</p>
+        <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+        <div class="more" hidden><dl>
+          <dt>Grounding</dt><dd>Provider account enforcement and intelligence sharing; MITRE notes T1588.007 is outside enterprise mitigation.<span class="cite">[<a href="#src4">4</a>,<a href="#src5">5</a>]</span></dd>
+          <dt>What it would have done</dt><dd>Disrupt T1588.007 and T1682.</dd>
+          <dt>Why it wasn’t effective here</dt><dd>Coverage gap across providers: work was split across several model providers and a reseller layer.<span class="cite">[<a href="#src1">1</a>]</span> No provider-side action for this campaign appears in the public record.<span class="cite">[<a href="#src12">12</a>]</span></dd>
+          <dt>Design note</dt><dd>Fragmented visibility works in the attacker’s favour. Enterprises can’t hand this layer to a vendor and consider it covered.</dd>
+        </dl></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PULLQUOTE P5 (editorial) ================= -->
+<figure class="pq reveal" aria-label="Editorial pullquote">
+  <div class="pq-inner">
+    <span class="pq-mark" aria-hidden="true">“</span>
+    <blockquote><span class="pq-text">Ungoverned AI is expertise waiting to be borrowed.&nbsp;&nbsp;</span></blockquote>
+    <figcaption><span class="kind">Editorial</span>The other half of the problem, in eight words</figcaption>
+  </div>
+</figure>
+
+<!-- ================= 08 RECOMMENDATIONS ================= -->
+<section class="section" id="s08">
+  <div class="wrap">
+    <p class="eyebrow reveal"><span class="num">08</span> Four horizons</p>
+    <h2 class="reveal">Design as if every attacker has expert help. Govern the AI you run.</h2>
+    <p class="lede reveal">Twenty actions across four horizons, from the next 48 hours to the next year. <span class="tag w">Withstand</span> marks defenses against AI aimed at you; <span class="tag g">Govern</span> marks controls on the AI you run.</p>
+
+    <div class="horizons">
+      <!-- H00 -->
+      <div class="hz h00 reveal">
+        <div class="hz-head"><span class="hz-id"><span class="urgent-dot"></span>Horizon 00</span><span class="hz-win">0–48h</span></div>
+        <h3>Immediate</h3>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R1</span><p class="rec-t">List every internet-reachable app that returns customer data and sits outside your main login, and name an owner for each. <span class="tag w">Withstand</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>API9 · T1595, T1190</dd><dt>Grounding</dt><dd>CIS 1 &amp; 2; NIST CSF ID.AM-02; CSA immediate actions; the regulator’s first directive.<span class="cite">[<a href="#src32">32</a>,<a href="#src35">35</a>,<a href="#src14">14</a>,<a href="#src26">26</a>]</span></dd><dt>Effort</dt><dd>Low to medium. Start from DNS, certificate-transparency and cloud load-balancer records. Expect to find apps no one remembers owning.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R2</span><p class="rec-t">Test each for server-side authentication and object-ownership checks; front failures with SSO or VPN, or take them offline. <span class="tag w">Withstand</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>API2, API1 · T1190, T1119</dd><dt>Grounding</dt><dd>OWASP API Top 10 prevention guidance; CSA; ThreatBook.<span class="cite">[<a href="#src6">6</a>,<a href="#src14">14</a>,<a href="#src28">28</a>]</span></dd><dt>Effort</dt><dd>Medium. Suspending a partner service needs business sign-off; pre-agree emergency authority.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R3</span><p class="rec-t">Add per-session and per-account rate limits on lookup endpoints; alert on evenly paced, sequential requests; review logs from late September onward. <span class="tag w">Withstand</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>API6 · T1119, T1090</dd><dt>Grounding</dt><dd>NIST SP 800-63B-4 throttling; OWASP OAT-011; CSA.<span class="cite">[<a href="#src33">33</a>,<a href="#src34">34</a>,<a href="#src14">14</a>]</span></dd><dt>Effort</dt><dd>Low to medium; gateway or WAF configuration. Key on identity, not IP: per-IP limits were rotated around.<span class="cite">[<a href="#src8">8</a>,<a href="#src3">3</a>]</span></dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R4</span><p class="rec-t">Inventory, scan for and rotate AI API keys and sessions across repositories, containers, mobile builds and CI; revoke stale sessions. <span class="tag g">Govern</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>ASI03 · T1588.007 (supply side)</dd><dt>Grounding</dt><dd>Provider guidance on AI credentials; infostealer session advisory; CIS Control 5.<span class="cite">[<a href="#src4">4</a>,<a href="#src27">27</a>,<a href="#src32">32</a>]</span></dd><dt>Effort</dt><dd>Low to start. Shadow keys created by individual teams will make the inventory sprawl.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R5</span><p class="rec-t">Retro-hunt with the published indicators, then stop relying on them. <span class="tag w">Withstand</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>API6 · T1090, T1583.003</dd><dt>Grounding</dt><dd>CrowdStrike indicators; CSA’s note that the operator can replace infrastructure addresses easily.<span class="cite">[<a href="#src1">1</a>,<a href="#src14">14</a>]</span></dd><dt>Effort</dt><dd>Trivial, with little durable value. It’s a check, not a defense.</dd></dl></div></div>
+      </div>
+
+      <!-- H01 -->
+      <div class="hz h01 reveal">
+        <div class="hz-head"><span class="hz-id">Horizon 01</span><span class="hz-win">1–4w</span></div>
+        <h3>Short-term</h3>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R6</span><p class="rec-t">Build behavioural detections for agent-speed traffic, keyed on session and account: uniform pacing, parameter mutation, object-ID enumeration, out-of-scope access after login. <span class="tag w">Withstand</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>API6, API1 · T1119, T1595, T1090</dd><dt>Grounding</dt><dd>CSA detection hypotheses; OWASP OAT-014, OAT-018; NIST CSF DE.CM.<span class="cite">[<a href="#src14">14</a>,<a href="#src34">34</a>,<a href="#src35">35</a>]</span></dd><dt>Effort</dt><dd>Medium. Needs application-layer logging on peripheral apps, which many lack.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R7</span><p class="rec-t">Monitor and allowlist outbound traffic to LLM API endpoints and AI reseller domains: unexpected model calls mean shadow AI or a compromised host. <span class="tag w">Withstand</span><span class="tag g">Govern</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>ASI04, ASI03 · T1588.007</dd><dt>Grounding</dt><dd>CSA short-term mitigation; NIST CSF ID.AM-03.<span class="cite">[<a href="#src14">14</a>,<a href="#src35">35</a>]</span></dd><dt>Effort</dt><dd>Medium. Requires a maintained catalogue of AI endpoints and an egress proxy.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R8</span><p class="rec-t">Run a data-minimization pass on the highest-volume lookup flows. Status services return status, not records. <span class="tag w">Withstand</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>API3 · T1119 (limits impact)</dd><dt>Grounding</dt><dd>OWASP API3; CIS Control 3; CSA.<span class="cite">[<a href="#src6">6</a>,<a href="#src32">32</a>,<a href="#src14">14</a>]</span></dd><dt>Effort</dt><dd>Medium; product-owned application changes. Frame them as blast-radius reduction.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R9</span><p class="rec-t">Stand up an approved-AI registry: sanctioned providers, authorized channels only, no unvetted resellers, a named owner for every agent, key and integration. <span class="tag g">Govern</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>ASI04, ASI03 · T1588.007</dd><dt>Grounding</dt><dd>Provider guidance on authorized channels; NIST CSF ID.AM-04, ID.RA-09; CIS Control 15.<span class="cite">[<a href="#src4">4</a>,<a href="#src35">35</a>,<a href="#src32">32</a>]</span></dd><dt>Effort</dt><dd>Low to medium; policy plus procurement enforcement. It breaks down if teams can acquire AI tools outside procurement.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R10</span><p class="rec-t">Open abuse-reporting channels with each AI provider and your sector sharing body, and report near-misses, not just breaches. <span class="tag w">Withstand</span><span class="tag g">Govern</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>ASI04 · T1588.007, T1682, T1595</dd><dt>Grounding</dt><dd>CSA; NIST CSF ID.RA-02; the sector experience of shared indicators surfacing hidden breaches.<span class="cite">[<a href="#src14">14</a>,<a href="#src35">35</a>,<a href="#src8">8</a>]</span></dd><dt>Effort</dt><dd>Low. The hard part is cultural: reporting “we held” feels unnecessary until it’s someone else’s early warning.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R11</span><p class="rec-t">Write and enforce rules for internal and vendor agentic testing: written scope, tool-enforced target allowlists, rate caps, human sign-off before exploitation, private logs. <span class="tag g">Govern</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>ASI02 · T1588.007 (keeps your own tool from becoming one)</dd><dt>Grounding</dt><dd>OWASP Agentic “least agency”; CSA; published governance checklists for AI testing agents.<span class="cite">[<a href="#src30">30</a>,<a href="#src14">14</a>,<a href="#src15">15</a>]</span></dd><dt>Effort</dt><dd>Low to medium. Ask suppliers which AI tools they use and how scope is technically enforced.</dd></dl></div></div>
+      </div>
+
+      <!-- H02 -->
+      <div class="hz h02 reveal">
+        <div class="hz-head"><span class="hz-id">Horizon 02</span><span class="hz-win">1–3m</span></div>
+        <h3>Medium-term</h3>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R12</span><p class="rec-t">Move to continuous external attack-surface management covering partner and employee apps, with authenticated testing where external scans can’t see. <span class="tag w">Withstand</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>API9 · T1595, T1190</dd><dt>Grounding</dt><dd>CIS 1 &amp; 18; NIST CSF ID.RA-01; GMO on the blind spots of external-only scanning.<span class="cite">[<a href="#src32">32</a>,<a href="#src35">35</a>,<a href="#src3">3</a>]</span></dd><dt>Effort</dt><dd>Medium to high: tooling, budget, and agreed testing authority with app owners.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R13</span><p class="rec-t">Run your own governed agentic red team against the perimeter, and find what an ARTEX-class agent would find first. <span class="tag w">Withstand</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>API1, API2, API9 · T1595, T1190</dd><dt>Grounding</dt><dd>CIS Control 18; CSA; the AI-assisted testing programs Korean banks were building before the incident.<span class="cite">[<a href="#src32">32</a>,<a href="#src14">14</a>,<a href="#src36">36</a>]</span></dd><dt>Effort</dt><dd>Medium. Only as good as the inventory it scopes from (R1, R12); run it under the R11 rules.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R14</span><p class="rec-t">Bring peripheral apps onto the central identity provider, with MFA for anything returning customer data; front legacy lookups with a gateway that enforces authorization. <span class="tag w">Withstand</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>API2, API1 · T1190</dd><dt>Grounding</dt><dd>NIST CSF PR.AA-03; CIS Control 6; CSA.<span class="cite">[<a href="#src35">35</a>,<a href="#src32">32</a>,<a href="#src14">14</a>]</span></dd><dt>Effort</dt><dd>High. Partner integrations change slowest; sequence by data sensitivity.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R15</span><p class="rec-t">Give every internal AI agent its own non-human identity: short-lived scoped credentials, vaulted keys, per-agent usage limits and anomaly alerts. <span class="tag g">Govern</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>ASI03, LLM10 · T1588.007 (supply side)</dd><dt>Grounding</dt><dd>OWASP Agentic Top 10; OWASP LLM Top 10 2025; provider guidance; CIS Control 5.<span class="cite">[<a href="#src30">30</a>,<a href="#src31">31</a>,<a href="#src4">4</a>,<a href="#src32">32</a>]</span></dd><dt>Effort</dt><dd>Medium to high. Platform work; most identity programs don’t yet model agents.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R16</span><p class="rec-t">Harden AI gateways and wrappers so production keys never sit in agent-reachable context; test them against key-extraction prompt injection. <span class="tag g">Govern</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>ASI03, ASI04 · T1588.007</dd><dt>Grounding</dt><dd>Documented prompt-injection attacks on AI gateway deployments and evaluation sandboxes.<span class="cite">[<a href="#src4">4</a>,<a href="#src30">30</a>]</span></dd><dt>Effort</dt><dd>Medium. Requires secret isolation in the AI platform architecture.</dd></dl></div></div>
+      </div>
+
+      <!-- H03 -->
+      <div class="hz h03 reveal">
+        <div class="hz-head"><span class="hz-id">Horizon 03</span><span class="hz-win">3–12m</span></div>
+        <h3>Long-term</h3>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R17</span><p class="rec-t">Measure exposure by time-to-remediate for internet-reachable assets, assume machine-speed discovery, and report it to the board. <span class="tag w">Withstand</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>API9 · T1190, T1595</dd><dt>Grounding</dt><dd>GMO on severity-ranked queues losing meaning against automation; CSA on remediation speed; NIST CSF ID.IM-01.<span class="cite">[<a href="#src3">3</a>,<a href="#src14">14</a>,<a href="#src35">35</a>]</span></dd><dt>Effort</dt><dd>High; a cultural shift in how exposure is measured and resourced.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R18</span><p class="rec-t">Redesign decision rights: no new internet-exposed service launches without security sign-off on authentication tier, data minimization and rate limiting, and every partner tool has a sunset date. <span class="tag w">Withstand</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>API9, API3 · T1190</dd><dt>Grounding</dt><dd>NIST CSF ID.AM-08; CIS Control 16; CSA on lifecycle governance of partner-exposed tools.<span class="cite">[<a href="#src35">35</a>,<a href="#src32">32</a>,<a href="#src14">14</a>]</span></dd><dt>Effort</dt><dd>High. Make it a paved road, not a gate.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R19</span><p class="rec-t">Build an enterprise AI governance program: an inventory of models, agents, keys and connected tools; least agency by default; AI risk in the risk register; a board view. <span class="tag g">Govern</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>ASI02, ASI03, ASI04 · T1588.007</dd><dt>Grounding</dt><dd>NIST AI RMF 1.0 (GOVERN); OWASP Agentic Top 10; provider assessment that sophistication no longer predicts who can attack.<span class="cite">[<a href="#src38">38</a>,<a href="#src30">30</a>,<a href="#src4">4</a>]</span></dd><dt>Effort</dt><dd>High, multi-quarter; needs sponsorship across security, data and engineering.</dd></dl></div></div>
+        <div class="rec"><div class="rec-row"><span class="rec-n">R20</span><p class="rec-t">Help shift sector norms: share attempted-attack data, join cross-provider abuse sharing, and take part in discussions on releasing dual-use agents. <span class="tag w">Withstand</span><span class="tag g">Govern</span></p></div>
+          <button class="more-btn" type="button" aria-expanded="false"><span class="pm">+</span>Detail</button>
+          <div class="more" hidden><dl><dt>Addresses · disrupts</dt><dd>ASI04 · T1588.007, T1595</dd><dt>Grounding</dt><dd>CSA strategic considerations; the absence of near-miss reporting noted by investigators.<span class="cite">[<a href="#src14">14</a>,<a href="#src8">8</a>]</span></dd><dt>Effort</dt><dd>High; industry-level. Closing a tool’s source cannot recall copies already in circulation.</dd></dl></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FINAL CALLOUT ================= -->
+<div class="callout-wrap reveal">
+  <p class="eyebrow"><span class="num">Final</span> The takeaway</p>
+  <div class="callout">
+    <p>Script kiddies once borrowed an exploit; the ARTEX campaign shows they can <strong>now borrow the expert</strong>, as a not particularly technically sophisticated operator turned an open-source agent, rented models and disposable servers into seven breached financial institutions, starting <span class="hl">63 days after the tool went public</span>.</p>
+    <p>Every technique was familiar, and the controls that failed were the ones that quietly assumed skilled attackers were rare.</p>
+    <p>The banks that held were <span class="hl2">protected by design, not detection</span>, so make design decisions your primary control: inventory every exposed system, authorize every request server-side, and govern your own AI so it cannot become someone else’s borrowed expertise.</p>
+  </div>
+</div>
+
+<!-- ================= SOURCES ================= -->
+<section class="sources" id="sources">
+  <div class="wrap">
+    <p class="eyebrow"><span class="num">Ref</span> Sources &amp; references</p>
+    <h2>Show the work.</h2>
+    <p class="lede" style="font-size:18px">This is the source material the report was built from. Any claim above can be traced to a numbered entry here.</p>
+
+    <div class="src-group"><h3>Primary disclosures &amp; researcher analyses</h3><ul class="src-list">
+      <li id="src1"><span class="sn">[1]</span><span><span class="pub">CrowdStrike</span> · <span class="ttl">Unknown Threat Actor Uses AI-Driven ARTEX to Target South Korean Finance</span><span class="dt">Oct 7, 2026</span><br><a href="https://www.crowdstrike.com/en-us/blog/unknown-threat-actor-uses-artex-to-target-south-korean-finance/" target="_blank" rel="noopener noreferrer">crowdstrike.com/en-us/blog/unknown-threat-actor-uses-artex-to-target-south-korean-finance</a></span></li>
+      <li id="src2"><span class="sn">[2]</span><span><span class="pub">GMO Cybersecurity by Ierae</span> · <span class="ttl">ARTEX confirmed on attack infrastructure targeting Japanese companies (Japanese)</span><span class="dt">Oct 19, 2026</span><br><a href="https://gmo-cybersecurity.com/blog/20261019/" target="_blank" rel="noopener noreferrer">gmo-cybersecurity.com/blog/20261019</a></span></li>
+      <li id="src3"><span class="sn">[3]</span><span><span class="pub">GMO Cybersecurity by Ierae</span> · <span class="ttl">Three points to prepare for the series of unauthorized access incidents (Japanese)</span><span class="dt">Oct 15, 2026</span><br><a href="https://gmo-cybersecurity.com/blog/20261014/" target="_blank" rel="noopener noreferrer">gmo-cybersecurity.com/blog/20261014</a></span></li>
+      <li id="src4"><span class="sn">[4]</span><span><span class="pub">Anthropic</span> · <span class="ttl">Detecting and countering misuse of AI: September 2026</span><span class="dt">Sep 10, 2026</span><br><a href="https://www.anthropic.com/threat-intelligence-report-september-2026" target="_blank" rel="noopener noreferrer">anthropic.com/threat-intelligence-report-september-2026</a></span></li>
+      <li id="src14"><span class="sn">[14]</span><span><span class="pub">Cloud Security Alliance</span> · <span class="ttl">ARTEX: Open-Source Agentic Pentest Tool Turned on Korean Banks</span><span class="dt">Oct 10, 2026</span><br><a href="https://labs.cloudsecurityalliance.org/research/csa-research-note-artex-agentic-pentest-tool-korean-banks-20/" target="_blank" rel="noopener noreferrer">labs.cloudsecurityalliance.org/research/csa-research-note-artex-agentic-pentest-tool-korean-banks-20</a></span></li>
+      <li id="src28"><span class="sn">[28]</span><span><span class="pub">ThreatBook</span> · <span class="ttl">Analysis of the AI-Driven ARTEX Attacks on South Korean Financial Institutions</span><span class="dt">Oct 2026</span><br><a href="https://threatbook.io/blog/artex-attacks-south-korean-financial-institutions" target="_blank" rel="noopener noreferrer">threatbook.io/blog/artex-attacks-south-korean-financial-institutions</a></span></li>
+      <li id="src22"><span class="sn">[22]</span><span><span class="pub">zephel01 (independent analyst, note.com)</span> · <span class="ttl">Analysis of GMO’s primary ARTEX post and secondary reporting (Japanese)</span><span class="dt">Oct 2026</span><br><a href="https://note.com/zephel01/n/ne720d917a711" target="_blank" rel="noopener noreferrer">note.com/zephel01/n/ne720d917a711</a></span></li>
+    </ul></div>
+
+    <div class="src-group"><h3>Journalist &amp; wire coverage</h3><ul class="src-list">
+      <li id="src8"><span class="sn">[8]</span><span><span class="pub">The Herald Business</span> · <span class="ttl">Exclusive: Chinese AI tool ARTEX used in wave of bank hacks, probe finds</span><span class="dt">Oct 3, 2026</span><br><a href="https://biz.heraldcorp.com/article/10892497" target="_blank" rel="noopener noreferrer">biz.heraldcorp.com/article/10892497</a></span></li>
+      <li id="src9"><span class="sn">[9]</span><span><span class="pub">The Kyunghyang Shinmun</span> · <span class="ttl">The Korean financial sector was breached by a two-month-old Chinese AI</span><span class="dt">Oct 4, 2026</span><br><a href="https://www.khan.co.kr/en/article/202610042320007" target="_blank" rel="noopener noreferrer">khan.co.kr/en/article/202610042320007</a></span></li>
+      <li id="src10"><span class="sn">[10]</span><span><span class="pub">The Kyunghyang Shinmun</span> · <span class="ttl">Government activates emergency response system over financial sector hacking</span><span class="dt">Oct 4, 2026</span><br><a href="https://www.khan.co.kr/en/article/202610042043017" target="_blank" rel="noopener noreferrer">khan.co.kr/en/article/202610042043017</a></span></li>
+      <li id="src11"><span class="sn">[11]</span><span><span class="pub">The Korea Herald</span> · <span class="ttl">Hana, BNK report data breaches as hacking hits Korean banks</span><span class="dt">Oct 2, 2026</span><br><a href="https://www.koreaherald.com/article/10892290" target="_blank" rel="noopener noreferrer">koreaherald.com/article/10892290</a></span></li>
+      <li id="src12"><span class="sn">[12]</span><span><span class="pub">Reuters, via Insurance Journal</span> · <span class="ttl">South Korean banks were likely hacked by China-based actor with AI agent: CrowdStrike</span><span class="dt">Oct 8, 2026</span><br><a href="https://www.insurancejournal.com/news/international/2026/10/08/888416.htm" target="_blank" rel="noopener noreferrer">insurancejournal.com/news/international/2026/10/08/888416.htm</a></span></li>
+      <li id="src13"><span class="sn">[13]</span><span><span class="pub">The Hacker News</span> · <span class="ttl">ARTEX AI Pentesting Tool Used in Data Theft Attacks on South Korean Financial Firms</span><span class="dt">Oct 8, 2026</span><br><a href="https://thehackernews.com/2026/10/artex-ai-pentesting-tool-used-in-data.html" target="_blank" rel="noopener noreferrer">thehackernews.com/2026/10/artex-ai-pentesting-tool-used-in-data.html</a></span></li>
+      <li id="src18"><span class="sn">[18]</span><span><span class="pub">Tech Times</span> · <span class="ttl">Open-Source AI Agent Hacked Seven South Korean Banks</span><span class="dt">Oct 5, 2026</span><br><a href="https://www.techtimes.com/articles/328541/20261005/open-source-ai-agent-hacked-seven-south-korean-banks-exposing-65000-records.htm" target="_blank" rel="noopener noreferrer">techtimes.com/articles/328541/…</a></span></li>
+      <li id="src19"><span class="sn">[19]</span><span><span class="pub">Jiji Press</span> · <span class="ttl">Chinese AI Tool Likely Used in Cyberattacks on Japan Firms</span><span class="dt">Oct 20, 2026</span><br><a href="https://jen.jiji.com/jc/i?g=eco&amp;k=2026102000878" target="_blank" rel="noopener noreferrer">jen.jiji.com/jc/i?g=eco&amp;k=2026102000878</a></span></li>
+      <li id="src20"><span class="sn">[20]</span><span><span class="pub">Bloomberg, via Moneyweb</span> · <span class="ttl">AI Tool That Hacked Korean Banks Was Used in Japan, GMO Says</span><span class="dt">Oct 20, 2026</span><br><a href="https://www.moneyweb.co.za/news/ai/ai-tool-that-hacked-korean-banks-was-used-in-japan-gmo-says/" target="_blank" rel="noopener noreferrer">moneyweb.co.za/news/ai/ai-tool-that-hacked-korean-banks-was-used-in-japan-gmo-says</a></span></li>
+      <li id="src23"><span class="sn">[23]</span><span><span class="pub">IDNFinancials, relaying Reuters</span> · <span class="ttl">South Korea uncovers AI-powered hacks at 16 financial firms</span><span class="dt">Oct 14, 2026</span><br><a href="https://www.idnfinancials.com/news/70289/south-korea-uncovers-ai-powered-hacks-at-16-financial-firms" target="_blank" rel="noopener noreferrer">idnfinancials.com/news/70289/…</a></span></li>
+      <li id="src25"><span class="sn">[25]</span><span><span class="pub">SBS</span> · <span class="ttl">Analysis of Financial Sector Hacking Tool ARTEX Reveals Integration with DeepSeek</span><span class="dt">Oct 2026</span><br><a href="https://news.sbs.co.kr/english/article.do?news_id=N1008787202" target="_blank" rel="noopener noreferrer">news.sbs.co.kr/english/article.do?news_id=N1008787202</a></span></li>
+      <li id="src26"><span class="sn">[26]</span><span><span class="pub">Korea JoongAng Daily</span> · <span class="ttl">AI hackers target Korea’s banks, trigger industrywide security review; Banks boost defenses after AI-linked hacks</span><span class="dt">Oct 2026</span><br><a href="https://www.koreajoongangdaily.com/business/ai-hackers-target-koreas-banks-trigger-industrywide-security-review/12904066" target="_blank" rel="noopener noreferrer">koreajoongangdaily.com/…/12904066</a> · <a href="https://www.koreajoongangdaily.com/business/banks-boost-defenses-after-ailinked-hacks/12913975" target="_blank" rel="noopener noreferrer">…/12913975</a></span></li>
+      <li id="src27"><span class="sn">[27]</span><span><span class="pub">BleepingComputer</span> · <span class="ttl">Anthropic warns infostealer malware is hijacking Claude sessions to drain usage</span><span class="dt">Aug 30, 2026</span><br><a href="https://www.bleepingcomputer.com/news/artificial-intelligence/anthropic-warns-infostealer-malware-is-hijacking-claude-sessions-to-drain-usage/" target="_blank" rel="noopener noreferrer">bleepingcomputer.com/news/artificial-intelligence/…</a></span></li>
+      <li id="src36"><span class="sn">[36]</span><span><span class="pub">Let’s Data Science (summarizing The Korea Times)</span> · <span class="ttl">South Korean Banks Expand AI Cyber Defenses</span><span class="dt">Jul 2026</span><br><a href="https://letsdatascience.com/news/banks-strengthen-defenses-against-autonomous-ai-hacking-57edaaa8" target="_blank" rel="noopener noreferrer">letsdatascience.com/news/banks-strengthen-defenses-against-autonomous-ai-hacking-57edaaa8</a></span></li>
+    </ul></div>
+
+    <div class="src-group"><h3>Vendor, aggregator &amp; tertiary content</h3><ul class="src-list">
+      <li id="src15"><span class="sn">[15]</span><span><span class="pub">Progressive Robot</span> · <span class="ttl">Chinese AI Tool Pulled to Prevent ‘Misuse’ After South Korea Hacks</span><span class="dt">Oct 9, 2026</span><br><a href="https://www.progressiverobot.com/2026/10/09/artex-ai-chinese-tool-pulled-misuse-south-korea-hacks/" target="_blank" rel="noopener noreferrer">progressiverobot.com/2026/10/09/artex-ai-chinese-tool-pulled-misuse-south-korea-hacks</a></span></li>
+      <li id="src16"><span class="sn">[16]</span><span><span class="pub">AI Weekly</span> · <span class="ttl">ARTEX Developer Closes AI Pentest Tool After Korea Bank Hacks</span><span class="dt">Oct 9, 2026</span><br><a href="https://aiweekly.co/alerts/artex-developer-closes-ai-pentest-tool-after-korea-bank-hacks" target="_blank" rel="noopener noreferrer">aiweekly.co/alerts/artex-developer-closes-ai-pentest-tool-after-korea-bank-hacks</a></span></li>
+      <li id="src17"><span class="sn">[17]</span><span><span class="pub">Aviatrix Threat Research Center</span> · <span class="ttl">How AI-Powered ARTEX Tool Compromised South Korean Financial Institutions</span><span class="dt">Oct 8, 2026</span><br><a href="https://aviatrix.ai/threat-research-center/artex-ai-pentesting-south-korean-financial-firms-2026/" target="_blank" rel="noopener noreferrer">aviatrix.ai/threat-research-center/artex-ai-pentesting-south-korean-financial-firms-2026</a></span></li>
+      <li id="src21"><span class="sn">[21]</span><span><span class="pub">BigGo Finance</span> · <span class="ttl">Chinese-made AI ARTEX suspected in attacks on Japanese companies</span><span class="dt">Oct 19, 2026</span><br><a href="https://finance.biggo.com/news/c4002d34-e3a2-4931-9a70-31938a65aaf8" target="_blank" rel="noopener noreferrer">finance.biggo.com/news/c4002d34-e3a2-4931-9a70-31938a65aaf8</a></span></li>
+      <li id="src24"><span class="sn">[24]</span><span><span class="pub">Wccftech (citing Enki WhiteHat)</span> · <span class="ttl">Coverage of the South Korean bank intrusions and Enki WhiteHat’s analysis</span><span class="dt">Oct 2026</span><br><a href="https://wccftech.com/china-blasts-false-information-for-political-purposes-after-anthropic-claude-code-logs-allegedly-unmask-a-26-year-old-hacker-of-nine-south-korean-banks-who-now-says-hes-being-framed/" target="_blank" rel="noopener noreferrer">wccftech.com/…</a></span></li>
+      <li id="src7"><span class="sn">[7]</span><span><span class="pub">Cycode</span> · <span class="ttl">OWASP Top 10 for Agentic Applications (category summary)</span><span class="dt">accessed Oct 2026</span><br><a href="https://cycode.com/blog/owasp-top-10-agentic-applications/" target="_blank" rel="noopener noreferrer">cycode.com/blog/owasp-top-10-agentic-applications</a></span></li>
+    </ul></div>
+
+    <div class="src-group"><h3>Financial-sector regulation</h3><ul class="src-list">
+      <li id="src39"><span class="sn">[39]</span><span><span class="pub">National Bureau of Asian Research (Nigel Cory)</span> · <span class="ttl">The Cybersecurity Case for Korean Cloud Reform: Financial Sector Reforms Are the Model to Follow</span><span class="dt">Jul 14, 2026</span><br><a href="https://nbr.org/publication/the-cybersecurity-case-for-korean-cloud-reform-financial-sector-reforms-are-the-model-to-follow/" target="_blank" rel="noopener noreferrer">nbr.org/publication/the-cybersecurity-case-for-korean-cloud-reform…</a></span></li>
+      <li id="src40"><span class="sn">[40]</span><span><span class="pub">Jones Day</span> · <span class="ttl">Digital Operational Resilience Act Now in Effect for Financial Sector (Regulation (EU) 2022/2554)</span><span class="dt">Jan 2025</span><br><a href="https://www.jonesday.com/en/insights/2025/01/digital-operational-resilience-act-now-in-effect-for-financial-sector" target="_blank" rel="noopener noreferrer">jonesday.com/en/insights/2025/01/digital-operational-resilience-act-now-in-effect-for-financial-sector</a></span></li>
+      <li id="src41"><span class="sn">[41]</span><span><span class="pub">Hogan Lovells Cadwalader</span> · <span class="ttl">NYDFS final set of cybersecurity requirements under amended Part 500 take effect November 1, 2025</span><span class="dt">Oct 22, 2025</span><br><a href="https://www.hlc.com/en/publications/nydfs-final-set-of-cybersecurity-requirements-under-amended-part-500-take-effect-november-1-2025" target="_blank" rel="noopener noreferrer">hlc.com/en/publications/nydfs-final-set-of-cybersecurity-requirements…</a></span></li>
+    </ul></div>
+
+    <div class="src-group"><h3>Framework references</h3><ul class="src-list">
+      <li id="src5"><span class="sn">[5]</span><span><span class="pub">MITRE ATT&amp;CK</span> · <span class="ttl">T1588.007 Obtain Capabilities: Artificial Intelligence (v20)</span><span class="dt">modified Sep 16, 2026</span><br><a href="https://attack.mitre.org/techniques/T1588/007/" target="_blank" rel="noopener noreferrer">attack.mitre.org/techniques/T1588/007</a></span></li>
+      <li id="src29"><span class="sn">[29]</span><span><span class="pub">MITRE ATT&amp;CK</span> · <span class="ttl">T1682 Query Public AI Services (v20)</span><span class="dt">created Mar 25, 2026</span><br><a href="https://attack.mitre.org/techniques/T1682/" target="_blank" rel="noopener noreferrer">attack.mitre.org/techniques/T1682</a></span></li>
+      <li id="src37"><span class="sn">[37]</span><span><span class="pub">MITRE ATT&amp;CK</span> · <span class="ttl">T1119 Automated Collection (v20)</span><span class="dt">modified Sep 11, 2026</span><br><a href="https://attack.mitre.org/techniques/T1119/" target="_blank" rel="noopener noreferrer">attack.mitre.org/techniques/T1119</a></span></li>
+      <li id="src6"><span class="sn">[6]</span><span><span class="pub">OWASP</span> · <span class="ttl">API Security Top 10</span><span class="dt">2023</span><br><a href="https://owasp.org/API-Security/editions/2023/en/0x11-t10/" target="_blank" rel="noopener noreferrer">owasp.org/API-Security/editions/2023/en/0x11-t10</a></span></li>
+      <li id="src30"><span class="sn">[30]</span><span><span class="pub">OWASP GenAI Security Project</span> · <span class="ttl">Top 10 for Agentic Applications for 2026</span><span class="dt">Dec 9, 2025</span><br><a href="https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/" target="_blank" rel="noopener noreferrer">genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026</a></span></li>
+      <li id="src31"><span class="sn">[31]</span><span><span class="pub">OWASP GenAI Security Project</span> · <span class="ttl">Top 10 for LLM Applications</span><span class="dt">2025</span><br><a href="https://genai.owasp.org/llm-top-10/" target="_blank" rel="noopener noreferrer">genai.owasp.org/llm-top-10</a></span></li>
+      <li id="src34"><span class="sn">[34]</span><span><span class="pub">OWASP</span> · <span class="ttl">Automated Threats to Web Applications (handbook v1.3)</span><span class="dt">Mar 2026</span><br><a href="https://owasp.org/www-project-automated-threats-to-web-applications/" target="_blank" rel="noopener noreferrer">owasp.org/www-project-automated-threats-to-web-applications</a></span></li>
+      <li id="src32"><span class="sn">[32]</span><span><span class="pub">Center for Internet Security</span> · <span class="ttl">CIS Critical Security Controls v8.1</span><span class="dt">2024</span><br><a href="https://www.cisecurity.org/controls/cis-controls-list" target="_blank" rel="noopener noreferrer">cisecurity.org/controls/cis-controls-list</a></span></li>
+      <li id="src33"><span class="sn">[33]</span><span><span class="pub">NIST</span> · <span class="ttl">SP 800-63B-4 Digital Identity Guidelines: rate limiting (throttling)</span><span class="dt">2025</span><br><a href="https://pages.nist.gov/800-63-4/sp800-63b/authenticators/#throttle" target="_blank" rel="noopener noreferrer">pages.nist.gov/800-63-4/sp800-63b/authenticators/#throttle</a></span></li>
+      <li id="src35"><span class="sn">[35]</span><span><span class="pub">NIST</span> · <span class="ttl">Cybersecurity Framework 2.0 Core</span><span class="dt">2024</span><br><a href="https://www.nist.gov/document/nist-csf-20-core-withdrawn-csf-11-elements" target="_blank" rel="noopener noreferrer">nist.gov/document/nist-csf-20-core-withdrawn-csf-11-elements</a></span></li>
+      <li id="src38"><span class="sn">[38]</span><span><span class="pub">NIST</span> · <span class="ttl">AI Risk Management Framework 1.0</span><span class="dt">2023</span><br><a href="https://www.nist.gov/itl/ai-risk-management-framework" target="_blank" rel="noopener noreferrer">nist.gov/itl/ai-risk-management-framework</a></span></li>
+    </ul></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Built by <a href="https://www.linkedin.com/in/kahalewai/" target="_blank" rel="noopener noreferrer">Kahalewai</a>, Claude did the heavy lifting
+</footer>
+
+<script>
+(function(){
+  /* ---------- theme ---------- */
+  var root = document.documentElement, btn = document.getElementById('themeToggle'), lbl = document.getElementById('themeLabel');
+  function apply(t){ root.setAttribute('data-theme', t); lbl.textContent = t === 'dark' ? 'Light mode' : 'Dark mode'; }
+  var saved = null; try { saved = localStorage.getItem('or-theme'); } catch(e){}
+  apply(saved === 'light' ? 'light' : 'dark');
+  btn.addEventListener('click', function(){
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    apply(next); try { localStorage.setItem('or-theme', next); } catch(e){}
+  });
+
+  /* ---------- hero lane fade ---------- */
+  var heroEl = document.querySelector('.hero'), lanes = document.querySelector('.lanes-bg'), swim = document.querySelector('.swim');
+  function fade(){
+    if (!heroEl || !lanes || !swim) return;
+    var h = heroEl.getBoundingClientRect().top, body = swim.querySelector('.swim-body');
+    var top = swim.getBoundingClientRect().top - h, bottom = (body ? body.getBoundingClientRect().bottom : swim.getBoundingClientRect().bottom) - h;
+    lanes.style.setProperty('--f2', (bottom - 50) + 'px');
+    lanes.style.setProperty('--f3', (bottom + 10) + 'px');
+    lanes.style.setProperty('--f0', Math.max(0, top - 24) + 'px');
+    lanes.style.setProperty('--f1', (top + 48) + 'px');
+  }
+  function fitTitle(){
+    var h1 = document.querySelector('.hero h1'), box = document.querySelector('.hero-text');
+    if (!h1 || !box) return;
+    h1.style.fontSize = '';
+    if (window.innerWidth < 700) return;
+    var a = h1.querySelector('.solid').firstChild, b = h1.querySelector('.grad-ital').firstChild;
+    var end = b.textContent.replace(/\u00a0/g,'').length;
+    for (var i = 0; i < 3; i++){
+      var r1 = document.createRange(); r1.setStart(a,0); r1.setEnd(a,1);
+      var r2 = document.createRange(); r2.setStart(b,end-1); r2.setEnd(b,end);
+      var w = r2.getBoundingClientRect().right - r1.getBoundingClientRect().left;
+      var target = box.getBoundingClientRect().width;
+      if (!w) return;
+      h1.style.fontSize = (parseFloat(getComputedStyle(h1).fontSize) * target / w) + 'px';
+    }
+  }
+  function layoutHero(){ fitTitle(); fade(); }
+  layoutHero(); window.addEventListener('resize', layoutHero);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutHero);
+
+  /* ---------- full event log ---------- */
+  var log = [
+    ['Pre-incident conditions'],
+    ['2024-03-11','MITRE adds T1588.007 (adversaries obtaining AI capabilities); its only listed mitigation is pre-compromise.','5','Confirmed'],
+    ['2025-12-09','OWASP publishes the Top 10 for Agentic Applications 2026, introducing “least agency.”','30','Confirmed'],
+    ['Dec 2025 – Aug 2026','A model provider documents public offensive agent frameworks, theft of AI keys and sessions, and fraudulent AI resellers.','4','Confirmed'],
+    ['Jun 2026','Korean regulators begin relaxing network-separation rules for AI security testing; the second phase widens to 75 firms in October.','8','Reported'],
+    ['Jul 2026','A separate precedent: a Chinese-speaking actor reportedly paired DeepSeek with an open-source agent against 460+ internet-facing systems.','15','Reported'],
+    ['2026-07-26','ARTEX published on GitHub under AGPL-3.0.','9, 15','Confirmed'],
+    ['2026-07-27','Link to ARTEX added to the developer’s profile.','15','Reported'],
+    ['Aug 2026 onward','JPCERT/CC reportedly observes traces of AI-agent use in attacks on Japanese companies.','21','Reported'],
+    ['2026-08-30','Provider warns infostealer malware is hijacking authenticated Claude sessions.','27','Confirmed'],
+    ['2026-09-03','ARTEX places first among ~150 teams at a Baidu-hosted offense/defense competition.','9','Reported'],
+    ['2026-09-10','Provider threat report: sophistication no longer reliably signals who is attacking.','4','Confirmed'],
+    ['2026-09-13','DeepSeek-powered web search added to ARTEX.','15','Reported'],
+    ['2026-09-24','Latest public ARTEX version released.','9','Reported'],
+    ['Standing condition','Employee- and partner-facing systems had received less rigorous management than customer channels, per investigators.','8','Reported'],
+    ['Standing condition','Two targeted banks had systems designed without the specific flaw the attacker sought.','8','Reported'],
+    ['Initial compromise'],
+    ['Before Sept 27','Two-server setup: Hong Kong control node and ARTEX instance; DeepSeek v4.1-flash via a likely reseller; GLM-5.3 and Grok 4.6 in additional Claude Code sessions.','1','Confirmed'],
+    ['2026-09-27','Attack on KB Kookmin begins, three days after the latest ARTEX release.','9','Reported'],
+    ['Sept 27 – Oct 1','Attack activity concentrated over five days.','8, 9','Confirmed'],
+    ['2026-09-28','First access to a loan-agent mobile inquiry service.','18','Reported'],
+    ['Sept 27 – 30','Shinhan: identity verification bypassed; customer numbers reportedly enumerated before linked records were extracted. Sources describe the method differently.','11, 9','Disputed'],
+    ['Sept 27 – 30','KB Kookmin: employee mobile work-support system compromised.','1, 11','Confirmed'],
+    ['Sept 27 – 30','Hana: sales-support system (ODS) accessed; BNK Busan: outsourced-staff records exposed.','11','Confirmed'],
+    ['Sept 27 – 30','Yegaram Savings, Hyundai Capital and Welcome Savings also breached.','9, 18','Confirmed'],
+    ['Same window','Woori Bank and NH NongHyup targeted, not breached.','8, 18','Confirmed'],
+    ['Escalation & lateral activity'],
+    ['During campaign','No public evidence of system takeover, lateral movement or persistence; data was extracted by querying.','8','Reported'],
+    ['During campaign','Multiple IPs, two to three overlapping per bank; blocked addresses were replaced.','8','Reported'],
+    ['During campaign','Operator asks an AI assistant where Korean breach data is sold and how to find Telegram data-sales groups.','1','Confirmed'],
+    ['Sept 28 → ~Sept 30','Reported dwell before blocking: ~30 h and ~43 h at two affected banks.','18','Reported'],
+    ['As of Oct 3','IP-switching activity still ongoing, per investigators.','8','Reported'],
+    ['Discovery'],
+    ['Sept 29 (morning)','First affected institution detects the anomaly, more than 15 hours after first access.','18','Reported'],
+    ['2026-09-30','Shinhan confirms a breach; KB detects a possible breach that night and blocks the affected server and routes.','11','Confirmed'],
+    ['2026-10-01','Hana alerts supervisors after learning of attempts elsewhere, blocks the IP and checks similar systems.','11','Confirmed'],
+    ['~Oct 1 – 3','Attacker IPs from the first investigation are shared sector-wide; other institutions find their own breaches in logs.','8','Reported'],
+    ['2026-10-02','A Korean security firm reports the ARTEX console title string on an attack server.','9','Confirmed'],
+    ['2026-10-03','Financial Security Institute says Shinhan’s logs show ARTEX use, identified by a traffic signature.','8','Reported'],
+    ['2026-10-07','CrowdStrike finds the operator’s exposed open directories, revealing the infrastructure and model stack.','1','Confirmed'],
+    ['2026-10-15','Japan: GMO’s forensic logs indicate AI-driven attacks across many cases, including WAF evasion via hundreds of rotating IPs (not tied to ARTEX).','3','Confirmed'],
+    ['2026-10-19','Japan: GMO confirms ARTEX on one infrastructure targeting ~20 firms; six more AI-using infrastructures found.','2','Confirmed'],
+    ['Disclosure'],
+    ['2026-10-01','Shinhan discloses about 25,700 customers affected.','8, 11','Confirmed'],
+    ['2026-10-02','KB discloses 119 records, Hana 89, BNK 11; FSC holds an emergency meeting.','11','Confirmed'],
+    ['2026-10-04','Seven institutions confirmed; Welcome Savings reports 2,200+ corporate records.','9, 10','Confirmed'],
+    ['~Oct 2 – 5','Yegaram posts a notice; about 40,000 individuals reported.','8, 18','Reported'],
+    ['Early Oct','FSC and FSS warn of phishing and loan scams using leaked data.','13','Confirmed'],
+    ['Gap','Attempts that cause no damage carry no reporting obligation.','8','Reported'],
+    ['2026-10-06','President Lee tells cabinet that signs of AI use have emerged.','15','Reported'],
+    ['2026-10-08','No AI-provider statement on record; Anthropic did not respond to a Reuters request for comment.','12','Confirmed'],
+    ['2026-10-14','FSC reports incidents at 16 financial firms (~100,000 cases); methods under investigation; not all attributed to ARTEX.','23','Reported'],
+    ['Sept – Oct 2026','Japan: 8 GMO-identified targets publish leak notices.','2','Confirmed'],
+    ['Response & containment'],
+    ['Sept 30 – Oct 1','Banks block IPs; Shinhan suspends the affected service; Hana activates emergency teams.','11','Confirmed'],
+    ['2026-10-02','FSC orders checks of externally accessible systems including AI systems, stronger authentication, tighter access control and faster sharing.','11, 26','Confirmed'],
+    ['2026-10-04','MSIT and KISA activate a 24-hour emergency posture; advisories to ~28,000 companies; cloud providers asked to block attacker IPs.','10','Confirmed'],
+    ['Oct 2026','Investigators draft a recommendation to audit internal employee-facing systems.','8','Reported'],
+    ['2026-10-08','Developer halts updates and takes ARTEX closed-source.','13, 15','Confirmed'],
+    ['2026-10-08','A Korean-language fork reportedly appears (unverified).','14','Reported'],
+    ['2026-10-08','Japan’s Digital Transformation Minister convenes a cross-ministry meeting; a national advisory is planned.','23','Reported'],
+    ['Oct 2026','FSC requires independent investigations across 12 areas; banks plan record security budgets.','23, 26','Reported'],
+    ['2026-10-19','GMO shares findings with law enforcement.','2','Confirmed'],
+    ['Ongoing state'],
+    ['Ongoing','Closing the source cannot recall copies already cloned.','14, 15','Confirmed'],
+    ['Ongoing','Attribution unresolved; investigation continues.','1, 12','Confirmed'],
+    ['Ongoing','Broader 16-firm probe continues; AI’s role in non-ARTEX cases undetermined.','23','Reported'],
+    ['Ongoing','GMO investigating whether other countries are targeted.','2','Confirmed'],
+    ['Ongoing','Leaked income and loan-limit data creates long-tail phishing risk.','8, 13','Confirmed']
+  ];
+  var tb = document.getElementById('eventLog'), html = '', n = 0;
+  log.forEach(function(r){
+    if (r.length === 1){ html += '<tr class="ph"><td colspan="4">' + r[0] + '</td></tr>'; return; }
+    n++;
+    var srcs = r[2].split(',').map(function(s){ s = s.trim(); return '<a href="#src' + s + '" style="color:inherit">[' + s + ']</a>'; }).join(' ');
+    html += '<tr><td class="d">' + r[0] + '</td><td>' + r[1] + '</td><td class="c">' + srcs + '</td><td class="c">' + r[3] + '</td></tr>';
+  });
+  tb.innerHTML = html;
+
+  /* ---------- expand / collapse ---------- */
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('.more-btn'); if (!b) return;
+    var panel = b.nextElementSibling; if (!panel || !panel.classList.contains('more')) return;
+    var open = b.getAttribute('aria-expanded') === 'true';
+    b.setAttribute('aria-expanded', String(!open));
+    panel.hidden = open;
+    b.querySelector('.pm').textContent = open ? '+' : '−';
+    var card = b.closest('.card'); if (card) card.classList.toggle('open', !open);
+  });
+
+  /* ---------- reveal on scroll ---------- */
+  var els = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if (en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, {rootMargin:'0px 0px -8% 0px', threshold:0.08});
+    els.forEach(function(el){ io.observe(el); });
+  } else { els.forEach(function(el){ el.classList.add('in'); }); }
+})();
+</script>
+</body>
+</html>
