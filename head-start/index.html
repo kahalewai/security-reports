@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Head Start — eMudhra 2026</title>
+<meta name="description" content="A learn-forward security report on the October 2026 eMudhra intermediate CA key compromise, for security architects, application architects and CISOs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e17; --bg2:#0e1420; --surface:#121a28; --surface2:#172133; --line:#1f2a3d; --line2:#2c3a52;
+  --text:#e9e6dc; --text2:#c3c1b6; --muted:#8f93a0; --faint:#5f6472;
+  --ember:#e8743c; --ember-soft:rgba(232,116,60,.16);
+  --green:#7dc4ff; --green-soft:rgba(125,196,255,.14);
+  --brass:#f2d16b; --brass-soft:rgba(242,209,107,.16);
+  --glow:0 0 0 1px var(--line2), 0 10px 40px rgba(0,0,0,.45);
+  --display:'Fraunces',Georgia,serif; --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --body:#e9e6dc; --bodyw:1140px; --calloutw:820px;
+}
+:root[data-theme="light"]{
+  --bg:#f4f1ea; --bg2:#ece8df; --surface:#ffffff; --surface2:#faf8f3; --line:#d9d4c8; --line2:#c3bdb0;
+  --text:#121a2b; --text2:#333a4a; --muted:#5d6472; --faint:#8a8f9a;
+  --ember:#b8511f; --ember-soft:rgba(184,81,31,.10);
+  --green:#1f6fb5; --green-soft:rgba(31,111,181,.10);
+  --brass:#9a7a1a; --brass-soft:rgba(154,122,26,.12);
+  --glow:0 0 0 1px var(--line2), 0 10px 30px rgba(20,20,20,.08);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--display);font-weight:300;font-size:18px;line-height:1.6;
+  background-image:radial-gradient(1200px 700px at 15% -10%,var(--ember-soft),transparent 60%),radial-gradient(900px 600px at 95% 10%,var(--brass-soft),transparent 60%),radial-gradient(1000px 800px at 50% 110%,var(--green-soft),transparent 60%);
+  background-attachment:fixed;}
+a{color:var(--brass);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+a:hover{border-color:var(--brass)}
+p{margin:0 0 1.1em}
+strong{font-weight:600}
+.mono{font-family:var(--mono)}
+.container{max-width:var(--bodyw);margin:0 auto;padding:0 24px}
+@media (max-width:480px){.container{padding:0 16px}}
+section.body{padding:112px 0}
+@media (max-width:768px){section.body{padding:80px 0}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);margin:0 0 18px}
+h2.title{font-family:var(--display);font-weight:400;font-size:clamp(30px,4.6vw,46px);line-height:1.1;letter-spacing:-.01em;margin:0 0 18px;font-variation-settings:'opsz' 144}
+p.lede{font-size:clamp(18px,2.1vw,21px);color:var(--text2);max-width:820px;margin:0 0 38px;line-height:1.5}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.xall{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:transparent;color:var(--muted);border:1px solid var(--line2);padding:8px 12px;border-radius:999px;cursor:pointer;transition:all .2s;margin-bottom:40px}
+.xall:hover{color:var(--text);border-color:var(--brass)}
+.cite{font-family:var(--mono);font-size:.68em;color:var(--brass);vertical-align:super;line-height:0;margin:0 1px;border:0}
+.cite::before{content:'['}.cite::after{content:']'}
+.tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--muted);margin-right:6px}
+.tag.ember{color:var(--ember);border-color:var(--ember)}.tag.green{color:var(--green);border-color:var(--green)}.tag.brass{color:var(--brass);border-color:var(--brass)}
+
+/* theme toggle */
+.toggle{position:fixed;top:18px;right:18px;z-index:50;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:var(--surface);color:var(--text);border:1px solid var(--line2);padding:9px 14px;border-radius:999px;cursor:pointer;box-shadow:var(--glow);transition:all .2s}
+.toggle:hover{border-color:var(--brass)}
+
+/* hero */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:88px 0 140px;overflow:hidden}
+@media (max-width:768px){.hero{padding:72px 0 130px}}
+.hero .inner{max-width:var(--bodyw);margin:0 auto;padding:0 24px;width:100%}
+.hero .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 20px}
+.hero h1{font-family:var(--display);font-style:italic;font-weight:300;font-size:clamp(66px,14vw,164px);line-height:.92;letter-spacing:-.025em;margin:0 0 26px;display:inline-block;
+  background:linear-gradient(100deg,var(--text) 0%,var(--brass) 55%,var(--ember) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;font-variation-settings:'opsz' 144}
+.hero .deck{font-size:clamp(19px,2.4vw,24px);line-height:1.45;color:var(--text2);max-width:760px;margin:0 0 24px}
+.hero .meta{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.06em;margin:0 0 48px}
+.hero-note{font-family:var(--mono);font-size:12.5px;color:var(--muted);line-height:1.6;max-width:860px;margin:14px 0 0}
+.hero-svg text{font-family:var(--mono)}
+.run{stroke-dasharray:6 7;animation:run 1.6s linear infinite}
+@keyframes run{to{stroke-dashoffset:-26}}
+.hero .meta span{color:var(--brass)}
+.hero-svg{width:100%;height:auto;display:block}
+.hero-svg-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0}
+.hero-svg-wrap .hero-svg{margin:0}
+@media (max-width:768px){.hero-svg-wrap .hero-svg{min-width:720px}}
+.scroll{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:10px}
+.scroll i{display:block;width:1px;height:40px;background:linear-gradient(var(--brass),transparent);animation:drop 1.8s ease-in-out infinite}
+@keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+.pulse{animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.7}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.run,.pulse,.scroll i,.h00{animation:none}}
+
+/* stat grid */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:860px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.stats{grid-template-columns:1fr}}
+.stat{background:var(--surface);border:1px solid var(--line);border-top:2px solid var(--brass);border-radius:10px;padding:26px 22px 20px;transition:all .25s;position:relative}
+.stat:hover{border-color:var(--brass);box-shadow:0 0 0 1px var(--brass),0 12px 36px var(--brass-soft)}
+.stat .n{font-family:var(--mono);font-weight:500;font-size:clamp(40px,5.6vw,58px);line-height:1;letter-spacing:-.02em;color:var(--text);margin:0 0 12px}
+.stat .l{font-size:16px;line-height:1.4;color:var(--text2);margin:0 0 14px}
+.stat .s{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em}
+.stat.ember{border-top-color:var(--ember)}.stat.ember:hover{border-color:var(--ember);box-shadow:0 0 0 1px var(--ember),0 12px 36px var(--ember-soft)}
+.stat.green{border-top-color:var(--green)}.stat.green:hover{border-color:var(--green);box-shadow:0 0 0 1px var(--green),0 12px 36px var(--green-soft)}
+
+/* prose blocks */
+.prose{max-width:820px}
+.prose .spine{font-family:var(--display);font-style:italic;font-size:clamp(24px,3vw,32px);line-height:1.25;color:var(--text);border-left:3px solid var(--brass);padding:6px 0 6px 22px;margin:0 0 30px}
+.callout-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}
+@media (max-width:760px){.callout-row{grid-template-columns:1fr}}
+.mini{background:var(--surface);border:1px solid var(--line);border-top:2px solid var(--green);border-radius:10px;padding:18px 18px 14px;font-size:15.5px;color:var(--text2);transition:all .25s}
+.mini:hover{border-color:var(--green);box-shadow:0 0 0 1px var(--green),0 10px 30px var(--green-soft)}
+.mini b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--green);margin-bottom:8px;font-weight:500}
+
+/* cards (details) */
+details.card{background:var(--surface);border:1px solid var(--line);border-top:2px solid var(--brass);border-radius:10px;padding:0;margin:0 0 14px;transition:all .25s;overflow:hidden}
+details.card:hover{border-color:var(--brass);box-shadow:0 0 0 1px var(--brass),0 12px 36px var(--brass-soft)}
+details.card.ember{border-top-color:var(--ember)}details.card.ember:hover{border-color:var(--ember);box-shadow:0 0 0 1px var(--ember),0 12px 36px var(--ember-soft)}
+details.card.green{border-top-color:var(--green)}details.card.green:hover{border-color:var(--green);box-shadow:0 0 0 1px var(--green),0 12px 36px var(--green-soft)}
+details.card summary{list-style:none;cursor:pointer;padding:20px 22px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
+details.card summary::-webkit-details-marker{display:none}
+details.card summary h3{font-family:var(--display);font-weight:500;font-size:20px;line-height:1.25;margin:8px 0 8px}
+details.card summary .sum{font-size:16px;color:var(--text2);margin:0}
+details.card summary .chev{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;padding-top:4px;transition:color .2s}
+details.card[open] summary .chev{color:var(--brass)}
+details.card .body{padding:0 22px 22px;border-top:1px dashed var(--line);margin-top:0;padding-top:18px;font-size:16.5px;color:var(--text2)}
+details.card .body{overflow-x:auto}
+@media (max-width:760px){table.ev{min-width:560px}}
+details.card .body h4{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--brass);margin:18px 0 6px;font-weight:500}
+details.card .body h4:first-child{margin-top:0}
+details.card .body p{margin:0 0 .9em}
+details.card .body ul{margin:0 0 .9em 1.1em;padding:0}
+details.card .body li{margin:0 0 .4em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (min-width:1100px){#risk .grid2{grid-template-columns:1fr 1fr 1fr}}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+.grid2 details.card{margin:0}
+.tier{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:34px 0 14px;display:flex;align-items:center;gap:14px}
+.tier::after{content:'';flex:1;height:1px;background:var(--line)}
+.tier.first{margin-top:0}
+
+/* timeline */
+.tl{position:relative;padding:10px 0}
+.tl-spine{position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);background:linear-gradient(var(--brass),var(--ember) 60%,var(--green));box-shadow:0 0 14px var(--brass-soft),0 0 30px var(--brass-soft)}
+.tl-phase{position:relative;z-index:2;text-align:center;margin:34px 0 26px}
+.tl-phase{line-height:1}
+.tl-phase span{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;background:var(--bg);color:var(--brass);border:1px solid var(--brass);padding:8px 14px;border-radius:999px}
+.tl-item{position:relative;margin:0 0 22px;min-height:40px}
+.tl-dot{position:absolute;left:50%;top:22px;width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--brass);transform:translateX(-50%);z-index:2;box-shadow:0 0 0 4px var(--bg),0 0 14px var(--brass)}
+.tl-item.ember .tl-dot{border-color:var(--ember);box-shadow:0 0 0 4px var(--bg),0 0 14px var(--ember)}
+.tl-item.green .tl-dot{border-color:var(--green);box-shadow:0 0 0 4px var(--bg),0 0 14px var(--green)}
+.tl-card{width:calc(50% - 34px);background:var(--surface);border:1px solid var(--line);border-top:2px solid var(--brass);border-radius:10px;padding:16px 18px;transition:all .25s}
+.tl-item.ember .tl-card{border-top-color:var(--ember)}.tl-item.green .tl-card{border-top-color:var(--green)}
+.tl-card:hover{border-color:var(--brass);box-shadow:0 0 0 1px var(--brass),0 10px 30px var(--brass-soft)}
+.tl-item[data-side="left"] .tl-card{margin-right:auto}
+.tl-item[data-side="right"] .tl-card{margin-left:auto}
+.tl-card time{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--brass);margin:0 0 6px}
+.tl-item.ember .tl-card time{color:var(--ember)}.tl-item.green .tl-card time{color:var(--green)}
+.tl-card p{margin:0;font-size:16px;color:var(--text2)}
+.tl-full{position:relative;z-index:2;margin:6px 0 10px}
+.tl-full details.card{border-top-color:var(--line2)}
+.tl-full summary h3{font-size:16px!important;font-family:var(--mono)!important;font-weight:500!important;letter-spacing:.04em}
+table.ev{width:100%;border-collapse:collapse;font-size:14.5px;margin:4px 0 0}
+table.ev th{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 8px 8px 0;border-bottom:1px solid var(--line2);font-weight:500}
+table.ev td{padding:9px 8px 9px 0;border-bottom:1px solid var(--line);vertical-align:top;color:var(--text2)}
+table.ev td:first-child{font-family:var(--mono);font-size:12.5px;white-space:nowrap;color:var(--text)}
+table.ev td:last-child{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+
+.tl-phase em{display:table;margin:10px auto 0;background:var(--bg);padding:0 10px;font-style:normal;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+@media (max-width:760px){.tl-phase em{margin-left:0}}
+.tl-gap{position:relative;height:170px;margin:4px 0 8px;z-index:2}
+.tl-gap::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);background:repeating-linear-gradient(180deg,var(--ember) 0 7px,var(--bg) 7px 15px)}
+.tl-gap span{position:absolute;left:50%;top:50%;transform:translate(-50%,-60%);font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ember);background:var(--bg);border:1px dashed var(--ember);padding:9px 16px;border-radius:999px;white-space:nowrap}
+.tl-gap small{position:absolute;left:50%;top:calc(50% + 24px);transform:translateX(-50%);font-family:var(--mono);font-size:10.5px;color:var(--muted);white-space:nowrap;background:var(--bg);padding:0 8px}
+.tl-full .body h4.ph{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--brass);margin:24px 0 8px;font-weight:500}
+.tl-full .body h4.ph:first-child{margin-top:0}
+@media (max-width:760px){
+  .tl-gap{height:140px}
+  .tl-gap::before{left:14px}
+  .tl-gap span{left:40px;transform:translateY(-60%);white-space:normal}
+  .tl-gap small{left:40px;transform:none;padding:0}
+}
+@media (max-width:760px){
+  .tl-spine{left:14px}
+  .tl-dot{left:14px}
+  .tl-card{width:auto;margin-left:40px!important;margin-right:0!important}
+  .tl-phase{text-align:left;padding-left:40px}
+  table.ev td:first-child,table.ev td:last-child{white-space:normal}
+}
+
+/* pullquotes */
+.pq{padding:96px 0;background:linear-gradient(180deg,transparent,var(--bg2) 30%,var(--bg2) 70%,transparent)}
+.pq .inner{max-width:var(--bodyw);margin:0 auto;padding:0 24px;position:relative}
+.pq .mark{font-family:var(--display);font-size:140px;line-height:0;color:var(--brass);opacity:.35;position:absolute;left:12px;top:36px;font-weight:300}
+.pq blockquote{margin:0;padding:0 0 0 44px}
+.pq blockquote p{font-family:var(--display);font-style:italic;font-weight:300;font-size:clamp(28px,4.4vw,48px);line-height:1.15;margin:0 0 22px;letter-spacing:-.01em;display:inline-block;
+  background:linear-gradient(100deg,var(--text) 0%,var(--brass) 70%,var(--text) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.pq blockquote footer{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--muted)}
+.pq blockquote footer b{color:var(--brass);font-weight:500}
+.pq.editorial blockquote p{background:linear-gradient(100deg,var(--text) 0%,var(--green) 70%,var(--text) 100%);-webkit-background-clip:text;background-clip:text}
+.pq.editorial .mark{color:var(--green)}.pq.editorial blockquote footer b{color:var(--green)}
+
+/* chart */
+.chart-wrap{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 14px 10px;margin:0 0 16px}
+.chart-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.chart-wrap svg{width:100%;height:auto;display:block}
+@media (max-width:768px){.chart-wrap svg{min-width:720px}}
+.chart-note{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.6;max-width:860px}
+.chart-note b{color:var(--brass);font-weight:500}
+
+/* horizons */
+.horizons{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:860px){.horizons{grid-template-columns:1fr}}
+.hz{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--green);border-radius:12px;padding:22px 20px 10px;transition:all .25s}
+.hz:hover{box-shadow:var(--glow)}
+.hz.h00{border-top-color:var(--ember);animation:urg 3.2s ease-in-out infinite}
+@keyframes urg{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 1px var(--ember),0 0 28px var(--ember-soft)}}
+.hz.h01{border-top-color:var(--brass)}
+.hz .hz-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 6px}
+.hz .hz-id{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.hz.h00 .hz-id{color:var(--ember)}.hz.h01 .hz-id{color:var(--brass)}.hz.h02 .hz-id,.hz.h03 .hz-id{color:var(--green)}
+.hz .hz-win{font-family:var(--mono);font-weight:700;font-size:26px;letter-spacing:-.02em;color:var(--text)}
+.hz .hz-name{font-family:var(--display);font-size:20px;font-weight:500;margin:0 0 14px}
+.hz details.card{border-top:0;border:1px solid var(--line);margin:0 0 10px;border-radius:8px}
+.hz details.card summary{padding:14px 16px}
+.hz details.card summary h3{font-size:16.5px;margin:0 0 4px}
+.hz details.card summary .sum{font-size:14.5px}
+.hz details.card .body{padding:0 16px 16px;font-size:15px}
+.hz .who{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+
+/* final callout */
+.final{padding:60px 0 100px}
+.final .box{max-width:var(--calloutw);margin:0 auto;padding:0 24px}
+.final .box > div{border:1px solid var(--brass);border-radius:14px;padding:38px 34px;background:linear-gradient(180deg,var(--brass-soft),transparent 70%);box-shadow:0 0 0 1px var(--brass-soft),0 24px 60px rgba(0,0,0,.25)}
+.final .eyebrow{margin-bottom:12px}
+.final h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,4vw,40px);margin:0 0 18px;line-height:1.1}
+.final p{font-size:clamp(17px,2vw,19.5px);line-height:1.55;color:var(--text)}
+.final p em{font-style:italic;color:var(--brass)}
+
+/* sources */
+.sources{padding:40px 0 70px;border-top:1px solid var(--line)}
+.sources h2.title{font-size:clamp(24px,3vw,30px)}
+.sources p.lede{font-size:16px;margin-bottom:24px}
+.srcgrp{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+ol.src{list-style:none;margin:0;padding:0}
+ol.src li{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14.5px;color:var(--text2);line-height:1.45}
+ol.src li .num{font-family:var(--mono);color:var(--brass);font-size:13px}
+ol.src li .pub{color:var(--text);font-weight:500}
+ol.src li .d{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-left:6px}
+ol.src li a{word-break:break-all}
+
+/* footer */
+.foot{padding:28px 0 40px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.04em}
+.foot a{color:var(--brass)}
+
+/* reveal */
+html.js .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+html.js .reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light mode</button>
+
+<!-- ============================ HERO ============================ -->
+<header class="hero" id="top">
+  <div class="inner">
+    <p class="kicker">A security report · eMudhra intermediate CA compromise · October 2026</p>
+    
+    <h1>Head Start&nbsp;&nbsp;</h1>
+    <p class="deck">In October 2026, eight of eMudhra's publicly trusted CA keys turned out to be recoverable from their own certificates. Browsers contained it in hours. The rest of the internet is still working on it.</p>
+    <p class="meta"><span>For</span> security architects · application architects · CISOs &nbsp;·&nbsp; <span>Published</span> November 2026 &nbsp;·&nbsp; <span>Sources</span> 31, indexed below</p>
+    <div class="hero-svg-wrap"><svg class="hero-svg" viewBox="0 0 1000 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A circular maze with the source at its center. On the left half, built by good design decisions, every route dead-ends and the attacker stops. On the right half, built by poor design decisions, one route winds through every ring to the source.">
+      <defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <!-- half tints -->
+      <path d="M500.0,405.0 A190,190 0 0 1 500.0,25.0 L500,215 Z" fill="var(--green-soft)" opacity=".7"/>
+      <path d="M500.0,25.0 A190,190 0 0 1 500.0,405.0 L500,215 Z" fill="var(--ember-soft)" opacity=".7"/>
+      <!-- walls -->
+      <g fill="none" stroke="var(--text)" stroke-width="1.6" stroke-linecap="round" opacity=".85">
+        <path d="M500.0,405.0 A190,190 0 0 1 328.0,295.7 M316.4,263.8 A190,190 0 0 1 500.0,25.0 M500.0,25.0 A190,190 0 0 1 683.6,263.8 M672.0,295.7 A190,190 0 0 1 500.0,405.0 M500.0,373.0 A158,158 0 0 1 350.5,164.0 M364.8,133.2 A158,158 0 0 1 500.0,57.0 M500.0,57.0 A158,158 0 0 1 609.4,101.0 M631.2,127.0 A158,158 0 0 1 500.0,373.0 M500.0,341.0 A126,126 0 0 1 500.0,89.0 M500.0,89.0 A126,126 0 0 1 593.2,299.8 M567.3,321.5 A126,126 0 0 1 500.0,341.0 M500.0,309.0 A94,94 0 0 1 500.0,121.0 M500.0,121.0 A94,94 0 0 1 581.1,167.5 M592.7,199.3 A94,94 0 0 1 500.0,309.0 M500.0,277.0 A62,62 0 0 1 500.0,153.0 M500.0,153.0 A62,62 0 0 1 560.1,230.3 M543.3,259.4 A62,62 0 0 1 500.0,277.0 M500.0,245.0 A30,30 0 0 1 500.0,185.0 M500.0,185.0 A30,30 0 0 1 501.3,185.0 M527.7,203.5 A30,30 0 0 1 500.0,245.0 M500.0,245.0 L500.0,405.0 M500.0,185.0 L500.0,25.0 M379.0,316.6 L354.5,337.1 M410.9,125.9 L388.3,103.3 M374.5,204.0 L342.6,201.2 M453.0,296.4 L437.0,324.1 M414.8,175.3 L385.8,161.8 M441.7,236.2 L411.7,247.1 M473.8,158.8 L460.3,129.8 M489.7,243.2 L478.8,273.3 M471.8,204.7 L441.7,193.8 M624.5,312.3 L649.7,332.0 M566.8,108.1 L583.7,81.0 M538.2,300.9 L551.2,330.1 M550.2,178.6 L576.0,159.7 M520.8,236.6 L543.1,259.6 M524.3,124.2 L532.6,93.3 M574.2,75.5 L589.2,47.2 M505.2,244.5 L510.8,276.1"/>
+      </g>
+      <!-- routes -->
+      <path d="M307.4,285.1 L307.4,285.1 L307.4,285.1 L336.5,274.5 L332.7,262.7 L329.7,250.6 L327.6,238.4 L326.4,226.0 L326.0,213.6 L326.5,201.2 L328.0,188.9 L330.3,176.7 L333.4,164.7 L337.5,152.9 L342.3,141.5 L371.3,155.0 L377.0,144.0 L383.7,133.6" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 7" class="run"/>
+      <circle cx="307.4" cy="285.1" r="6" fill="var(--green)"/>
+      <g stroke="var(--green)" stroke-width="3" stroke-linecap="round"><line x1="379.1" y1="125.5" x2="391.1" y2="137.5"/><line x1="391.1" y1="125.5" x2="379.1" y2="137.5"/></g>
+      <path d="M694.5,285.8 L694.5,285.8 L694.5,285.8 L663.5,274.5 L667.3,263.0 L670.2,251.2 L672.3,239.2 L673.6,227.1 L674.0,215.0 L673.6,202.9 L672.3,190.8 L670.2,178.8 L667.3,167.0 L663.5,155.5 L659.0,144.2 L653.6,133.3 L647.6,122.8 L640.8,112.7 L633.3,103.2 L608.8,123.7 L615.0,131.7 L620.7,140.1 L625.7,148.9 L630.1,158.1 L633.8,167.5 L636.9,177.2 L639.2,187.0 L640.9,197.0 L641.8,207.1 L642.0,217.3 L641.5,227.4 L640.2,237.4 L638.3,247.4 L635.6,257.2 L632.2,266.7 L628.2,276.0 L623.5,285.0 L618.2,293.7 L612.3,301.9 L605.8,309.7 L598.8,317.0 L591.3,323.8 L570.7,299.3 L576.6,294.0 L582.0,288.3 L587.1,282.2 L591.7,275.8 L595.8,269.0 L599.5,262.0 L602.6,254.7 L605.2,247.3 L607.2,239.6 L608.7,231.9 L609.6,224.0 L610.0,216.1 L609.8,208.2 L609.0,200.4 L607.7,192.6 L605.8,184.9 L603.4,177.4 L573.3,188.3 L575.0,193.7 L576.4,199.2 L577.3,204.8 L577.9,210.5 L578.0,216.1 L577.7,221.8 L577.0,227.4 L575.9,233.0 L574.4,238.5 L572.5,243.8 L570.2,249.0 L567.5,254.0 L539.8,238.0 L541.4,235.1 L542.7,232.2 L543.8,229.1 L544.7,226.0 L545.3,222.8 L545.8,219.6 L546.0,216.3 L546.0,213.1 L545.7,209.8 L545.2,206.6 L544.5,203.5 L543.6,200.3 L542.5,197.3 L541.1,194.4 L539.5,191.5 L537.8,188.8 L535.8,186.2 L533.7,183.7 L531.4,181.4 L529.0,179.3 L526.4,177.3 L506.9,205.2 L506.9,205.2 L506.9,205.2" fill="none" stroke="var(--ember)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 7" class="run"/>
+      <circle cx="694.5" cy="285.8" r="6" fill="var(--ember)" class="pulse"/>
+      <!-- source -->
+      <circle cx="500" cy="215" r="13" fill="var(--brass)" filter="url(#glow)" class="pulse"/>
+      <text x="500" y="419" text-anchor="middle" font-size="12" letter-spacing="2.5" fill="var(--brass)">THE SOURCE</text>
+      <!-- side captions -->
+      <g font-size="12" letter-spacing="2.5">
+        <text x="20" y="52" fill="var(--green)">DESIGN THAT CLOSES THE PATH</text>
+        <text x="980" y="52" fill="var(--ember)" text-anchor="end">DESIGN THAT LEAVES ONE OPEN</text>
+      </g>
+      <g font-size="13.5" fill="var(--text2)">
+        <text x="20" y="92">The attacker gets in two rings</text><text x="20" y="114">and stops. No route reaches</text><text x="20" y="136">the attack.</text>
+        <text x="980" y="92" text-anchor="end">The attacker only needs one route.</text><text x="980" y="114" text-anchor="end">Every ring has a gap, and the</text><text x="980" y="136" text-anchor="end">gaps line up.</text>
+      </g>
+      <g font-size="12" fill="var(--muted)">
+        <text x="20" y="330">key verified by hash, not label</text><text x="20" y="352">anchors chosen, not inherited</text><text x="20" y="374">anomalies explained before closed</text>
+        <text x="980" y="330" text-anchor="end">key verified by label</text><text x="980" y="352" text-anchor="end">anchors inherited from the default bundle</text><text x="980" y="374" text-anchor="end">anomaly closed as a configuration error</text>
+      </g>
+    </svg></div>
+    <p class="hero-note">The maze is drawn before the attacker arrives. Whether a route to the attack exists at all is decided then — by design — and nothing added afterward redraws the walls.</p>
+  </div>
+  <div class="scroll"><span>Scroll</span><i></i></div>
+</header>
+
+<main>
+
+<!-- ============================ STATS ============================ -->
+<section class="body reveal" id="numbers">
+  <div class="container">
+    <p class="eyebrow">By the numbers</p>
+    <h2 class="title">Eight bits of entropy. Five hundred thirty-five days in public.</h2>
+    <p class="lede">What makes this incident unusual is not victim counts, of which none are confirmed, but the ratio between how cheap the flaw was to find and how expensive it is to undo.</p>
+    <div class="stats">
+      <div class="stat ember"><div class="n">8</div><div class="l">Publicly trusted CA private keys recoverable from their own certificates — every one an integer below 256</div><div class="s">Mozilla Bugzilla 2083449 <a class="cite" href="#src-2">2</a> · Helme <a class="cite" href="#src-11">11</a></div></div>
+      <div class="stat"><div class="n">535</div><div class="l">Days from the key ceremony (Apr 30, 2025) to discovery (Oct 17, 2026)</div><div class="s">Computed from <a class="cite" href="#src-2">2</a></div></div>
+      <div class="stat green"><div class="n">100</div><div class="l">Minutes from the researcher's report to Chrome's public-key block going live, with no browser update</div><div class="s">Google Security Blog <a class="cite" href="#src-3">3</a></div></div>
+      <div class="stat ember"><div class="n">1</div><div class="l">Prompt needed for an AI agent to recover the keys, in two independent reproductions</div><div class="s">Mozilla <a class="cite" href="#src-2">2</a> · Helme <a class="cite" href="#src-11">11</a></div></div>
+      <div class="stat"><div class="n">107,107</div><div class="l">Certificates signed with six of the keys and logged to Certificate Transparency by third parties in roughly 36 hours</div><div class="s">Bugzilla 2083449, comment 44 <a class="cite" href="#src-2">2</a></div></div>
+      <div class="stat"><div class="n">30,800</div><div class="l">Unexpired certificates chained to the distrusted root and forced to migrate — 99.9% from a single US ecosystem</div><div class="s">Chrome Root Program, comment 30 <a class="cite" href="#src-2">2</a></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ FRAMING ============================ -->
+<section class="body reveal" id="premise">
+  <div class="container">
+    <p class="eyebrow">The premise</p>
+    <h2 class="title">Anything latent in public data should now be treated as found.</h2>
+    <p class="lede">Three parties recovered the keys independently, and two of them then handed the job to an AI agent and got the answer from a single prompt. When looking costs nothing, the only defense that runs ahead of the adversary is the one made before the artifact existed.</p>
+    <div class="prose">
+      <p class="spine">The only defense that runs before the adversary is the one built in.</p>
+      <p>On April 30, 2025, a certificate authority ran a key ceremony that produced, as a side effect of a rehearsal step, a second key object for each of eight intermediate CAs. The second objects carried the same labels as the first, and they were the ones that got certified, cross-signed, disclosed and trusted. Their private values were integers below 256. For 535 days anyone holding the public certificate could compute the private key in milliseconds <a class="cite" href="#src-2">2</a><a class="cite" href="#src-11">11</a>.</p>
+      <p>Nobody did, as far as anyone knows, until a researcher ran a weak-key check across a public corpus of CA certificates on a Saturday afternoon and found the break twenty-seven minutes later <a class="cite" href="#src-2">2</a>. Mozilla then recovered the keys without being told how <a class="cite" href="#src-2">2</a>. Scott Helme recovered all eight on a laptop in under a second, and reported that an AI agent did the same from one prompt <a class="cite" href="#src-11">11</a><a class="cite" href="#src-13">13</a>. A Mozilla engineer reported the same result from local agents <a class="cite" href="#src-2">2</a>. eMudhra used AI-facilitated analysis to confirm its other issuers were unaffected <a class="cite" href="#src-2">2</a>, and Chrome ran a known-weakness tool across its entire trust boundary within an hour of learning the method <a class="cite" href="#src-2">2</a>.</p>
+      <p>One distinction matters and this report keeps it. Whether AI found this flaw is not established: the researcher's own account mentions new tooling run against a public corpus, and eMudhra has suggested AI-assisted techniques may have been involved <a class="cite" href="#src-2">2</a><a class="cite" href="#src-5">5</a><a class="cite" href="#src-12">12</a><a class="cite" href="#src-14">14</a>. What is established, by three parties, is that reproducing the discovery now costs one sentence. That is the fact that changes the risk model. A latent weakness in a public artifact used to be protected by the scarcity of people who would think to look. That scarcity is gone.</p>
+      <p>In that world, every capability an organization adds after an artifact exists — scanning, revocation, detection, response — is a race that begins after the adversary has started, and the browsers that won this race in a hundred minutes did so because a control was designed into their trust decisions a decade earlier <a class="cite" href="#src-3">3</a><a class="cite" href="#src-4">4</a>. Everything else is still catching up <a class="cite" href="#src-7">7</a>. The head start belongs to design, and in this incident three design decisions decided everything.</p>
+    </div>
+    <div class="callout-row">
+      <div class="mini"><b>Decision one</b>How a key's identity is verified across an import boundary. Here it was verified by label.</div>
+      <div class="mini"><b>Decision two</b>Which anchors a client trusts and how it learns to stop. Browsers had an answer; almost nothing else did.</div>
+      <div class="mini"><b>Decision three</b>Whether an anomaly can be closed before it is explained. In June 2025 it was.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ TIMELINE ============================ -->
+<section class="body reveal" id="timeline">
+  <div class="container">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">How it unfolded</p>
+        <h2 class="title">The flaw announced itself sixteen months before anyone heard it.</h2>
+        <p class="lede">A key ceremony in April 2025 left two keys behind for each CA. One of them failed a CRL signature six weeks later. The investigation resolved the symptom and closed.</p>
+      </div>
+      <button class="xall" data-target="#timeline" data-expand="Show the full record" data-collapse="Hide the full record">Show the full record</button>
+    </div>
+    <div class="tl">
+      <div class="tl-spine"></div>
+
+      <div class="tl-phase"><span>Act I · Built in</span><em>April – July 2025</em></div>
+      <article class="tl-item ember" data-side="left"><div class="tl-dot"></div><div class="tl-card"><time>30 Apr 2025</time><p>A key ceremony rehearses a wrap, unwrap and re-import of each exportable key. Two same-label objects per CA result, and the re-imported ones — private scalars below 256 — are the ones certified <a class="cite" href="#src-2">2</a><a class="cite" href="#src-5">5</a>.</p></div></article>
+      <article class="tl-item" data-side="right"><div class="tl-dot"></div><div class="tl-card"><time>14 May 2025</time><p>Sectigo cross-certifies all eight from CSRs built on the weak keys, carrying them into Apple and Microsoft trust through a second root <a class="cite" href="#src-2">2</a><a class="cite" href="#src-8">8</a>.</p></div></article>
+      <article class="tl-item ember" data-side="left"><div class="tl-dot"></div><div class="tl-card"><time>29 May – 14 Jul 2025</time><p>CRLs for six of the intermediates fail signature verification — the weak keys announcing themselves. The investigation resolves it as a configuration error and the ticket closes; the second key pair goes unmentioned <a class="cite" href="#src-10">10</a><a class="cite" href="#src-2">2</a>.</p></div></article>
+      <div class="tl-full"><details class="card"><summary><h3>Full record · Phases 1–2</h3><span class="chev">Show</span></summary><div class="body">
+<h4 class="ph">Phase 1 · Pre-incident conditions</h4>
+<table class="ev"><thead><tr><th>When</th><th>Event</th><th>Src</th><th>Conf.</th></tr></thead><tbody>
+        <tr><td>2022</td><td>Chrome Root Store launches, baselined to existing root programs; eMudhra's roots included on that baseline without a full inclusion review.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>3 Aug 2022</td><td>Google open-sources paranoid_crypto to detect weak keys and signatures from black boxes such as HSMs, including EC public-key checks.</td><td><a class="cite" href="#src-16">16</a></td><td>confirmed</td></tr>
+        <tr><td>2022–2026</td><td>eMudhra files four applications to add roots to the Chrome Root Store; three denied at screening; six-month cool-down; the fourth is pending at discovery and later denied.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>Pre-Apr 2025</td><td>pkimetal, badkeys and zlint have no small-scalar EC test; Google's paranoid pipeline scans CT-logged certificates only.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>Apr 2025</td><td>Chrome and Firefox have already removed TLS trust in AAA Certificate Services; Apple and Microsoft still trust it.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-12">12</a></td><td>confirmed</td></tr>
+        <tr><td>30 Apr 2025</td><td>Ceremony: 24 intermediates (A/B/C × RSA-4096/P-384 × DV/OV/EV/CS). B/C series destined for US/EU data centers for data-sovereignty reasons, generated on Utimaco Se-Series Gen2 HSMs; A/A-1 on Entrust.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>30 Apr 2025</td><td>Approved deviation rehearses wrap/unwrap/re-import of exportable keys; two objects per CA with the same label; certificates issued over the re-imported objects; resulting P-384 scalars all below 256.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-5">5</a></td><td>reported (mechanism) · confirmed (outcome)</td></tr>
+        <tr><td>30 Apr 2025</td><td>Control design for the ceremony relies on key labels, a manual CSR step and maker-checker review; no independent post-generation check of key parameters.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-9">9</a></td><td>inferred</td></tr>
+        <tr><td>9–10 May 2025</td><td>Certificates published to CCADB (late; tracked separately as Bug 1965559).</td><td><a class="cite" href="#src-2">2</a></td><td>reported</td></tr>
+        <tr><td>14 May 2025</td><td>Sectigo cross-certificates issued under AAA Certificate Services for all eight.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-8">8</a></td><td>confirmed</td></tr>
+        <tr><td>23 May 2025</td><td>Internet Archive snapshot shows the six P-384 TLS intermediates' CRLs already failing verification.</td><td><a class="cite" href="#src-2">2</a></td><td>reported</td></tr>
+        <tr><td>29 May 2025</td><td>CRLs for the six TLS intermediates generated manually with signatures that do not verify; A-1 series created the same day.</td><td><a class="cite" href="#src-10">10</a><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>30 May 2025</td><td>Series A revoked; reason not publicly explained.</td><td><a class="cite" href="#src-2">2</a></td><td>reported</td></tr>
+        <tr><td>3 Jun 2025</td><td>Sectigo emails a problem report on the invalid CRLs; the message is quarantined by mail filters.</td><td><a class="cite" href="#src-10">10</a></td><td>confirmed</td></tr>
+        <tr><td>5 Jun 2025</td><td>Bug 1970728 filed by Sectigo citing crt.sh; follow-up email reaches eMudhra 20:12 UTC.</td><td><a class="cite" href="#src-10">10</a></td><td>confirmed</td></tr>
+        <tr><td>6 Jun 2025</td><td>eMudhra attributes the mismatch to incorrect CA key configuration, locates a key that verifies, re-publishes CRLs by 07:30 UTC. The 2025 report does not mention that two key pairs exist.</td><td><a class="cite" href="#src-10">10</a><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>Mid-2025</td><td>G3 hierarchy included in browser trust lists.</td><td><a class="cite" href="#src-5">5</a></td><td>reported</td></tr>
+        <tr><td>20 Jun 2025</td><td>eMudhra reports completing two action items: automated CRL workflow; automated post-signing validation.</td><td><a class="cite" href="#src-10">10</a></td><td>reported</td></tr>
+        <tr><td>14 Jul 2025</td><td>Bug 1970728 closed. The second-key-pair condition persists.</td><td><a class="cite" href="#src-10">10</a></td><td>confirmed</td></tr>
+        <tr><td>2025–2026</td><td>Two WebTrust audit periods (auditor BDO) cover the hierarchy, together spanning roughly thirteen months of the keys' lifetime; the 2025–26 report carries the June 2025 CRL incident as an Other Matter under eMudhra's original explanation.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-9">9</a><a class="cite" href="#src-5">5</a></td><td>reported · disputed on coverage</td></tr>
+        <tr><td>Date unknown</td><td>EM DV TLS CA - G3C placed into production; issues no end-entity certificates.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-5">5</a></td><td>reported</td></tr>
+        <tr><td>13 Aug 2026</td><td>eMudhra SSL/TLS CP/CPS v1.08 describes CA key generation and storage as FIPS 140-2 Level 3 compliant; community later asks whether this means a validated configuration.</td><td><a class="cite" href="#src-2">2</a></td><td>reported</td></tr>
+        <tr><td>19 Aug 2026</td><td>Google archives the paranoid_crypto repository.</td><td><a class="cite" href="#src-2">2</a></td><td>reported</td></tr>
+        <tr><td>14 Oct 2026</td><td>CRL #11 for emSign Root TLS CA - G1, and G3 CRL #10, published signed with OCSP responder keys; swapped on the next issuance without a report.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed (observation) · reported (cause)</td></tr>
+        <tr><td>Window</td><td>Apr 30, 2025 → Oct 17, 2026 = 535 days during which the eight private keys were computable from public data.</td><td><a class="cite" href="#src-11">11</a><a class="cite" href="#src-7">7</a></td><td>computed</td></tr>
+        </tbody></table>
+<h4 class="ph">Phase 2 · Initial compromise</h4>
+<table class="ev"><thead><tr><th>When</th><th>Event</th><th>Src</th><th>Conf.</th></tr></thead><tbody>
+        <tr><td>30 Apr 2025</td><td>Eight P-384 CA keys certified with private scalars below 256; each recoverable with at most 255 scalar multiplications.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-11">11</a></td><td>confirmed (sub-256) · reported (values)</td></tr>
+        <tr><td>May 2025</td><td>Weak public keys become publicly available via CCADB disclosure and Sectigo cross-certificates; derivation possible from this point.</td><td><a class="cite" href="#src-11">11</a><a class="cite" href="#src-7">7</a></td><td>confirmed</td></tr>
+        <tr><td>May 2025 – Oct 2026</td><td>No CT entries for the six TLS intermediates; non-CT client exposure unknowable; no confirmed malicious exploitation as of Oct 21, 2026.</td><td><a class="cite" href="#src-3">3</a><a class="cite" href="#src-7">7</a><a class="cite" href="#src-9">9</a></td><td>confirmed (CT) · unknown (non-CT)</td></tr>
+        <tr><td>17 Oct 2026 16:00–16:27</td><td>Wayne begins testing new tooling against a CCADB corpus; the run identifies a break in the EC keys at 16:27.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-14">14</a></td><td>confirmed</td></tr>
+        </tbody></table>
+</div></details></div>
+      <div class="tl-phase"><span>Act II · In the open</span><em>July 2025 – October 2026</em></div>
+      <div class="tl-gap"><span>535 days · nothing happens</span><small>30 Apr 2025 → 17 Oct 2026</small></div>
+      <article class="tl-item" data-side="right"><div class="tl-dot"></div><div class="tl-card"><time>Jul 2025 – Oct 2026</time><p>Two audit periods pass. The open-source weak-key tool is archived. No scanner in the ecosystem tests dormant CA keys for this failure mode, and the keys sit in CCADB where anyone could have derived them. No certificate chaining to them appears in CT; whether anyone looked is unknowable <a class="cite" href="#src-2">2</a><a class="cite" href="#src-9">9</a><a class="cite" href="#src-3">3</a><a class="cite" href="#src-7">7</a>.</p></div></article>
+      <div class="tl-full"><details class="card"><summary><h3>Full record · Phase 3</h3><span class="chev">Show</span></summary><div class="body">
+<h4 class="ph">Phase 3 · Propagation and persistence</h4>
+<table class="ev"><thead><tr><th>When</th><th>Event</th><th>Src</th><th>Conf.</th></tr></thead><tbody>
+        <tr><td>14 May 2025</td><td>Propagation: cross-signing carries the weak keys into AAA Certificate Services and thereby into trust stores that never trusted emSign ECC Root CA - G3 directly.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-8">8</a><a class="cite" href="#src-12">12</a></td><td>confirmed</td></tr>
+        <tr><td>6 Jun 2025</td><td>Normalization: re-signing the CRLs with the weak keys makes them the operational keys for these CAs, closing the one discrepancy that had surfaced.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-10">10</a></td><td>confirmed</td></tr>
+        <tr><td>Mid-2025</td><td>Amplification: inclusion in browser trust lists converts an internal key-management error into a globally trusted signing capability.</td><td><a class="cite" href="#src-5">5</a></td><td>reported</td></tr>
+        <tr><td>May 2025 – Oct 2026</td><td>Persistence: the keys sit in CCADB through two audit periods and past ecosystem linters that have no test for this failure mode.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        </tbody></table>
+</div></details></div>
+      <div class="tl-phase"><span>Act III · Found and withdrawn</span><em>October – November 2026</em></div>
+      <article class="tl-item green" data-side="left"><div class="tl-dot"></div><div class="tl-card"><time>17 Oct 2026 · 16:27 → 18:05 UTC</time><p>A weak-key run across a public CCADB corpus flags the EC keys twenty-seven minutes after it starts. By 18:05 the researcher has signed an attestation with each private key and emailed Apple, Chrome, Microsoft, Mozilla and eMudhra <a class="cite" href="#src-2">2</a><a class="cite" href="#src-7">7</a>.</p></div></article>
+      <article class="tl-item green" data-side="right"><div class="tl-dot"></div><div class="tl-card"><time>17 Oct · 19:45 and 22:59 UTC</time><p>Chrome's key-hash block is live 100 minutes after the report; Firefox's OneCRL distribution completes in under three hours. Neither needs a browser update or a user action <a class="cite" href="#src-3">3</a><a class="cite" href="#src-4">4</a>.</p></div></article>
+      <article class="tl-item" data-side="left"><div class="tl-dot"></div><div class="tl-card"><time>18 Oct · 09:24–09:38 UTC</time><p>eMudhra revokes all eight intermediates, reason cACompromise — about twelve hours after acknowledging the report <a class="cite" href="#src-2">2</a><a class="cite" href="#src-6">6</a>.</p></div></article>
+      <article class="tl-item" data-side="right"><div class="tl-dot"></div><div class="tl-card"><time>19 – 20 Oct</time><p>Apple blocks; public disclosure on dev-security-policy; Mozilla and Chrome decide to remove the ECC root; Go, Microsoft and the first of sixty-plus projects ship fixes <a class="cite" href="#src-8">8</a><a class="cite" href="#src-15">15</a><a class="cite" href="#src-4">4</a><a class="cite" href="#src-12">12</a><a class="cite" href="#src-2">2</a>.</p></div></article>
+      <article class="tl-item ember" data-side="left"><div class="tl-dot"></div><div class="tl-card"><time>21 – 22 Oct</time><p>eMudhra publishes its account of the ceremony, then announces a voluntary exit from the global SSL/TLS business five days after disclosure <a class="cite" href="#src-5">5</a><a class="cite" href="#src-6">6</a>.</p></div></article>
+      <article class="tl-item ember" data-side="right"><div class="tl-dot"></div><div class="tl-card"><time>26 Oct – 2 Nov</time><p>Leadership accepts the flaw as its own and apologizes; KPMG is appointed; the full incident report is deferred to Nov 9. The mechanism, the ceremony records and the remaining G1 hierarchy are still open questions, and frozen CA bundles will trust the keys until 2039 <a class="cite" href="#src-5">5</a><a class="cite" href="#src-2">2</a><a class="cite" href="#src-11">11</a>.</p></div></article>
+      <div class="tl-full"><details class="card"><summary><h3>Full record · Phases 4–7</h3><span class="chev">Show</span></summary><div class="body">
+<h4 class="ph">Phase 4 · Discovery — Saturday, 17 October 2026</h4>
+<table class="ev"><thead><tr><th>When (UTC)</th><th>Event</th><th>Src</th><th>Conf.</th></tr></thead><tbody>
+        <tr><td>16:27</td><td>CCADB corpus run discovers the EC key break.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>17:22–18:00</td><td>Report drafted; per-key signed attestations built; checked repeatedly.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-7">7</a></td><td>confirmed</td></tr>
+        <tr><td>18:05</td><td>Report with attestations emailed to Apple, Chrome, Microsoft, Mozilla and eMudhra.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-3">3</a></td><td>confirmed</td></tr>
+        <tr><td>19:45</td><td>Chrome completes corroboration; CRLSet update blocking SPKI hashes is live.</td><td><a class="cite" href="#src-3">3</a></td><td>confirmed</td></tr>
+        <tr><td>20:03–20:06</td><td>Chrome corroborates to the researcher; adds Mozilla contacts; Mozilla receives the forwarded report.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>20:08</td><td>Mozilla acknowledges, validates proof of key control, begins OneCRL process.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>20:18</td><td>Full CCADB check finds the Sectigo cross-signs share the weak keys.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>21:05–21:27</td><td>Apple corroborates; requests and receives attestations for the cross-signed certificates.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>21:28</td><td>eMudhra acknowledges; no issuance beyond OCSP for G3B; DV G3C was live, now disabled; Sectigo notified.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>21:48</td><td>Mozilla independently recovers all private keys, confirming the flaw is trivial to exploit.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>22:46</td><td>CRLSet sequence 10843 observed listing the six TLS keys as revoked.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>22:59</td><td>OneCRL distribution complete for Firefox users with standard configurations.</td><td><a class="cite" href="#src-4">4</a><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        </tbody></table>
+<h4 class="ph">Phase 5 · Disclosure</h4>
+<table class="ev"><thead><tr><th>When</th><th>Event</th><th>Src</th><th>Conf.</th></tr></thead><tbody>
+        <tr><td>18 Oct 09:24–09:38</td><td>eMudhra revokes all eight (cACompromise).</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>18 Oct 12:06</td><td>Mozilla opens Bugzilla 2083449 (initially restricted).</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>18–19 Oct</td><td>eMudhra's closed-group message to root programs: revocation table, HSM vendor, team experience, other issuers verified unaffected using AI-facilitated mathematical models.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>19 Oct</td><td>Mozilla discloses to downstream trust-store operators with text that omits the nature of the flaw.</td><td><a class="cite" href="#src-7">7</a><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>19 Oct 14:55</td><td>Sectigo completes offline revocation of the eight cross-certificates.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>19 Oct</td><td>Apple begins blocking the twelve TLS certificates on Apple devices.</td><td><a class="cite" href="#src-8">8</a></td><td>confirmed</td></tr>
+        <tr><td>19 Oct</td><td>Go security team learns of the issue; prepares an urgent release with deliberately vague notes.</td><td><a class="cite" href="#src-12">12</a></td><td>reported</td></tr>
+        <tr><td>19 Oct ~22:00</td><td>Android and ChromeOS receive the equivalent block via Google Play Services.</td><td><a class="cite" href="#src-3">3</a></td><td>confirmed</td></tr>
+        <tr><td>20 Oct ~13:01</td><td>Public disclosure: Mozilla and Chrome Root Program post to dev-security-policy.</td><td><a class="cite" href="#src-15">15</a><a class="cite" href="#src-11">11</a></td><td>confirmed</td></tr>
+        <tr><td>20 Oct</td><td>Mozilla Security Blog; Firefox 158.0.1 / ESR 115.43.1 / ESR 153.5.1; NSS 3.131.1 removes emSign ECC Root CA - G3.</td><td><a class="cite" href="#src-4">4</a></td><td>confirmed</td></tr>
+        <tr><td>20 Oct</td><td>Go 1.27.3 / 1.26.10 ship hard-coded rejection of the eight keys (CVE-2026-111943) without naming the CA.</td><td><a class="cite" href="#src-12">12</a><a class="cite" href="#src-7">7</a></td><td>confirmed</td></tr>
+        <tr><td>20 Oct</td><td>Microsoft ships blocks via the Windows disallowed certificate trust list.</td><td><a class="cite" href="#src-7">7</a><a class="cite" href="#src-12">12</a></td><td>reported</td></tr>
+        <tr><td>20 Oct 19:49</td><td>Google's security blog post published.</td><td><a class="cite" href="#src-3">3</a></td><td>confirmed</td></tr>
+        <tr><td>20 Oct 19:53</td><td>Helme publishes an independent reproduction with all eight scalar values; a 20:16 update reports an AI agent recovered the keys from a single prompt.</td><td><a class="cite" href="#src-11">11</a></td><td>confirmed</td></tr>
+        <tr><td>20 Oct ~20:16</td><td>Bugzilla 2083449 made public.</td><td><a class="cite" href="#src-11">11</a><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>20 Oct</td><td>eMudhra posts status-page Updates 1–2.</td><td><a class="cite" href="#src-5">5</a></td><td>confirmed</td></tr>
+        <tr><td>20 Oct</td><td>Mozilla decides on emergency removal of emSign ECC Root CA - G3; Chrome commits to the same path; eMudhra ceases issuance under it. Mozilla sends formal questions with a 24-hour deadline.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>21 Oct</td><td>eMudhra BSE press release and Update 3 (ceremony account; AI-assisted techniques suggested; impact confined to one US ecosystem).</td><td><a class="cite" href="#src-5">5</a><a class="cite" href="#src-12">12</a></td><td>confirmed</td></tr>
+        <tr><td>21 Oct</td><td>CERT-In advisory CIAD-2026-0050; MeitY investigation team; Red Hat bulletin; Firefox Android 158.0.2 fixes a blocklist startup bug; eMudhra shares fall 20%.</td><td><a class="cite" href="#src-9">9</a><a class="cite" href="#src-12">12</a><a class="cite" href="#src-4">4</a></td><td>confirmed</td></tr>
+        <tr><td>21 Oct ~20:38</td><td>Chrome Root Program posts twelve questions (Q1–Q12).</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>21 Oct</td><td>eMudhra misses Mozilla's 24-hour deadline and requests a further 24 hours.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>22 Oct</td><td>Press release: voluntary exit from global SSL/TLS. Update 4 offers Sectigo certificates. InCommon publishes a service update.</td><td><a class="cite" href="#src-6">6</a><a class="cite" href="#src-5">5</a><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>22 Oct</td><td>Community notes the status page's dates disagree with Bugzilla; by 13:25 UTC the page reads Oct 17/18 without a correction notice.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>23 Oct</td><td>Apple begins blocking the emSign ECC Root CA - G3 root. Mozilla records no response to its questions; Chrome asks eMudhra to prioritize its security response.</td><td><a class="cite" href="#src-8">8</a><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>~25 Oct</td><td>eMudhra responds publicly: accepts the error; notes eighteen months of public exposure without external detection; argues relying parties that check revocation have not been exposed since Oct 18. Community rebuttal: 107,107 third-party-signed certificates logged; CRL endpoints returning 403 to common user-agents.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>26 Oct</td><td>eMudhra leadership note: accepts the flaw as its own; apologizes; commits to full RCA and independent review.</td><td><a class="cite" href="#src-5">5</a></td><td>confirmed</td></tr>
+        <tr><td>27 Oct</td><td>Chrome Root Store v43 removes emSign ECC Root CA - G3 for all Chrome Root Store consumers.</td><td><a class="cite" href="#src-3">3</a></td><td>confirmed (scheduled)</td></tr>
+        <tr><td>28 Oct</td><td>Update 6: ~30,800 certificates belong to a US client ecosystem now issuing via the G1 RSA root; root programs asked for time; G1 issuance to stop after transition. Chrome's 7-day window expires without answers on the bug.</td><td><a class="cite" href="#src-5">5</a><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>~28 Oct</td><td>Chrome posts a detailed account of detection gaps and remediation.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>~29 Oct</td><td>eMudhra attaches its written response to Chrome's Q1–Q12.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>29 Oct</td><td>Apple support document 149555 published.</td><td><a class="cite" href="#src-8">8</a></td><td>confirmed</td></tr>
+        <tr><td>30 Oct</td><td>Update 7: KPMG appointed as independent external reviewer.</td><td><a class="cite" href="#src-5">5</a></td><td>confirmed</td></tr>
+        <tr><td>2 Nov</td><td>eMudhra states earlier answers reflected what internal teams could gather; full incident report deferred to Nov 9, 2026.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        </tbody></table>
+<p style="margin-top:14px;font-size:14px"><strong>Disclosure gaps, stated neutrally:</strong> internal awareness Oct 17 21:28 → customer-facing status page Oct 20 (about three days); root-program awareness Oct 17 → public Oct 20 (deliberate and coordinated); a named list of affected CAs with root-store timelines was not on eMudhra's status page as of Oct 21, which Chrome's first question requested <a class="cite" href="#src-2">2</a>.</p>
+<h4 class="ph">Phase 6 · Response and containment</h4>
+<table class="ev"><thead><tr><th>Actor</th><th>Action</th><th>Src</th><th>Conf.</th></tr></thead><tbody>
+        <tr><td>Chrome</td><td>SPKI-based CRLSet block (Oct 17); Play Services push (Oct 19); CT logs updated to reject chains to the CAs; root removal in CRS v43 (Oct 27); review of remaining eMudhra roots.</td><td><a class="cite" href="#src-3">3</a></td><td>confirmed</td></tr>
+        <tr><td>Chrome</td><td>paranoid_crypto run across all trusted CA certificates within an hour; no other weak CA keys; scans made recurring; check added to inclusion and monitoring; CCADB-Tools#185 filed.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>Mozilla</td><td>OneCRL block (Oct 17); Firefox point releases (Oct 20–21); NSS 3.131.1 root removal; downstream operator disclosure (Oct 19); public test site and patch tracker.</td><td><a class="cite" href="#src-4">4</a><a class="cite" href="#src-7">7</a><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>eMudhra</td><td>Revoked all eight (Oct 18); disabled production CA (Oct 17); ceased ECC G3 issuance (Oct 20); migrated InCommon to G1; offered Sectigo certificates (Oct 22); free migration of other customers; re-verification of every ceremony; KPMG (Oct 30); exit from global TLS (Oct 22).</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-5">5</a><a class="cite" href="#src-6">6</a></td><td>confirmed</td></tr>
+        <tr><td>Sectigo</td><td>Revoked all eight cross-certificates (Oct 19).</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>Apple</td><td>Blocked twelve TLS certificates (Oct 19) and the ECC root (Oct 23) via automatic updates; command-line tools pending a macOS update.</td><td><a class="cite" href="#src-8">8</a></td><td>confirmed</td></tr>
+        <tr><td>Microsoft</td><td>Disallowed-CTL block (Oct 20).</td><td><a class="cite" href="#src-7">7</a><a class="cite" href="#src-12">12</a></td><td>reported</td></tr>
+        <tr><td>Ecosystem</td><td>Updates shipped by Go, Node.js, Python, certifi, Rust webpki, Debian, Ubuntu, RHEL/Alma/Rocky, Fedora, Alpine, Arch, SUSE, FreeBSD, OpenBSD, Electron, Docker, GitLab, VS Code, JetBrains, curl bundle, Perl, Elixir, Erlang, Cloudflare, Tailscale and others.</td><td><a class="cite" href="#src-7">7</a><a class="cite" href="#src-12">12</a></td><td>confirmed</td></tr>
+        <tr><td>Community tooling</td><td>badkeys and pkimetal move to add small-scalar EC checks.</td><td><a class="cite" href="#src-2">2</a></td><td>reported</td></tr>
+        <tr><td>Government</td><td>CERT-In advisory with CA key-management recommendations; MeitY investigation.</td><td><a class="cite" href="#src-9">9</a><a class="cite" href="#src-12">12</a></td><td>confirmed</td></tr>
+        </tbody></table>
+<h4 class="ph">Phase 7 · Ongoing state, as of 4 November 2026</h4>
+<table class="ev"><thead><tr><th>Item</th><th>Status</th><th>Src</th><th>Conf.</th></tr></thead><tbody>
+        <tr><td>Root-cause report</td><td>Not yet filed; deferred to Nov 9, 2026 pending KPMG review; earlier answers partially caveated by eMudhra.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>Mechanism</td><td>Unresolved: whether the weak objects came from in-module generation, a supplied value, or the unwrap/re-import step. Ceremony script, logs and witness records not published.</td><td><a class="cite" href="#src-2">2</a></td><td>disputed</td></tr>
+        <tr><td>RSA G2B/G2C keys</td><td>Stated unaffected via a different path; the path has not been described; same HSM model and ceremony date.</td><td><a class="cite" href="#src-2">2</a></td><td>open</td></tr>
+        <tr><td>G1 roots</td><td>Still trusted by Mozilla and Chrome at this time; Chrome reviewing; community questions about G1 key records after CRL #11 was signed with an OCSP key; G1 issuance continues only for the InCommon transition.</td><td><a class="cite" href="#src-2">2</a><a class="cite" href="#src-3">3</a><a class="cite" href="#src-5">5</a></td><td>confirmed (status)</td></tr>
+        <tr><td>CRL-signing incidents</td><td>Preliminary report on the Oct 14 CRL committed for Oct 29; not filed as of Nov 2.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>Non-browser clients</td><td>macOS CLI tools still trusted the chain at Oct 28; macOS 27.2 reverted manual fixes; Bottlerocket, OpenHarmony, containerd, certbot, LibreOffice, OpenJDK pending.</td><td><a class="cite" href="#src-7">7</a><a class="cite" href="#src-8">8</a></td><td>confirmed</td></tr>
+        <tr><td>Long tail</td><td>Frozen CA bundles trust the intermediates until expiry (reported as July 2039).</td><td><a class="cite" href="#src-11">11</a></td><td>reported</td></tr>
+        <tr><td>Third-party certificates</td><td>107,107 certificates signed with six of the keys logged to CT Oct 20–21, almost all proof-of-concept, carrying no revocation pointers to eMudhra.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>CRL availability</td><td>User-agent filtering on crl.emsign.com observed Oct 24–25; tracked separately as Bug 2085612.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>Business outcome</td><td>Exit from global TLS; shares down about 40% over two days; MeitY review and KPMG review ongoing.</td><td><a class="cite" href="#src-6">6</a><a class="cite" href="#src-13">13</a><a class="cite" href="#src-12">12</a><a class="cite" href="#src-5">5</a></td><td>confirmed</td></tr>
+        <tr><td>Ecosystem controls</td><td>CCADB-Tools#185 proposal open; Chrome recurring weak-key scans in place; community linters updating.</td><td><a class="cite" href="#src-2">2</a></td><td>confirmed</td></tr>
+        <tr><td>InCommon</td><td>States it cannot independently verify eMudhra's findings about root and intermediate keys because the systems are eMudhra's.</td><td><a class="cite" href="#src-2">2</a></td><td>reported</td></tr>
+        </tbody></table>
+</div></details></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PULLQUOTE A ============================ -->
+<section class="pq reveal">
+  <div class="inner"><span class="mark">“</span>
+    <blockquote><p>The flaw was ours.&nbsp;&nbsp;</p><footer><b>eMudhra leadership</b> · statement of 26 October 2026 <a class="cite" href="#src-5">5</a></footer></blockquote>
+  </div>
+</section>
+
+<!-- ============================ ATTACK CHAIN ============================ -->
+<section class="body reveal" id="chain">
+  <div class="container">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">The latent chain</p>
+        <h2 class="title">Four of six steps were finished before any victim was touched.</h2>
+        <p class="lede">No adversary is documented. Every stage was demonstrated anyway, by a researcher, by Mozilla, by an AI agent, and by the third parties who logged 107,107 proof-of-concept certificates in thirty-six hours.</p>
+      </div>
+      <button class="xall" data-target="#chain">Expand all</button>
+    </div>
+    <p style="font-size:15.5px;color:var(--muted);max-width:820px;margin-bottom:28px">Mapped to MITRE ATT&amp;CK Enterprise <a class="cite" href="#src-30">30</a>. The chain below is the path the flaw created; each stage's confidence reflects how directly the sources show it, and stages that were feasible but not demonstrated say so.</p>
+
+    <div class="tl" style="padding:0">
+      <div class="tl-spine"></div>
+      <article class="tl-item" data-side="left"><div class="tl-dot"></div><div class="tl-card" style="padding:0;border:0;background:transparent;box-shadow:none">
+        <details class="card"><summary><div><span class="tag">Reconnaissance</span><h3><a href="https://attack.mitre.org/techniques/T1596/003/" target="_blank" rel="noopener">T1596.003</a> — Search Open Technical Databases: Digital Certificates</h3><p class="sum">The entire input to the compromise was public. The attack surface was the certificate data itself.</p></div><span class="chev">Detail</span></summary><div class="body">
+          <h4>What happened here</h4><p>The eight CA certificates sat in CCADB and adjacent public data from May 2025. The researcher's discovery came from running a weak-key check across a corpus of CCADB-disclosed Mozilla and Chrome chains; the run flagged the EC keys within 27 minutes of starting <a class="cite" href="#src-2">2</a><a class="cite" href="#src-14">14</a>. The same corpus is what any adversary would start from. The incident's central lesson lives at this stage: the public certificate data was the attack surface, and the only thing that changed on Oct 17 was that someone looked at it with a test the ecosystem's standard linters did not have <a class="cite" href="#src-2">2</a><a class="cite" href="#src-16">16</a>.</p>
+          <h4>Evidence</h4><p>Bugzilla 2083449 comments 2 and 50; Help Net Security; paranoid_crypto.</p>
+          <h4>Confidence</h4><p>High.</p></div></details>
+      </div></article>
+      <article class="tl-item ember" data-side="right"><div class="tl-dot"></div><div class="tl-card" style="padding:0;border:0;background:transparent;box-shadow:none">
+        <details class="card ember"><summary><div><span class="tag ember">Resource development</span><h3><a href="https://attack.mitre.org/techniques/T1588/004/" target="_blank" rel="noopener">T1588.004</a> — Obtain Capabilities: Digital Certificates</h3><p class="sum">No purchase, no theft. The CA private keys were derived from their public keys in milliseconds.</p></div><span class="chev">Detail</span></summary><div class="body">
+          <h4>What happened here</h4><p>ATT&amp;CK describes this technique as buying or stealing certificates. Here no purchase or theft was needed: each P-384 private scalar was an integer below 256, so recovery is at most 255 scalar multiplications <a class="cite" href="#src-2">2</a><a class="cite" href="#src-11">11</a>. Three independent parties did it: the researcher (proof by signed message), Mozilla at 21:48 UTC Oct 17 with no knowledge of the method, and Helme on Oct 20. A Mozilla engineer and Helme each report that an AI agent reproduced the recovery from a single prompt <a class="cite" href="#src-2">2</a><a class="cite" href="#src-11">11</a><a class="cite" href="#src-13">13</a>. The acquired capability is not a leaf certificate but the issuing authority itself: six TLS intermediates trusted by all four major root programs and, under sub-technique T1588.003, two code-signing intermediates trusted by Microsoft <a class="cite" href="#src-2">2</a><a class="cite" href="#src-3">3</a>.</p>
+          <h4>Evidence</h4><p>Bugzilla 2083449 comments 0, 2, 5; Helme; Google; CyberScoop.</p>
+          <h4>Confidence</h4><p>High.</p></div></details>
+      </div></article>
+      <article class="tl-item ember" data-side="left"><div class="tl-dot"></div><div class="tl-card" style="padding:0;border:0;background:transparent;box-shadow:none">
+        <details class="card ember"><summary><div><span class="tag ember">Resource development</span><h3><a href="https://attack.mitre.org/techniques/T1587/003/" target="_blank" rel="noopener">T1587.003</a> — Develop Capabilities: Digital Certificates</h3><p class="sum">With an intermediate's key, anyone can mint certificates for any domain without touching the CA. 107,107 were minted in 36 hours.</p></div><span class="chev">Detail</span></summary><div class="body">
+          <h4>What happened here</h4><p>Between Oct 20 09:40 and Oct 21 22:02 UTC, 107,107 certificates signed with six of the eight keys were logged to CT by third parties, including 106,050 proof-of-concept certificates naming google.com and precertificates for emudhra.salesforce.com; every signature verifies under the corresponding CA key <a class="cite" href="#src-2">2</a>. Helme separately forged a certificate for api.stripe.com <a class="cite" href="#src-11">11</a>. Such certificates carry whatever revocation pointers the forger chooses — in this case, almost none — so a client that checks revocation only for the end-entity certificate finds nothing to check <a class="cite" href="#src-2">2</a>.</p>
+          <h4>Evidence</h4><p>Bugzilla 2083449 comment 44; Helme.</p>
+          <h4>Confidence</h4><p>High.</p></div></details>
+      </div></article>
+      <article class="tl-item ember" data-side="right"><div class="tl-dot"></div><div class="tl-card" style="padding:0;border:0;background:transparent;box-shadow:none">
+        <details class="card ember"><summary><div><span class="tag ember">Credential access · collection</span><h3><a href="https://attack.mitre.org/techniques/T1557/" target="_blank" rel="noopener">T1557</a> — Adversary-in-the-Middle</h3><p class="sum">A forged certificate plus a network position yields transparent TLS interception against any client that still trusts the chain and does not enforce CT.</p></div><span class="chev">Detail</span></summary><div class="body">
+          <h4>What happened here</h4><p>Helme demonstrated the client side: with default settings, curl reported the forged chain as verified, Python completed the handshake, and Node reported the connection authorized. On Windows, CryptoAPI accepted the chain unless revocation checking was enabled, and even then only one of the two chain routes returned as revoked <a class="cite" href="#src-11">11</a>. Mozilla, Google, CERT-In and Unit 42 all describe interception, impersonation and traffic modification as the primary consequence <a class="cite" href="#src-3">3</a><a class="cite" href="#src-4">4</a><a class="cite" href="#src-9">9</a><a class="cite" href="#src-1">1</a>. No source reports a real-world interception; whether one occurred against non-CT clients during the 535-day window is unknowable from public data <a class="cite" href="#src-7">7</a>.</p>
+          <h4>Evidence</h4><p>Helme; Google; Mozilla; CERT-In; Unit 42; Jackson.</p>
+          <h4>Confidence</h4><p>High for feasibility, which was demonstrated. No evidence of execution.</p></div></details>
+      </div></article>
+      <article class="tl-item" data-side="left"><div class="tl-dot"></div><div class="tl-card" style="padding:0;border:0;background:transparent;box-shadow:none">
+        <details class="card"><summary><div><span class="tag">Defense evasion</span><h3><a href="https://attack.mitre.org/techniques/T1553/002/" target="_blank" rel="noopener">T1553.002</a> — Subvert Trust Controls: Code Signing</h3><p class="sum">Two of the eight keys belong to code-signing CAs trusted by Windows. Signed malware would present as software from a real publisher.</p></div><span class="chev">Detail</span></summary><div class="body">
+          <h4>What happened here</h4><p>EM OV CS CA - G3B and G3C are code-signing intermediates trusted by Microsoft <a class="cite" href="#src-2">2</a>. An adversary holding those keys can issue a code-signing certificate and sign malware so that it presents as software from a real publisher to any verifier that does not check revocation <a class="cite" href="#src-11">11</a><a class="cite" href="#src-9">9</a>. Apple's frameworks do not trust these CAs; Windows does <a class="cite" href="#src-8">8</a>. The same cross-signing that extended the TLS keys into AAA Certificate Services also cross-signed both code-signing CAs <a class="cite" href="#src-2">2</a>. No source reports signed malware in the wild.</p>
+          <h4>Evidence</h4><p>Bugzilla 2083449 comments 0 and 2; Apple; CERT-In; Helme.</p>
+          <h4>Confidence</h4><p>Medium: feasibility established from trust relationships; not demonstrated by a test in the sources.</p></div></details>
+      </div></article>
+      <article class="tl-item" data-side="right"><div class="tl-dot"></div><div class="tl-card" style="padding:0;border:0;background:transparent;box-shadow:none">
+        <details class="card"><summary><div><span class="tag">Initial access</span><h3><a href="https://attack.mitre.org/techniques/T1195/002/" target="_blank" rel="noopener">T1195.002</a> — Supply Chain Compromise: Software Supply Chain</h3><p class="sum">The highest-leverage targets are installers, self-updaters and CI runners that fetch code over HTTPS with no independent signature check.</p></div><span class="chev">Detail</span></summary><div class="body">
+          <h4>What happened here</h4><p>These clients trust an on-disk CA bundle, check neither revocation nor CT, and so remained vulnerable until each bundle was rebuilt <a class="cite" href="#src-11">11</a>. The Go team treated its fix as an urgent ecosystem-integrity release and hard-coded the eight keys into the standard library's verifier <a class="cite" href="#src-12">12</a>; the community patch tracker lists well over sixty runtimes, distributions and tools that shipped updates, with several still pending in November <a class="cite" href="#src-7">7</a>. Unit 42's guidance to inspect build pipelines and bundled trust anchors reflects the same concern <a class="cite" href="#src-1">1</a>.</p>
+          <h4>Evidence</h4><p>Helme; The Hacker News; Jackson; Unit 42.</p>
+          <h4>Confidence</h4><p>Medium: mechanism argued by multiple researchers and reflected in vendor response; no compromise observed.</p></div></details>
+      </div></article>
+    </div>
+
+    <details class="card" style="margin-top:26px;border-top-color:var(--line2)">
+      <summary><div><h3>Supporting techniques observed</h3><p class="sum">Four adjacent techniques that were present but did not drive the chain.</p></div><span class="chev">Show</span></summary>
+      <div class="body">
+        <h4><a href="https://attack.mitre.org/techniques/T1110/" target="_blank" rel="noopener">T1110</a> — Brute Force (Credential Access)</h4><p>The recovery method is enumeration of at most 255 candidate scalars. ATT&amp;CK scopes this technique to authentication credentials rather than cryptographic keys, so it is listed for readers who want the method named, not as a strict mapping. Confidence: high for the method; low for taxonomic fit <a class="cite" href="#src-2">2</a><a class="cite" href="#src-11">11</a>.</p>
+        <h4><a href="https://attack.mitre.org/techniques/T1608/003/" target="_blank" rel="noopener">T1608.003</a> — Stage Capabilities: Install Digital Certificate (Resource Development)</h4><p>A forged certificate must be installed on adversary-controlled infrastructure before use; Helme did exactly this with a local OpenSSL server presenting the forged api.stripe.com chain. Confidence: high, demonstrated by a researcher <a class="cite" href="#src-11">11</a>.</p>
+        <h4><a href="https://attack.mitre.org/techniques/T1565/002/" target="_blank" rel="noopener">T1565.002</a> — Data Manipulation: Transmitted Data Manipulation (Impact)</h4><p>Mozilla's advisory names reading or modifying traffic as the consequence; modification is the impact stage that follows interception and the mechanism behind the supply-chain scenario. Confidence: medium, stated by a root program, not demonstrated <a class="cite" href="#src-4">4</a><a class="cite" href="#src-11">11</a>.</p>
+        <h4><a href="https://attack.mitre.org/techniques/T1553/004/" target="_blank" rel="noopener">T1553.004</a> — Subvert Trust Controls: Install Root Certificate — noted as not applicable</h4><p>No root installation was required; the roots were already in every major trust store. This incident is the inverse case: removing roots became the containment action for clients that cannot block individual intermediates <a class="cite" href="#src-3">3</a><a class="cite" href="#src-4">4</a><a class="cite" href="#src-2">2</a>.</p>
+      </div>
+    </details>
+    <p style="margin-top:30px;font-size:16.5px;color:var(--text2);max-width:820px"><strong>What the chain shows structurally.</strong> Four of the six dominant techniques sit in Reconnaissance and Resource Development, before any victim is touched. The adversary's work was done for them at key-generation time; everything after Oct 17 was the ecosystem racing to withdraw a capability that had been publicly available for 535 days. That asymmetry is the subject of the next figure.</p>
+  </div>
+</section>
+
+<!-- ============================ CHART ============================ -->
+<section class="body reveal" id="asymmetry">
+  <div class="container">
+    <p class="eyebrow">The asymmetry</p>
+    <h2 class="title">Minutes to acquire. Months to withdraw.</h2>
+    <p class="lede">Plotted on one axis, discovery and containment are not the same kind of event. One is a lookup; the other is a supply chain.</p>
+    <div class="chart-wrap">
+      <svg viewBox="0 0 900 544" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Log-scale chart comparing the time to derive the compromised CA keys (under a second to under two hours) against the time for each client population to withdraw trust (one hundred minutes for Chrome through to more than a decade for embedded devices with frozen trust bundles).">
+        <defs><linearGradient id="gap" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--brass)" stop-opacity=".18"/><stop offset="1" stop-color="var(--brass)" stop-opacity="0"/></linearGradient></defs>
+        <g font-family="var(--mono)" font-size="10.5" fill="var(--muted)">
+          <g stroke="var(--line)" stroke-dasharray="2 3">
+            <line x1="270" y1="40" x2="270" y2="510"/><line x1="388" y1="40" x2="388" y2="510"/><line x1="507" y1="40" x2="507" y2="510"/><line x1="599" y1="40" x2="599" y2="510"/><line x1="655" y1="40" x2="655" y2="510"/><line x1="697" y1="40" x2="697" y2="510"/><line x1="770" y1="40" x2="770" y2="510"/><line x1="837" y1="40" x2="837" y2="510"/>
+          </g>
+          <text x="270" y="528" text-anchor="middle">1 s</text><text x="388" y="528" text-anchor="middle">1 min</text><text x="507" y="528" text-anchor="middle">1 h</text><text x="599" y="528" text-anchor="middle">1 day</text><text x="655" y="528" text-anchor="middle">1 wk</text><text x="697" y="528" text-anchor="middle">30 d</text><text x="770" y="528" text-anchor="middle">1 yr</text><text x="837" y="528" text-anchor="middle">10 yr</text>
+          <text x="20" y="528" fill="var(--faint)">time · log scale</text>
+        </g>
+        <!-- group A: acquisition -->
+        <text x="20" y="46" font-family="var(--mono)" font-size="11" letter-spacing="2" fill="var(--ember)">ACQUIRE THE CA KEY</text>
+        <g font-family="var(--mono)" font-size="11.5" fill="var(--text)">
+          <text x="20" y="72">Helme, laptop</text><rect x="270" y="63" width="4" height="12" fill="var(--ember)"/><text x="282" y="72" font-size="10.5" fill="var(--muted)">&lt; 1 s</text>
+          <text x="20" y="97">Researcher, CCADB corpus run</text><rect x="270" y="88" width="214" height="12" fill="var(--ember)" opacity=".9"/><text x="492" y="97" font-size="10.5" fill="var(--muted)">27 min</text>
+          <text x="20" y="122">Mozilla, independently</text><rect x="270" y="113" width="252" height="12" fill="var(--ember)" opacity=".9"/><text x="530" y="122" font-size="10.5" fill="var(--muted)">102 min</text>
+        </g>
+        <!-- callout upper-left -->
+        <text x="330" y="52" font-family="var(--mono)" font-size="11" fill="var(--ember)">↙ under a second, on commodity hardware</text>
+        <!-- gap band -->
+        <rect x="270" y="134" width="600" height="30" fill="url(#gap)"/>
+        <text x="570" y="153" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--brass)" letter-spacing="1.5">THE HEAD START THAT WAS NEVER THERE</text>
+        <!-- group B: withdrawal -->
+        <text x="20" y="186" font-family="var(--mono)" font-size="11" letter-spacing="2" fill="var(--green)">WITHDRAW TRUST · from the 18:05 UTC report</text>
+        <g font-family="var(--mono)" font-size="11.5" fill="var(--text)">
+          <text x="20" y="211">Chrome CRLSet</text><rect x="270" y="202" width="252" height="12" fill="var(--brass)"/><text x="530" y="211" font-size="10.5" fill="var(--muted)">100 min</text>
+          <text x="20" y="235">Firefox OneCRL</text><rect x="270" y="226" width="283" height="12" fill="var(--green)"/><text x="561" y="235" font-size="10.5" fill="var(--muted)">4 h 54 m</text>
+          <text x="20" y="259">eMudhra revocation</text><rect x="270" y="250" width="316" height="12" fill="var(--green)"/><text x="594" y="259" font-size="10.5" fill="var(--muted)">≈ 15 h</text>
+          <text x="20" y="283">Apple devices</text><rect x="270" y="274" width="341" height="12" fill="var(--green)"/><text x="619" y="283" font-size="10.5" fill="var(--muted)">Oct 19 · ≈ 1.5 d</text>
+          <text x="20" y="307">Sectigo cross-signs</text><rect x="270" y="298" width="347" height="12" fill="var(--green)"/><text x="625" y="307" font-size="10.5" fill="var(--muted)">≈ 45 h</text>
+          <text x="20" y="331">Android / ChromeOS</text><rect x="270" y="322" width="352" height="12" fill="var(--green)"/><text x="630" y="331" font-size="10.5" fill="var(--muted)">≈ 52 h</text>
+          <text x="20" y="355">Microsoft · Go · Debian · Ubuntu</text><rect x="270" y="346" width="361" height="12" fill="var(--green)"/><text x="639" y="355" font-size="10.5" fill="var(--muted)">Oct 20 · ≈ 3 d</text>
+          <text x="20" y="379">Node.js</text><rect x="270" y="370" width="369" height="12" fill="var(--green)"/><text x="647" y="379" font-size="10.5" fill="var(--muted)">Oct 21 · ≈ 4 d</text>
+          <text x="20" y="403">Chrome root removal</text><rect x="270" y="394" width="396" height="12" fill="var(--green)"/><text x="674" y="403" font-size="10.5" fill="var(--muted)">Oct 27 · ≈ 10 d</text>
+          <text x="20" y="427">macOS command-line tools</text><rect x="270" y="418" width="399" height="12" fill="var(--green)" opacity=".55"/><rect x="669" y="418" width="40" height="12" fill="none" stroke="var(--green)" stroke-dasharray="3 3"/><text x="717" y="427" font-size="10.5" fill="var(--muted)">open at Oct 28 · &gt; 11 d</text>
+          <text x="20" y="451">Pending packages</text><rect x="270" y="442" width="413" height="12" fill="var(--green)" opacity=".55"/><rect x="683" y="442" width="40" height="12" fill="none" stroke="var(--green)" stroke-dasharray="3 3"/><text x="731" y="451" font-size="10.5" fill="var(--muted)">open at Nov 4 · &gt; 18 d</text>
+          <text x="20" y="475">Frozen embedded bundles</text><rect x="270" y="466" width="573" height="12" fill="var(--ember)" opacity=".8"/>
+        </g>
+        <!-- callout lower-right -->
+        <text x="862" y="499" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--ember)">↖ until certificate expiry, reported as July 2039</text>
+      </svg>
+    </div>
+    <p class="chart-note">Every bar is a cited timestamp or date: acquisition from <a class="cite" href="#src-11">11</a> and <a class="cite" href="#src-2">2</a>; withdrawal from <a class="cite" href="#src-3">3</a> <a class="cite" href="#src-4">4</a> <a class="cite" href="#src-2">2</a> <a class="cite" href="#src-8">8</a> <a class="cite" href="#src-7">7</a> <a class="cite" href="#src-12">12</a> <a class="cite" href="#src-11">11</a>. Date-only events are plotted at an estimated hour and marked ≈. The AI-agent reproductions have no published duration and are therefore not plotted; two independent parties report recovery from a single prompt <a class="cite" href="#src-2">2</a><a class="cite" href="#src-11">11</a>. <b>Chrome's bar is the inflection point</b>: it is the one withdrawal that happened on the acquisition timescale, and it did so because key-hash blocking was designed into the browser years earlier.</p>
+  </div>
+</section>
+
+<!-- ============================ PULLQUOTE B ============================ -->
+<section class="pq reveal">
+  <div class="inner"><span class="mark">“</span>
+    <blockquote><p>every client that trusted them, rested on eight bits&nbsp;&nbsp;</p><footer><b>Scott Helme</b> · Eight Bits of Trust, 20 October 2026 <a class="cite" href="#src-11">11</a></footer></blockquote>
+  </div>
+</section>
+
+<!-- ============================ RISK MAPPING ============================ -->
+<section class="body reveal" id="risk">
+  <div class="container">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">Where the weakness lived</p>
+        <h2 class="title">The cryptography was sound. The design around it was not.</h2>
+        <p class="lede">Six OWASP Top 10:2025 categories apply and they chain: an insecure design produced a cryptographic failure, silently; the signals it produced were not followed; and the integrity and supply-chain layers made containment slow.</p>
+      </div>
+      <button class="xall" data-target="#risk">Expand all</button>
+    </div>
+    <p style="font-size:15.5px;color:var(--muted);max-width:820px;margin-bottom:28px">The 2025 edition <a class="cite" href="#src-29">29</a> is the right one for this incident: its new A03 and A10 categories describe two of the mechanisms here more precisely than any earlier edition could. CWE entries <a class="cite" href="#src-31">31</a> give the concrete weakness beneath each category. Ordered by causal position, not list number.</p>
+    <div class="grid2">
+      <details class="card ember"><summary><div><span class="tag ember">Primary driver</span><h3>A06:2025 — Insecure Design</h3><p class="sum">The ceremony was designed so that the error was easy to make and impossible to see.</p></div><span class="chev">Detail</span></summary><div class="body">
+        <h4>Why it applies</h4><p>The category covers risks that originate in how a system was conceived rather than how it was coded. Four design choices combined: keys destined for export were generated and then wrapped, unwrapped and re-imported as a rehearsal inside a production ceremony; the resulting key objects carried identical labels; the step that bound a public key to a CA certificate was manual and label-driven; and the control gate for that step was human maker-checker review with no cryptographic check that the public key being certified corresponded to the key the ceremony had intended to generate <a class="cite" href="#src-2">2</a>. Each is a reasonable choice in isolation. Together they left the correctness of a globally trusted CA resting on a person distinguishing two identically named handles.</p>
+        <h4>Specific weakness in this incident</h4><p>Two same-label key objects per CA from the day of the ceremony; CSRs built from the re-imported objects; signed by the root and sent to Sectigo; no reconciliation that the HSM now held roughly twice the expected number of CA keys <a class="cite" href="#src-2">2</a>. The June 2025 CRL discrepancy — the one moment the design's error surfaced — was resolved by switching to whichever key verified, which is the same design decision repeated <a class="cite" href="#src-10">10</a><a class="cite" href="#src-2">2</a>.</p>
+        <h4>CWE</h4><p>CWE-657 Violation of Secure Design Principles · CWE-654 Reliance on a Single Factor in a Security Decision</p>
+        <h4>Citations</h4><p>Bugzilla 2083449 comments 11, 30, 44, 65; Bugzilla 1970728; CERT-In recommendations <a class="cite" href="#src-9">9</a>.</p></div></details>
+      <details class="card ember"><summary><div><span class="tag ember">Primary driver</span><h3>A04:2025 — Cryptographic Failures</h3><p class="sum">A P-384 key must be a random 384-bit integer. These were integers below 256.</p></div><span class="chev">Detail</span></summary><div class="body">
+        <h4>Why it applies</h4><p>This is the failure as it manifested. A P-384 private key must be a uniformly random integer in a space of roughly 2³⁸⁴; the eight published keys were integers below 256, carrying three to eight bits of effective entropy <a class="cite" href="#src-2">2</a><a class="cite" href="#src-11">11</a>. A certificate built on such a key is structurally perfect — valid curve point, valid encoding, valid signatures — and cryptographically empty. The algorithm was sound; the key material was not <a class="cite" href="#src-9">9</a>.</p>
+        <h4>Specific weakness in this incident</h4><p>Eight CA private scalars recoverable by enumerating at most 255 candidates, certified by eMudhra's root, cross-certified by Sectigo, disclosed to CCADB and included in browser trust lists for 535 days.</p>
+        <h4>CWE</h4><p>CWE-331 Insufficient Entropy · CWE-1240 Use of a Cryptographic Primitive with a Risky Implementation</p>
+        <h4>Citations</h4><p>Bugzilla comments 5, 11, 65; Helme; Google <a class="cite" href="#src-3">3</a>; CERT-In; FIPS 186-5 <a class="cite" href="#src-23">23</a>; SP 800-90 <a class="cite" href="#src-24">24</a>.</p></div></details>
+      <details class="card"><summary><div><span class="tag">Contributing</span><h3>A10:2025 — Mishandling of Exceptional Conditions</h3><p class="sum">Every step that could have stopped this completed without raising an error.</p></div><span class="chev">Detail</span></summary><div class="body">
+        <h4>Why it applies</h4><p>The category covers systems that fail open, swallow errors, or report success when an operation did not do what was intended. The wrap/unwrap/re-import step produced key objects with different data and returned success. The CSR step accepted them. The root signed them. In June 2025 the manual CRL signing workflow produced six invalid signatures and, per eMudhra's own report, flagged no validation failure <a class="cite" href="#src-10">10</a>. In October 2026 CRLs were signed with OCSP responder keys and published <a class="cite" href="#src-2">2</a>. The system's answer to every exceptional condition was to proceed.</p>
+        <h4>Specific weakness in this incident</h4><p>No post-operation verification at the ceremony; no post-signing verification of CRLs until after the June 2025 incident; no enforcement that a CRL-signing key carries the cRLSign usage or matches the issuer's certified key.</p>
+        <h4>CWE</h4><p>CWE-636 Not Failing Securely · CWE-392 Missing Report of Error Condition</p>
+        <h4>Citations</h4><p>Bugzilla 1970728; Bugzilla 2083449 comments 11, 34, 36, 65.</p></div></details>
+      <details class="card"><summary><div><span class="tag">Contributing</span><h3>A08:2025 — Software or Data Integrity Failures</h3><p class="sum">Two integrity assumptions failed, one at each end of the trust chain.</p></div><span class="chev">Detail</span></summary><div class="body">
+        <h4>Why it applies</h4><p>The category covers trust placed in data or components whose integrity has not been verified. At the CA, the integrity of the key object was assumed across the re-import boundary; eMudhra states its team did not understand that the objects contained different data <a class="cite" href="#src-2">2</a>. At the relying-party end, most non-browser TLS clients trust an on-disk CA bundle and verify neither revocation nor CT, so the integrity of every trust decision they make rests on data they never check <a class="cite" href="#src-11">11</a><a class="cite" href="#src-7">7</a>. Chrome's key-hash CRLSet and Mozilla's OneCRL are what an integrity control for this layer looks like; most of the ecosystem has no equivalent <a class="cite" href="#src-3">3</a><a class="cite" href="#src-4">4</a>.</p>
+        <h4>Specific weakness in this incident</h4><p>Certified public keys never verified against intended generated keys; cross-certification CSRs accepted without a weak-key check <a class="cite" href="#src-2">2</a>; curl, Python, Node, Go, Java, git and package managers accepting the forged chain under default settings <a class="cite" href="#src-11">11</a>; macOS command-line tools checking against a file that ignores Apple's own block <a class="cite" href="#src-8">8</a>; third-party-minted certificates carrying no revocation pointers <a class="cite" href="#src-2">2</a>.</p>
+        <h4>CWE</h4><p>CWE-295 Improper Certificate Validation · CWE-299 Improper Check for Certificate Revocation</p>
+        <h4>Citations</h4><p>Bugzilla comments 11, 44, 50; Helme; Jackson; Apple; Google; Mozilla.</p></div></details>
+      <details class="card"><summary><div><span class="tag">Contributing</span><h3>A09:2025 — Security Logging and Alerting Failures</h3><p class="sum">At least four signals appeared before Oct 17, 2026. Each was lost.</p></div><span class="chev">Detail</span></summary><div class="body">
+        <h4>Why it applies</h4><p>The 2025 category emphasizes that alerts not generated, not delivered, or not acted upon are themselves a weakness. Sectigo's June 3, 2025 problem report sat in email quarantine for two days <a class="cite" href="#src-10">10</a>; the invalid-CRL finding was closed as a configuration error without asking why a second key pair existed for each CA <a class="cite" href="#src-2">2</a>; no inventory alert fired when the HSM held more CA keys than the script should have produced <a class="cite" href="#src-2">2</a>; and the Oct 14, 2026 CRL signed with an OCSP key was corrected on the next issuance without a report <a class="cite" href="#src-2">2</a>. At the ecosystem level, Google's internal weak-key pipeline scanned CT-logged certificates, so intermediates that had never issued anything were invisible to it <a class="cite" href="#src-2">2</a>.</p>
+        <h4>Specific weakness in this incident</h4><p>Alert delivery dependent on a single mailbox with no quarantine review; incident resolution that treated the symptom rather than the anomaly; no key-inventory reconciliation; monitoring scoped to issued certificates rather than disclosed CAs.</p>
+        <h4>CWE</h4><p>CWE-778 Insufficient Logging · CWE-693 Protection Mechanism Failure</p>
+        <h4>Citations</h4><p>Bugzilla 1970728; Bugzilla 2083449 comments 5, 30, 36, 44, 47, 50, 65.</p></div></details>
+      <details class="card"><summary><div><span class="tag">Contributing</span><h3>A03:2025 — Software Supply Chain Failures</h3><p class="sum">The trust-store supply chain is static artifacts on independent release cadences with no revocation channel.</p></div><span class="chev">Detail</span></summary><div class="body">
+        <h4>Why it applies</h4><p>The 2025 category expands beyond vulnerable components to the whole process of building, distributing and updating software. Mozilla's root list is vendored into certifi, Node, Go, Java, Debian, RHEL, Electron, Docker base images and dozens of tools, each on its own release cadence and none with a revocation channel <a class="cite" href="#src-7">7</a>. Containing a key compromise therefore required well over sixty independent software releases, container rebuilds, and in Go's case a hard-coded key blocklist in the standard library <a class="cite" href="#src-12">12</a> — and still leaves embedded devices with frozen bundles trusting the keys until the certificates expire <a class="cite" href="#src-11">11</a>. The same supply chain is the adversary's highest-value target <a class="cite" href="#src-1">1</a>.</p>
+        <h4>Specific weakness in this incident</h4><p>CA bundles distributed as static artifacts with no update or revocation mechanism; Electron apps requiring rebuilds; macOS 27.2 reverting user-applied fixes; packages still pending in November <a class="cite" href="#src-7">7</a>.</p>
+        <h4>CWE</h4><p>CWE-1357 Reliance on Insufficiently Trustworthy Component · CWE-1329 Reliance on Component That is Not Updateable</p>
+        <h4>Citations</h4><p>Jackson; Helme; The Hacker News; Unit 42; Google.</p></div></details>
+    </div>
+    <p style="margin-top:28px;font-size:16.5px;color:var(--text2);max-width:820px"><strong>How the categories relate.</strong> A06 is the cause, A04 is the manifestation, A10 explains why the cause produced no error, A09 explains why the signals that did appear were not followed, and A08 and A03 explain why containment is slow and incomplete once a CA key is public.</p>
+  </div>
+</section>
+
+<!-- ============================ EXISTING MITIGATIONS ============================ -->
+<section class="body reveal" id="existed">
+  <div class="container">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">What existed</p>
+        <h2 class="title">Fourteen controls were available. Six would have stopped it on day one.</h2>
+        <p class="lede">None of them is exotic. The ones at the source are design properties of a ceremony; the ones at the edge are capabilities added later, and even the best of those protect only browsers.</p>
+      </div>
+      <button class="xall" data-target="#existed">Expand all</button>
+    </div>
+
+    <div class="tier first">At the CA · prevent or detect at the source</div>
+    <details class="card green"><summary><div><span class="tag green">Would have stopped it · Apr 30, 2025</span><h3>1 · Cryptographic verification of key identity across every import boundary</h3><p class="sum">Sign a test vector with each re-imported object and verify against the key captured at generation; compare key hashes before and after.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>NIST SP 800-57 Part 1 Rev. 5 <a class="cite" href="#src-22">22</a> (assurance of public-key validity and private-key possession); FIPS 186-5 <a class="cite" href="#src-23">23</a> (key-pair validation); CA/B Forum BR §6.1.1.1 <a class="cite" href="#src-18">18</a> (prepare and follow a key generation script). FIPS 140-validated modules perform a pairwise consistency test at generation — but a wrap/unwrap/re-import is not a generation event, so that built-in test never fired on the objects that were certified.</p>
+      <h4>What it would have done</h4><p>Disrupted the chain at its first link. A test signature per re-imported object, or a simple comparison of key hashes before and after the rehearsal, would have shown that the two objects did not match before any CSR was built.</p>
+      <h4>Why it was not effective here</h4><p>Not implemented. The ceremony script treated the rehearsal as a procedural step rather than a cryptographic one; correctness of the subsequent CSR step was delegated to key labels and human review <a class="cite" href="#src-2">2</a>.</p>
+      <h4>What made this hard</h4><p>The certified control — a FIPS 140-2 Level 3 HSM — did exactly what it is certified to do: generate strong keys and report success on every operation. The gap was conceptual. The team understood the HSM as the guarantor of key quality, and the rehearsal was approved precisely because it looked like a logistics exercise rather than a key-generation event <a class="cite" href="#src-5">5</a>. Most PKI operators would have drawn the boundary in the same place.</p></div></details>
+    <details class="card green"><summary><div><span class="tag green">Would have stopped it · Apr–May 2025</span><h3>2 · Weak-key screening before certification, cross-certification and disclosure</h3><p class="sum">The tool existed since 2022. Chrome ran it across its whole trust boundary in an hour once it knew to.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>Google's paranoid_crypto <a class="cite" href="#src-16">16</a>, open-sourced August 2022 specifically to detect weak artifacts produced by black boxes such as proprietary HSMs, including EC public-key checks; the research lineage behind it; community linters badkeys, zlint and pkimetal <a class="cite" href="#src-2">2</a>.</p>
+      <h4>What it would have done</h4><p>Caught the eight keys at any of four moments — at the ceremony, before Sectigo cross-signed on May 14, 2025, at CCADB disclosure that month, or during any root-program monitoring pass in the following seventeen months.</p>
+      <h4>Why it was not effective here</h4><p>Coverage gap. The ecosystem's standard linters performed algorithmic checks for RSA and blocklist checks for ECDSA but had not implemented the baby-step giant-step small-scalar test that paranoid_crypto includes. Google's internal paranoid_crypto pipeline scanned certificates logged to CT, and these intermediates had never issued anything, so they were never in scope. The repository itself was archived in August 2026 <a class="cite" href="#src-2">2</a>.</p>
+      <h4>What made this hard</h4><p>A decade of weak-key research had been operationalized for RSA; the EC analog had been published but not absorbed into the tools everyone actually runs. Nobody owned the question of whether anyone had ever scanned a dormant CA key for this — not because anyone declined to, but because every scanner was scoped to what it was built to watch.</p></div></details>
+    <details class="card green"><summary><div><span class="tag green">Would have stopped it · Apr 30 or Jun 2025</span><h3>3 · Key-inventory reconciliation at ceremony close-out</h3><p class="sum">The plan called for 24 key pairs. The HSM held roughly twice that for two of the three series.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>BR §6.1.1.1 <a class="cite" href="#src-18">18</a> (ceremony report by a qualified auditor); NIST SP 800-57 Part 1 <a class="cite" href="#src-22">22</a> (lifecycle accounting); CERT-In's post-incident recommendation of independent verification of key identifiers and CSR mappings <a class="cite" href="#src-9">9</a>.</p>
+      <h4>What it would have done</h4><p>A count of key objects against the script's expected output would have flagged the anomaly the same day, and again during the June 2025 investigation.</p>
+      <h4>Why it was not effective here</h4><p>Not implemented. A community question on the bug asked directly whether there was any accounting for twice the number of keys; it is unanswered <a class="cite" href="#src-2">2</a>.</p>
+      <h4>What made this hard</h4><p>Organizations inventory certificates, which are visible, far more often than key handles, which live inside partitions and are easy to create and hard to see. A ceremony that creates objects as a side effect of a rehearsal breaks the assumption that object count equals plan.</p></div></details>
+    <details class="card green"><summary><div><span class="tag green">Would have surfaced it · 2025</span><h3>4 · Witnessed ceremony with a published record of every deviation</h3><p class="sum">Required by the Baseline Requirements when a sub-CA will be certified by a root the CA does not operate — which Sectigo's cross-signing triggered.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>BR §6.1.1.1 <a class="cite" href="#src-18">18</a>: the CA shall follow a key generation script, have a qualified auditor witness or record the ceremony, and have the auditor issue a report opining that the script was followed.</p>
+      <h4>What it would have done</h4><p>A witness report documenting the approved wrap/unwrap deviation and the resulting object inventory would have made the two-key condition visible to the auditor in 2025, to the WebTrust engagement, and to the root programs on request.</p>
+      <h4>Why it was not effective here</h4><p>Partially implemented and unverifiable from public record. eMudhra published a ceremony report for its February 2024 root ceremony; the equivalent for April 30, 2025 — script, witness report or video, HSM logs — has been requested repeatedly and not produced as of Nov 2. Whether an auditor observed the deviation is an open question <a class="cite" href="#src-2">2</a>.</p>
+      <h4>What made this hard</h4><p>Auditors attest that a procedure was followed, not that the keys it produced have the right mathematical properties. A deviation approved in advance is, by definition, procedurally compliant. The control was never designed to catch this, and it is not a criticism of the auditor that it did not.</p></div></details>
+    <details class="card green"><summary><div><span class="tag green">Would have caught it · Jun 2025</span><h3>5 · Anomaly-depth root-cause discipline</h3><p class="sum">The June 2025 CRL failure was the weak keys announcing themselves. Asking why a second key verified would have led straight to them.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>CCADB Incident Report guidelines <a class="cite" href="#src-21">21</a>, which require a root-cause analysis with contributing factors and action items that address causes rather than symptoms.</p>
+      <h4>What it would have done</h4><p>The CRLs had been signed with the original keys and failed to verify against the certified ones <a class="cite" href="#src-2">2</a>. Asking why a second key verified where the first did not would have led to the two-object condition and, with one lint, to the weak scalars — sixteen months before public discovery.</p>
+      <h4>Why it was not effective here</h4><p>Partially implemented. A 5-Whys analysis was performed, but it stopped at incorrect CA key configuration. The fix that made the CRLs verify — switching to the other key — closed the ticket and simultaneously normalized the weak keys as the operational ones. The report did not record that two key pairs existed <a class="cite" href="#src-10">10</a><a class="cite" href="#src-2">2</a>.</p>
+      <h4>What made this hard</h4><p>Incident response has a gravity toward the first explanation that makes the symptom disappear, especially under a 24-hour response clock and when no end-entity certificates are at stake. The anomaly did not look like a security event; it looked like a mapping error. This is the hardest control on the list to get right because it depends on curiosity surviving urgency.</p></div></details>
+    <details class="card green"><summary><div><span class="tag green">Would have distinguished the keys</span><h3>6 · Hardware attestation that a certified key was generated in-module and never imported</h3><p class="sum">Turns trusting the operator's description of the ceremony into verifying the device's description of the key.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>Vendor HSM attestation features — at least one major HSM vendor supports manufacturer-signed key-origin attestation, per a community contributor on the bug; Chrome Root Program's stated intent to pursue remote key attestation requirements <a class="cite" href="#src-2">2</a>.</p>
+      <h4>What it would have done</h4><p>Distinguished the originally generated objects from the re-imported ones by their provenance, independent of labels. A root program or cross-signer requiring attestation would have received proof that the certified keys were not the ones the HSM generated.</p>
+      <h4>Why it was not effective here</h4><p>Not required by the Baseline Requirements; not used.</p>
+      <h4>What made this hard</h4><p>Attestation is a design primitive, not a process, which is exactly why it is robust to the kind of approved deviation that defeated the procedural controls here — and also why it has to be chosen at procurement time rather than added later.</p></div></details>
+
+    <div class="tier">At the ecosystem · detect before trust is extended</div>
+    <details class="card"><summary><div><span class="tag brass">Would have caught it · May 2025</span><h3>7 · Cryptographic linting as a gate on cross-certification and CCADB disclosure</h3><p class="sum">The gates existed and linted — for structure, policy and known RSA weaknesses. Eight structurally perfect certificates passed every one.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>Chrome Root Program Policy <a class="cite" href="#src-20">20</a> and Mozilla Root Store Policy <a class="cite" href="#src-19">19</a> (continuous monitoring and linting obligations); CCADB <a class="cite" href="#src-21">21</a>; the now-filed proposal CCADB-Tools#185 to make weak-key screening a prerequisite for disclosure <a class="cite" href="#src-2">2</a>.</p>
+      <h4>What it would have done</h4><p>Stopped the keys at the two moments trust was extended beyond eMudhra: Sectigo's cross-signing on May 14, 2025, and CCADB disclosure the same month.</p>
+      <h4>Why it was not effective here</h4><p>The EC small-scalar check was not among the tests. Chrome's own account of the gap is the fair one: in its words, “a defense-in-depth ecosystem should have caught a flaw of this nature automatically” <a class="cite" href="#src-2">2</a>.</p>
+      <h4>What made this hard</h4><p>The ecosystem had built impressive machinery for catching malformed certificates and had, reasonably, assumed that HSM-generated EC keys were the one thing it did not need to test.</p></div></details>
+    <details class="card"><summary><div><span class="tag brass">Worked, within its scope</span><h3>8 · Certificate Transparency enforcement</h3><p class="sum">Browsers were protected before anyone knew there was a problem. Nothing else was.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>RFC 6962 <a class="cite" href="#src-26">26</a>; Chrome, Apple and Firefox CT enforcement <a class="cite" href="#src-7">7</a>; ATT&amp;CK M1054 <a class="cite" href="#src-30">30</a>.</p>
+      <h4>What it did</h4><p>Because no certificate chaining to the six TLS intermediates was ever logged before Oct 17, 2026, no forged certificate could have been accepted by a CT-enforcing client <a class="cite" href="#src-3">3</a>.</p>
+      <h4>Why it was not more effective</h4><p>Scope. CT enforcement is a browser property; curl, Python, Node, Go, Java, git, package managers and embedded devices do not enforce it. An attacker targeting those clients would simply not log the forged certificate, and the CT-based weak-key pipeline would never see the intermediate either <a class="cite" href="#src-11">11</a><a class="cite" href="#src-2">2</a>.</p>
+      <h4>What made this hard</h4><p>CT is the clearest success in this incident and the clearest illustration of the thesis: a control designed into the browser's trust decision worked without anyone acting; the same control bolted on after the fact to the non-browser world does not exist.</p></div></details>
+
+    <div class="tier">At the relying party · limit blast radius and contain</div>
+    <div class="grid2">
+    <details class="card"><summary><div><span class="tag">Worked for browsers</span><h3>9 · Pushed revocation for intermediates</h3><p class="sum">OneCRL, CRLSet, CRLite, disallowed CTL, Apple's config updates — a block in 100 minutes with no user action. For everything else: sixty releases and counting.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>Mozilla OneCRL (2015) and CRLite; Chrome CRLSets; Microsoft automatic disallowed-CTL updates; Apple's automatic certificate configuration <a class="cite" href="#src-3">3</a><a class="cite" href="#src-4">4</a><a class="cite" href="#src-8">8</a><a class="cite" href="#src-7">7</a>.</p>
+      <h4>What it did</h4><p>Chrome had a key-hash block live 100 minutes after the report; Firefox completed OneCRL distribution in under three hours; blocking by public key meant the cross-signs were covered automatically.</p>
+      <h4>Why it was not more effective</h4><p>No equivalent exists for the non-browser ecosystem. Containment there required more than sixty separate software releases, container rebuilds, hard-coded blocklists and manual edits to macOS's bundle file, and remains incomplete <a class="cite" href="#src-7">7</a><a class="cite" href="#src-12">12</a>.</p>
+      <h4>What made this hard</h4><p>Mozilla shipped pushed revocation over a decade ago; for the rest of the ecosystem there has been almost no investment in the problem. That is a collective design debt, not any single organization's omission.</p></div></details>
+    <details class="card"><summary><div><span class="tag">Undermined four ways</span><h3>10 · Strict revocation checking at egress, proxies and gateways</h3><p class="sum">Soft-fail defaults, end-entity-only checks, six-month CRL caches, and endpoints that refused common user-agents.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>BR §4.9 and §4.9.7 <a class="cite" href="#src-18">18</a>; RFC 5280 <a class="cite" href="#src-25">25</a>; Unit 42 interim guidance <a class="cite" href="#src-1">1</a>.</p>
+      <h4>What it would have done</h4><p>After the Oct 18 revocation, any client that checked the full chain and refused to proceed on failure would have rejected forged certificates presenting the revoked intermediates.</p>
+      <h4>Why it was not effective here</h4><p>Clients soft-fail by default. Many check only the end-entity certificate, and forged leaves carry no revocation pointer. eMudhra's root CRLs carried next-update dates roughly six months out, so a compliant client could cache the pre-revocation CRL for months. And for a period, eMudhra's CRL endpoints returned 403 to common command-line user-agents <a class="cite" href="#src-2">2</a><a class="cite" href="#src-11">11</a>.</p>
+      <h4>What made this hard</h4><p>Revocation checking is unreliable by design because availability was prioritized over security when the protocols were built. Turning it on is not a configuration change; it is a decision to accept outages. Few organizations have made that decision consciously, which is why so few have made it at all.</p></div></details>
+    <details class="card"><summary><div><span class="tag">Would have made it irrelevant</span><h3>11 · Curated, minimal trust stores for machine-to-machine clients</h3><p class="sum">A webhook client that trusts twelve CAs instead of the whole public list was never exposed.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>RFC 5280 §6 <a class="cite" href="#src-25">25</a> (trust anchors are chosen by the relying party); Mozilla's trust-store operator guidance <a class="cite" href="#src-15">15</a>; Go's decision to enforce a key blocklist in its own verifier, demonstrating per-application trust policy is practical <a class="cite" href="#src-12">12</a>.</p>
+      <h4>What it would have done</h4><p>Internal service-to-service traffic, CI runners and SDK calls that trust only the handful of CAs they need would never have trusted an eMudhra chain in the first place.</p>
+      <h4>Why it was not effective here</h4><p>Most machine clients inherit the full public root list from a language runtime or OS bundle because that is the default and curating it is work with no visible payoff until a day like Oct 17 <a class="cite" href="#src-11">11</a><a class="cite" href="#src-7">7</a>.</p>
+      <h4>What made this hard</h4><p>The public trust store is designed for a browser that must reach any site on the internet. A payment webhook client does not need that property, but it gets it for free and nobody takes it away.</p></div></details>
+    <details class="card"><summary><div><span class="tag">Would have neutralized the supply-chain path</span><h3>12 · Artifact signature verification independent of transport</h3><p class="sum">A forged TLS certificate cannot forge a package signature.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>ATT&amp;CK M1045 Code Signing <a class="cite" href="#src-30">30</a>; signed packages and checksums in modern ecosystems.</p>
+      <h4>What it would have done</h4><p>Installers and updaters that verify artifact signatures would have been unaffected even over an intercepted connection.</p>
+      <h4>Why it was not effective here</h4><p>Widely absent. Curl-pipe-shell installers, self-updaters and many CI fetch paths use TLS as their only integrity control <a class="cite" href="#src-11">11</a><a class="cite" href="#src-12">12</a>.</p>
+      <h4>What made this hard</h4><p>TLS was never intended to be a code-integrity mechanism; it became one by convenience. Treating transport authentication as artifact authentication is a design shortcut almost everyone has taken.</p></div></details>
+    <details class="card"><summary><div><span class="tag">Would have shrunk the migration</span><h3>13 · CA agility — ACME Renewal Information and short-lived certificates</h3><p class="sum">~30,800 certificates had to move before Oct 27. Roughly 97% were ACME-issued, and ARI was not in use.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>RFC 9773 <a class="cite" href="#src-28">28</a>; Mozilla Root Store Policy §6.1.3 <a class="cite" href="#src-19">19</a> (proactive subscriber communication and mass-revocation planning); the industry's scheduled move to 47-day lifetimes <a class="cite" href="#src-1">1</a>.</p>
+      <h4>What it would have done</h4><p>With ARI, the CA could have signalled early renewal and clients would have rotated automatically onto a new chain.</p>
+      <h4>Why it was not effective here</h4><p>ARI was not in use by eMudhra or its subscribers; the affected ecosystem's certificates ran about 200 days; eMudhra asked the root programs for an extended transition window, which Mozilla policy does not permit <a class="cite" href="#src-2">2</a><a class="cite" href="#src-5">5</a>.</p>
+      <h4>What made this hard</h4><p>Issuance pipelines are built for renewal, not replacement. The difference only shows when the CA itself is the thing that must change.</p></div></details>
+    <details class="card"><summary><div><span class="tag">Detects only what the forger logs</span><h3>14 · CT monitoring for one's own domains</h3><p class="sum">Valuable against ordinary misissuance; weak against a key compromise, because an attacker targeting non-CT clients has no reason to log anything.</p></div><span class="chev">Detail</span></summary><div class="body">
+      <h4>Grounding</h4><p>RFC 6962 <a class="cite" href="#src-26">26</a>; public monitors; Unit 42 and CERT-In guidance <a class="cite" href="#src-1">1</a><a class="cite" href="#src-9">9</a>.</p>
+      <h4>What it would have done</h4><p>Detected the proof-of-concept forgeries that third parties logged for google.com and emudhra.salesforce.com <a class="cite" href="#src-2">2</a>.</p>
+      <h4>Why it was not effective here</h4><p>Detection depends on the attacker logging the certificate.</p>
+      <h4>What made this hard</h4><p>It belongs in the program; it should not be mistaken for coverage of this scenario.</p></div></details>
+    </div>
+    <p style="margin-top:28px;font-size:16.5px;color:var(--text2);max-width:820px"><strong>The pattern across all fourteen.</strong> The six controls at the CA are design properties of a ceremony and of an operator's relationship with its HSM; four would have stopped the incident on the day it began, and two more within six weeks. The two ecosystem controls did their jobs within their scope. The six relying-party controls are capabilities added after the fact, and even the ones that worked brilliantly for browsers do not exist for the clients where the real exposure lives.</p>
+  </div>
+</section>
+
+<!-- ============================ PULLQUOTE C ============================ -->
+<section class="pq editorial reveal">
+  <div class="inner"><span class="mark">“</span>
+    <blockquote><p>The only defense that runs before the adversary is the one built in.&nbsp;&nbsp;</p><footer><b>The thesis of this report</b> · in thirteen words</footer></blockquote>
+  </div>
+</section>
+
+<!-- ============================ RECOMMENDATIONS ============================ -->
+<section class="body reveal" id="now">
+  <div class="container">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">What to do now</p>
+        <h2 class="title">Verify at the boundary. Curate the trust. Rehearse the distrust.</h2>
+        <p class="lede">Twenty-five actions across four horizons, for operators of trust infrastructure and for everyone who relies on it. The first 48 hours are a scan; the next year is a redesign.</p>
+      </div>
+      <button class="xall" data-target="#now">Expand all</button>
+    </div>
+    <p style="font-size:15.5px;color:var(--muted);max-width:820px;margin-bottom:28px"><strong>Operators</strong> run trust infrastructure — not only public CAs, but any enterprise with an internal PKI, a code-signing service, HSM-backed signing keys or cloud KMS asymmetric keys. <strong>Relying parties</strong> are everyone whose software terminates TLS or verifies a signature. Each action is tagged.</p>
+
+    <div class="horizons">
+      <div class="hz h00">
+        <div class="hz-head"><span class="hz-id">Horizon 00 · Immediate</span><span class="hz-win">0–48h</span></div>
+        <p class="hz-name">Find your exposure. Block by key. Scan your own keys.</p>
+        <details class="card"><summary><div><p class="who">Relying parties</p><h3>R1 · Inventory exposure across every trust surface</h3><p class="sum">OS and runtime bundles, container images, Electron apps, proxies, gateways, VPNs, embedded devices. Test each population; do not assume.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Enumerate OS bundles, language-runtime bundles (certifi, Node, Go, Java cacerts), container base images, Electron apps, TLS-intercepting proxies, API gateways, VPN concentrators and embedded devices. Use the published test hosts and offline chain set so each client population is tested rather than assumed <a class="cite" href="#src-7">7</a>. Pay particular attention to macOS fleets, where Apple's block does not reach command-line tools <a class="cite" href="#src-8">8</a>.</p><h4>Addresses</h4><p>OWASP A03, A08 · ATT&amp;CK T1557, T1195.002 · Grounding: <a class="cite" href="#src-7">7</a> <a class="cite" href="#src-8">8</a> <a class="cite" href="#src-1">1</a> <a class="cite" href="#src-9">9</a></p><h4>Effort</h4><p>Hours with scripting; the inventory itself is the hard part and most organizations will discover trust surfaces they did not know they had.</p></div></details>
+        <details class="card"><summary><div><p class="who">Relying parties</p><h3>R2 · Block by public key where you can; remove the root where you cannot</h3><p class="sum">Key-hash blocks cover the cross-signs automatically. Root removal breaks things; accept it.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Where a control supports key-level blocking (Windows disallowed store, proxies, Go/Node pinning), block all sixteen certificates by key. Where a client can only act on roots, remove emSign ECC Root CA - G3 and evaluate removing AAA Certificate Services for clients that still carry it, accepting the breakage that follows <a class="cite" href="#src-15">15</a>. Redeploy patched bundles to containers and runtimes <a class="cite" href="#src-12">12</a>.</p><h4>Addresses</h4><p>OWASP A08, A03 · ATT&amp;CK T1557, T1553.002 · Grounding: <a class="cite" href="#src-15">15</a> <a class="cite" href="#src-7">7</a> <a class="cite" href="#src-8">8</a> <a class="cite" href="#src-12">12</a></p><h4>Effort</h4><p>Low for managed endpoints; moderate for container estates; high for anything with a frozen bundle.</p></div></details>
+        <details class="card"><summary><div><p class="who">Both</p><h3>R3 · Run a weak-key scan against every CA and signing key you trust or have issued</h3><p class="sum">Chrome did this across its whole trust boundary in an hour. An AI agent can do it for yours in an afternoon.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Public roots, internal PKI intermediates, code-signing certificates, SSH CA keys, cloud KMS and HSM public keys. Use paranoid_crypto <a class="cite" href="#src-16">16</a> or badkeys with the EC small-scalar check now being added <a class="cite" href="#src-2">2</a>. This is the single highest-value action in the first 48 hours because it converts the incident's discovery method into your own detection.</p><h4>Addresses</h4><p>OWASP A04 · ATT&amp;CK T1588.004, T1596.003 · Grounding: <a class="cite" href="#src-16">16</a> <a class="cite" href="#src-2">2</a> <a class="cite" href="#src-11">11</a></p><h4>Effort</h4><p>Low. Requires only public key material and a Python environment.</p></div></details>
+        <details class="card"><summary><div><p class="who">Relying parties</p><h3>R4 · Hunt the window</h3><p class="sum">TLS telemetry, egress logs and signature-verification logs since May 2025. Absence is not proof; presence would be decisive.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Query TLS telemetry, proxy and egress logs for any certificate chaining to the eight intermediates since May 2025; query Authenticode and signature-verification logs for publisher chains under emSign CS; review authentication logs for sensitive services around any anomalous TLS error spikes <a class="cite" href="#src-1">1</a><a class="cite" href="#src-9">9</a>.</p><h4>Addresses</h4><p>OWASP A09 · ATT&amp;CK T1557, T1553.002, T1565.002</p><h4>Effort</h4><p>Depends entirely on whether TLS metadata is retained; organizations without it will learn that here and fix it in R10.</p></div></details>
+        <details class="card"><summary><div><p class="who">Operators</p><h3>R5 · Freeze any in-flight key ceremony that includes an export, wrap or import step until verification is added</h3><p class="sum">A decision, not a project. The verification itself is a few lines of OpenSSL.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Before the next ceremony runs, require that the script compare each certified public key against the key captured at generation and reconcile object counts against plan. Verify every existing CA and signing key against its generation record now <a class="cite" href="#src-2">2</a>.</p><h4>Addresses</h4><p>OWASP A06, A10 · ATT&amp;CK T1588.004 · Grounding: BR §6.1.1.1 <a class="cite" href="#src-18">18</a>; SP 800-57 <a class="cite" href="#src-22">22</a>; FIPS 186-5 <a class="cite" href="#src-23">23</a></p></div></details>
+        <details class="card"><summary><div><p class="who">Both</p><h3>R6 · Confirm revocation endpoints are reachable by every user-agent and bound your CRL cache age</h3><p class="sum">Test from curl, Python, Go and a browser. Cache well below issuer next-update windows.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Operators: test revocation endpoints from several user-agents; remove any user-agent filtering <a class="cite" href="#src-2">2</a>. Relying parties: set CRL cache lifetimes well below issuer next-update windows so a revocation is seen in hours, not months.</p><h4>Addresses</h4><p>OWASP A08 · ATT&amp;CK T1557 · Grounding: BR §4.9.7, §4.10.2 <a class="cite" href="#src-18">18</a>; RFC 5280 <a class="cite" href="#src-25">25</a></p><h4>Effort</h4><p>Low.</p></div></details>
+      </div>
+
+      <div class="hz h01">
+        <div class="hz-head"><span class="hz-id">Horizon 01 · Short-term</span><span class="hz-win">1–4w</span></div>
+        <p class="hz-name">Make the scan a gate. Make the ceremony verify. Make the revocation decision.</p>
+        <details class="card"><summary><div><p class="who">Both</p><h3>R7 · Make weak-key screening a standing gate, not a one-time scan</h3><p class="sum">Issuance, CLM onboarding, ceremony close-out, and CI for any repo that commits public keys. On a schedule, too.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Integrate the check into internal PKI issuance, certificate lifecycle management onboarding, HSM key-ceremony close-out, and CI for any repository that commits public keys or certificates. Run it on a schedule against the organization's full trust store as well, because detection capability improves over time and dormant keys never age out <a class="cite" href="#src-16">16</a><a class="cite" href="#src-2">2</a>.</p><h4>Addresses</h4><p>OWASP A04, A08 · ATT&amp;CK T1588.004</p><h4>Effort</h4><p>One to two sprints for pipeline integration; the open-source tooling is ready.</p></div></details>
+        <details class="card"><summary><div><p class="who">Operators</p><h3>R8 · Add post-operation cryptographic verification to every ceremony script and signing runbook</h3><p class="sum">Sign a test vector per key; compare key hashes across every boundary; count objects against plan; identify keys by hash, never by label.</p></div><span class="chev">Detail</span></summary><div class="body"><p>For each key: sign a test vector and verify against the intended public key; compare key hashes across every wrap, unwrap, export, import or backup-restore boundary; count objects against plan; identify keys by hash in every subsequent step. Record all of it in the ceremony report <a class="cite" href="#src-9">9</a>.</p><h4>Addresses</h4><p>OWASP A06, A10 · ATT&amp;CK T1588.004 · Grounding: BR §6.1.1.1 <a class="cite" href="#src-18">18</a>; SP 800-57 <a class="cite" href="#src-22">22</a>; FIPS 186-5 <a class="cite" href="#src-23">23</a></p><h4>Effort</h4><p>Low effort, high discipline. The hard part is cultural: treating a rehearsal as a cryptographic event.</p></div></details>
+        <details class="card"><summary><div><p class="who">Relying parties</p><h3>R9 · Decide the revocation posture explicitly, per client population</h3><p class="sum">Hard-fail or soft-fail on purpose; full-chain checks, because forged leaves carry no revocation pointers.</p></div><span class="chev">Detail</span></summary><div class="body"><p>For egress proxies, API gateways and service-to-service clients, choose hard-fail or soft-fail on purpose, document the availability trade-off, and configure full-chain checking rather than end-entity-only <a class="cite" href="#src-2">2</a><a class="cite" href="#src-11">11</a>. Monitor revocation-endpoint availability for every CA you depend on.</p><h4>Addresses</h4><p>OWASP A08 · ATT&amp;CK T1557 · Grounding: RFC 5280 <a class="cite" href="#src-25">25</a>; BR §4.9 <a class="cite" href="#src-18">18</a></p><h4>Effort</h4><p>The engineering is modest; the decision requires a CISO to accept that security may cause an outage.</p></div></details>
+        <details class="card"><summary><div><p class="who">Relying parties</p><h3>R10 · Ship detection content for the signals this incident produced</h3><p class="sum">CRL signature failures from any trusted CA. Chains to newly distrusted roots. Code signatures from unexpected CS CAs. Certificates for your domains from unexpected issuers.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Alert on CRL signature-verification failures from any trusted CA — this was the June 2025 signal <a class="cite" href="#src-10">10</a>. Alert on TLS chains terminating at newly distrusted roots. Alert on code signatures chaining to unexpected CS CAs. Alert on any certificate for an organization domain from an issuer not on the expected list, fed by CT monitoring <a class="cite" href="#src-26">26</a>. Retain TLS chain metadata long enough to hunt backward.</p><h4>Addresses</h4><p>OWASP A09 · ATT&amp;CK T1557, T1553.002, T1587.003 · Grounding: <a class="cite" href="#src-10">10</a> <a class="cite" href="#src-2">2</a> <a class="cite" href="#src-1">1</a> <a class="cite" href="#src-9">9</a></p><h4>Effort</h4><p>One sprint if TLS telemetry exists; otherwise, start by creating it.</p></div></details>
+        <details class="card"><summary><div><p class="who">Operators</p><h3>R11 · Enforce key-usage constraints and signed-artifact validation for every artifact type</h3><p class="sum">A CRL must be signed by a key with cRLSign that matches the issuer. Validate certificates, CRLs and OCSP responses — not only the last incident's artifact type.</p></div><span class="chev">Detail</span></summary><div class="body"><p>An OCSP responder key must never sign a CRL <a class="cite" href="#src-2">2</a>. Automated post-signing validation should cover certificates, CRLs and OCSP responses, not only the artifact type involved in the last incident <a class="cite" href="#src-10">10</a>.</p><h4>Addresses</h4><p>OWASP A10, A08 · Grounding: RFC 5280 §4.2.1.3 <a class="cite" href="#src-25">25</a></p><h4>Effort</h4><p>Depends on CA software; may require vendor engagement.</p></div></details>
+        <details class="card"><summary><div><p class="who">Relying parties</p><h3>R12 · Patch the long tail you own and catalogue the long tail you do not</h3><p class="sum">Electron rebuilds, JVM keystores, embedded images; and an accepted-risk register with expiry dates for what cannot be updated.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Rebuild Electron applications against patched runtimes; refresh JVM keystores, which on Debian-family systems do not follow the system bundle; redeploy embedded and appliance images where possible; and for devices that cannot be updated, document them as accepted risk with an expiry date <a class="cite" href="#src-7">7</a><a class="cite" href="#src-12">12</a>.</p><h4>Addresses</h4><p>OWASP A03 · ATT&amp;CK T1195.002, T1557</p><h4>Effort</h4><p>Moderate to high; this is where most organizations will still be in December.</p></div></details>
+      </div>
+
+      <div class="hz h02">
+        <div class="hz-head"><span class="hz-id">Horizon 02 · Medium-term</span><span class="hz-win">1–3m</span></div>
+        <p class="hz-name">Agility, curation, inventory, attestation — and point the agent at yourself.</p>
+        <details class="card"><summary><div><p class="who">Relying parties</p><h3>R13 · Build CA agility into every issuance pipeline</h3><p class="sum">ACME with Renewal Information; a pre-qualified second CA; a rehearsed switch; shorter lifetimes. CAA as hygiene, understood for what it does.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Adopt ACME with Renewal Information so a CA can trigger early rotation <a class="cite" href="#src-28">28</a>; pre-qualify a second CA for every certificate class; test a full CA switch in staging; shorten lifetimes ahead of the industry's 47-day schedule <a class="cite" href="#src-1">1</a>. Set CAA records to the intended issuers <a class="cite" href="#src-27">27</a> — understanding that CAA prevents ordinary misissuance, not forgery with a derived key, so it belongs here as hygiene rather than as a defense against this scenario.</p><h4>Addresses</h4><p>OWASP A03, A06 · limits the window for T1587.003 · Grounding: RFC 9773; RFC 8659; Mozilla Root Store Policy §6.1.3 <a class="cite" href="#src-19">19</a>; <a class="cite" href="#src-2">2</a></p><h4>Effort</h4><p>A quarter for most organizations; the affected ecosystem's migration shows the cost of not having done it <a class="cite" href="#src-5">5</a>.</p></div></details>
+        <details class="card"><summary><div><p class="who">Relying parties</p><h3>R14 · Curate minimal trust stores for machine-to-machine clients</h3><p class="sum">Measure which roots your services actually need; build an allowlist bundle; treat "inherits the default" as a choice requiring justification.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Measure from TLS telemetry which roots service-to-service, SDK, webhook and CI clients actually need; build an allowlist bundle; distribute it through configuration management. A client that trusts a dozen CAs instead of the full public list was never exposed to this incident <a class="cite" href="#src-11">11</a>.</p><h4>Addresses</h4><p>OWASP A08, A03, A06 · ATT&amp;CK T1557, T1195.002 · Grounding: RFC 5280 §6 <a class="cite" href="#src-25">25</a>; Go's per-verifier blocklist as precedent <a class="cite" href="#src-12">12</a></p><h4>Effort</h4><p>Moderate; the telemetry work in R10 is the prerequisite.</p></div></details>
+        <details class="card"><summary><div><p class="who">Relying parties</p><h3>R15 · Verify artifact signatures independently of transport</h3><p class="sum">Signed packages, out-of-band checksums, transparency-backed signing; no curl-pipe-shell in build or deploy.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Require signed packages, checksums delivered out of band, or transparency-log-backed signing for every internal distribution path; prohibit curl-pipe-shell in build and deployment; verify vendor installers' signatures rather than trusting the download URL <a class="cite" href="#src-11">11</a>.</p><h4>Addresses</h4><p>OWASP A03, A08 · ATT&amp;CK T1195.002, T1565.002 · Grounding: M1045 <a class="cite" href="#src-30">30</a></p><h4>Effort</h4><p>Moderate; most of the tooling is mature.</p></div></details>
+        <details class="card"><summary><div><p class="who">Both</p><h3>R16 · Stand up a cryptographic inventory</h3><p class="sum">Every asymmetric key: where generated, on what, ever exported or imported, attestation, owner, rotation, what trusts it. Reconcile against HSM and KMS listings on a schedule.</p></div><span class="chev">Detail</span></summary><div class="body"><p>The incident's two-objects-per-CA condition is exactly the kind of discrepancy an inventory reconciliation exists to surface <a class="cite" href="#src-2">2</a>.</p><h4>Addresses</h4><p>OWASP A06, A09 · ATT&amp;CK T1588.004 · Grounding: NIST SP 800-57 Part 1 <a class="cite" href="#src-22">22</a></p><h4>Effort</h4><p>A quarter to establish; scope to CA, code-signing and KMS keys first.</p></div></details>
+        <details class="card"><summary><div><p class="who">Operators</p><h3>R17 · Require key-origin attestation for CA and signing keys</h3><p class="sum">Make "generated in-module and never imported" a verifiable property, retained with the ceremony record and required for any sub-CA you sign.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Use HSM and cloud KMS attestation features; retain the attestations with the ceremony record; make them a condition of certification for any subordinate CA you sign and of cross-certification you accept <a class="cite" href="#src-2">2</a>.</p><h4>Addresses</h4><p>OWASP A06 · ATT&amp;CK T1588.004 · Grounding: Chrome's stated direction on remote key attestation <a class="cite" href="#src-2">2</a></p><h4>Effort</h4><p>Vendor-dependent; some HSM platforms support this today, others do not — which is itself a procurement criterion.</p></div></details>
+        <details class="card"><summary><div><p class="who">Operators</p><h3>R18 · Redesign ceremony governance so that verification is structural</h3><p class="sum">No rehearsals inside production ceremonies; deviations require a verification plan; two-person control on key selection by hash; the report lists every object created, including by side effect.</p></div><span class="chev">Detail</span></summary><div class="body"><p>The witness or recording covers deviations explicitly <a class="cite" href="#src-18">18</a><a class="cite" href="#src-21">21</a>.</p><h4>Addresses</h4><p>OWASP A06 · ATT&amp;CK T1588.004</p><h4>Effort</h4><p>Low cost; requires policy ownership at the level that approves deviations.</p></div></details>
+        <details class="card"><summary><div><p class="who">Both</p><h3>R19 · Institutionalize adversarial self-assessment with AI agents</h3><p class="sum">The prompt that recovered eMudhra's keys was one sentence. Run it against yourself quarterly and whenever a new key is certified.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Give an agent your public CA certificates, key hashes, trust-store contents and revocation endpoints, and ask it to find weaknesses <a class="cite" href="#src-2">2</a><a class="cite" href="#src-11">11</a>. eMudhra itself used AI-facilitated analysis to verify its other issuers and has committed to AI-based tooling for ceremony review <a class="cite" href="#src-2">2</a><a class="cite" href="#src-5">5</a>; the lesson is to do that before the incident rather than after.</p><h4>Addresses</h4><p>OWASP A04, A09 · ATT&amp;CK T1596.003, T1588.004</p><h4>Effort</h4><p>Low. The capability cost has collapsed; the organizational step is deciding to point it at yourself first.</p></div></details>
+      </div>
+
+      <div class="hz h03">
+        <div class="hz-head"><span class="hz-id">Horizon 03 · Long-term</span><span class="hz-win">3–12m</span></div>
+        <p class="hz-name">Pushed revocation for everything. Trust decisions as design reviews. A drill the board can see.</p>
+        <details class="card"><summary><div><p class="who">Relying parties</p><h3>R20 · Build pushed revocation for the non-browser estate</h3><p class="sum">An internal trust-bundle service every runtime consumes at startup and on a short refresh, able to distrust an intermediate by key within hours. The OneCRL model, inside the enterprise.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Track and contribute to emerging ecosystem efforts for universal pushed revocation <a class="cite" href="#src-7">7</a>.</p><h4>Addresses</h4><p>OWASP A08, A03 · ATT&amp;CK T1557 · Grounding: OneCRL and CRLSet as reference designs <a class="cite" href="#src-4">4</a><a class="cite" href="#src-3">3</a></p><h4>Effort</h4><p>Multi-quarter platform work; the organizations that had something like this in October were done in a day.</p></div></details>
+        <details class="card"><summary><div><p class="who">Both</p><h3>R21 · Make trust decisions a design-review gate</h3><p class="sum">Five written answers for every new system that terminates TLS, verifies a signature or holds a key: which anchors and why; revocation posture; CT; agility; key origin.</p></div><span class="chev">Detail</span></summary><div class="body"><p>"We use the default bundle" is an answer that requires sign-off. This is the architectural embodiment of the report's thesis <a class="cite" href="#src-29">29</a><a class="cite" href="#src-25">25</a>.</p><h4>Addresses</h4><p>OWASP A06 · ATT&amp;CK T1557, T1195.002, T1588.004 by prevention</p><h4>Effort</h4><p>Governance change; cheap to institute, slow to become reflexive.</p></div></details>
+        <details class="card"><summary><div><p class="who">Operators</p><h3>R22 · Redesign decision rights for deviations and incident closure</h3><p class="sum">Deviations need a verification plan to be approved. An incident cannot close while an anomaly is unexplained, even if the symptom is resolved.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Require that incident reports to external parties state every fact the investigation found, including ones that complicate the story <a class="cite" href="#src-21">21</a><a class="cite" href="#src-10">10</a><a class="cite" href="#src-2">2</a>.</p><h4>Addresses</h4><p>OWASP A06, A09</p><h4>Effort</h4><p>Policy work with executive sponsorship; the test is whether it survives the next urgent closure.</p></div></details>
+        <details class="card"><summary><div><p class="who">Both</p><h3>R23 · Give the board a trust-infrastructure metric and a drill</h3><p class="sum">Share of machine clients on curated stores; share of certificates with CA agility; time-to-distrust measured by an annual drill that removes a root from staging and watches what breaks.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Mozilla requires CAs to maintain mass-revocation plans <a class="cite" href="#src-19">19</a>; relying parties need the mirror image. The affected ecosystem's unrehearsed migration shows the cost <a class="cite" href="#src-5">5</a>.</p><h4>Addresses</h4><p>OWASP A06, A09 · resilience measure</p><h4>Effort</h4><p>Moderate; the drill is the valuable part and the first one will be humbling.</p></div></details>
+        <details class="card"><summary><div><p class="who">Relying parties</p><h3>R24 · Reduce dependence on any single code-signing authority</h3><p class="sum">Publisher allowlists with revocation and timestamp checks enforced; reproducible or attested builds for first-party software.</p></div><span class="chev">Detail</span></summary><div class="body"><p>A forged code-signing certificate from any one CA becomes insufficient on its own <a class="cite" href="#src-9">9</a><a class="cite" href="#src-11">11</a>.</p><h4>Addresses</h4><p>OWASP A08 · ATT&amp;CK T1553.002 · Grounding: M1045 <a class="cite" href="#src-30">30</a></p><h4>Effort</h4><p>Multi-quarter for Windows estates; the two compromised code-signing CAs make this concrete rather than hypothetical.</p></div></details>
+        <details class="card"><summary><div><p class="who">Both · organizations with scale</p><h3>R25 · Invest upstream in the ecosystem's detection layer</h3><p class="sum">Support disclosure-time weak-key gating; contribute EC checks to community linters; help keep the reference tooling maintained now that it is archived.</p></div><span class="chev">Detail</span></summary><div class="body"><p>Every organization that relies on the WebPKI is a beneficiary of this work, and almost none of them fund it <a class="cite" href="#src-2">2</a><a class="cite" href="#src-16">16</a>.</p><h4>Addresses</h4><p>OWASP A04, A09 · ATT&amp;CK T1588.004 at ecosystem scale</p><h4>Effort</h4><p>Low cost for large organizations; the leverage is enormous.</p></div></details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ FINAL CALLOUT ============================ -->
+<section class="final reveal">
+  <div class="box"><div>
+    <p class="eyebrow">The takeaway</p>
+    <h2>The head start</h2>
+    <p>Capable AI has collapsed the distance between a latent weakness and a found one: anything derivable from a public artifact should now be assumed derived. Every capability added afterward — scanning, revocation, detection, response — begins its race after the adversary has started, and this incident shows that race being lost by the entire non-browser internet. <em>The only defense that runs before the adversary is the one built in.</em> That is the head start, and the designs that earn it are small and specific: how a key is verified across a boundary, which anchors a client trusts, whether an anomaly can be closed before it is explained.</p>
+  </div></div>
+</section>
+
+<!-- ============================ SOURCES ============================ -->
+<section class="sources" id="sources">
+  <div class="container">
+    <p class="eyebrow">Show the work</p>
+    <h2 class="title">Every claim above traces to one of these.</h2>
+    <p class="lede">This is the source material the report was built from. Any statement in the sections above can be checked here. Bracketed numbers throughout the report link to these entries.</p>
+
+    <p class="srcgrp">Primary disclosures</p>
+    <ol class="src">
+      <li id="src-2"><span class="num">[2]</span><span><span class="pub">Mozilla CA Program — Bugzilla 2083449</span><span class="d">Oct 18 – Nov 2, 2026</span><br>eMudhra: Private key compromise of Intermediate Certificates. The incident record: researcher timeline, Mozilla's independent recovery, eMudhra's responses, Chrome's questions and detection-gap account, community analysis. <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=2083449" target="_blank" rel="noopener">bugzilla.mozilla.org/show_bug.cgi?id=2083449</a></span></li>
+      <li id="src-3"><span class="num">[3]</span><span><span class="pub">Google — Chrome and Android Security Teams</span><span class="d">Oct 20, 2026</span><br>Protecting Chrome and Android Users from Compromised eMudhra Intermediate CA Certificates. <a href="https://blog.google/security/protecting-chrome-and-android-users-from-compromised-emudhra-intermediate-ca-certificates/" target="_blank" rel="noopener">blog.google/security/…</a></span></li>
+      <li id="src-4"><span class="num">[4]</span><span><span class="pub">Mozilla Security Blog — Firefox Security Team</span><span class="d">Oct 20, 2026 (updated Oct 21)</span><br>Protecting Firefox users following the compromise of eMudhra intermediate certificates. <a href="https://blog.mozilla.org/security/2026/10/20/protecting-firefox-users-following-the-compromise-of-emudhra-intermediate-certificates/" target="_blank" rel="noopener">blog.mozilla.org/security/2026/10/20/…</a></span></li>
+      <li id="src-5"><span class="num">[5]</span><span><span class="pub">eMudhra Limited — Statement on Recent Certificate Security Incident</span><span class="d">Oct 20 – 30, 2026 (Updates 1–7)</span><br>The affected organization's status page, including its account of the ceremony, the leadership note, and the customer-transition updates. <a href="https://emudhra.com/en/post/certificate-security-incident" target="_blank" rel="noopener">emudhra.com/en/post/certificate-security-incident</a></span></li>
+      <li id="src-6"><span class="num">[6]</span><span><span class="pub">eMudhra Limited — Press release</span><span class="d">Oct 22, 2026</span><br>eMudhra to Exit global SSL/TLS Certificate Business. <a href="https://emudhra.com/en/press-release/emudhra-to-exit-global-ssl-tls-certificate-business" target="_blank" rel="noopener">emudhra.com/en/press-release/…</a></span></li>
+      <li id="src-10"><span class="num">[10]</span><span><span class="pub">Mozilla CA Program — Bugzilla 1970728</span><span class="d">Jun 5 – Jul 14, 2025</span><br>eMudhra: Invalid CRL signatures. The prior incident involving the same six intermediates, with eMudhra's 2025 incident report and action items. <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1970728" target="_blank" rel="noopener">bugzilla.mozilla.org/show_bug.cgi?id=1970728</a></span></li>
+      <li id="src-15"><span class="num">[15]</span><span><span class="pub">Mozilla dev-security-policy</span><span class="d">Oct 20, 2026</span><br>Compromised eMudhra Intermediate Certificates — Mozilla and Chrome Root Program announcements and trust-store operator guidance. <a href="https://groups.google.com/a/mozilla.org/g/dev-security-policy/c/0R3XLJL6FuE" target="_blank" rel="noopener">groups.google.com/a/mozilla.org/g/dev-security-policy/c/0R3XLJL6FuE</a></span></li>
+    </ol>
+
+    <p class="srcgrp">Vendor and government advisories</p>
+    <ol class="src">
+      <li id="src-1"><span class="num">[1]</span><span><span class="pub">Palo Alto Networks Unit 42</span><span class="d">Oct 22, 2026 (updated Oct 26)</span><br>EMudhra Intermediate CA Certificates Compromised — summary and interim guidance. <a href="https://unit42.paloaltonetworks.com/emudhra-certificate-compromise/" target="_blank" rel="noopener">unit42.paloaltonetworks.com/emudhra-certificate-compromise/</a></span></li>
+      <li id="src-8"><span class="num">[8]</span><span><span class="pub">Apple Support — 149555</span><span class="d">Published Oct 29, 2026</span><br>About the compromised eMudhra intermediate CAs. <a href="https://support.apple.com/en-us/149555" target="_blank" rel="noopener">support.apple.com/en-us/149555</a></span></li>
+      <li id="src-9"><span class="num">[9]</span><span><span class="pub">CERT-In (Government of India) — Advisory CIAD-2026-0050</span><span class="d">Oct 21, 2026</span><br>Compromise of eMudhra Intermediate CA Certificates. <a href="https://www.cert-in.org.in/s2cMainServlet?pageid=PUBVLNOTES02&amp;VLCODE=CIAD-2026-0050" target="_blank" rel="noopener">cert-in.org.in … CIAD-2026-0050</a></span></li>
+    </ol>
+
+    <p class="srcgrp">Researcher analyses and tooling</p>
+    <ol class="src">
+      <li id="src-7"><span class="num">[7]</span><span><span class="pub">Dennis Jackson (Mozilla) and community contributors</span><span class="d">Oct 20, 2026 (updated Oct 28)</span><br>eMudhra Intermediate CA Compromise — proof of compromise, client test site, patch tracker and per-OS workarounds. <a href="https://emudhra.we-have-a-problem.com/" target="_blank" rel="noopener">emudhra.we-have-a-problem.com</a></span></li>
+      <li id="src-11"><span class="num">[11]</span><span><span class="pub">Scott Helme</span><span class="d">Oct 20, 2026</span><br>Eight Bits of Trust; eMudhra's CA keys cracked in milliseconds. <a href="https://scotthelme.co.uk/eight-bits-of-trust-emudhras-ca-keys-cracked-in-milliseconds/" target="_blank" rel="noopener">scotthelme.co.uk/eight-bits-of-trust-…</a></span></li>
+      <li id="src-16"><span class="num">[16]</span><span><span class="pub">Google Security Team — paranoid_crypto</span><span class="d">Open-sourced Aug 3, 2022; announced Aug 24, 2022</span><br>Library for detecting known weaknesses in keys and signatures produced by black boxes. <a href="https://github.com/google/paranoid_crypto" target="_blank" rel="noopener">github.com/google/paranoid_crypto</a> · <a href="https://security.googleblog.com/2022/08/announcing-open-sourcing-of-paranoids.html" target="_blank" rel="noopener">announcement</a></span></li>
+    </ol>
+
+    <p class="srcgrp">Journalist coverage</p>
+    <ol class="src">
+      <li id="src-12"><span class="num">[12]</span><span><span class="pub">The Hacker News — Swati Khandelwal</span><span class="d">Oct 20, 2026 (updated and corrected Oct 21)</span><br>Eight eMudhra CA Keys Compromised, Triggering Emergency Fixes Across Browsers and Software. <a href="https://thehackernews.com/2026/10/eight-emudhra-ca-keys-compromised.html" target="_blank" rel="noopener">thehackernews.com/2026/10/eight-emudhra-ca-keys-compromised.html</a></span></li>
+      <li id="src-13"><span class="num">[13]</span><span><span class="pub">CyberScoop — Greg Otto</span><span class="d">Oct 22, 2026</span><br>eMudhra kills its certificate business after researchers cracked its private keys in under a second. <a href="https://cyberscoop.com/emudhra-shuts-down-certificate-business-weak-private-keys/" target="_blank" rel="noopener">cyberscoop.com/emudhra-shuts-down-certificate-business-weak-private-keys/</a></span></li>
+      <li id="src-14"><span class="num">[14]</span><span><span class="pub">Help Net Security</span><span class="d">Oct 21, 2026</span><br>eMudhra security blunder left trusted CA signing keys exposed to anyone. Used for corroboration of the discovery method. <a href="https://www.helpnetsecurity.com/2026/10/21/emudhra-certificates-private-keys-compromised/" target="_blank" rel="noopener">helpnetsecurity.com/2026/10/21/…</a></span></li>
+      <li id="src-17"><span class="num">[17]</span><span><span class="pub">The Register — Simon Sharwood</span><span class="d">Oct 20, 2026</span><br>Indian certification authority eMudhra's private keys compromised – one of them was the number '4'. Cited for the lifetime certificate-count figure that this report does not use as an impact number. <a href="https://www.theregister.com/security/2026/10/20/indian-certification-authority-emudhras-private-keys-compromised-one-of-them-was-the-number-4/5304312" target="_blank" rel="noopener">theregister.com/security/2026/10/20/…</a></span></li>
+    </ol>
+
+    <p class="srcgrp">Framework references</p>
+    <ol class="src">
+      <li id="src-18"><span class="num">[18]</span><span><span class="pub">CA/Browser Forum — TLS Baseline Requirements</span><br>§6.1.1.1 key generation ceremonies; §4.9 revocation; §4.9.7 CRL availability; §6.2.7 HSM validation. <a href="https://cabforum.org/working-groups/server/baseline-requirements/documents/" target="_blank" rel="noopener">cabforum.org/working-groups/server/baseline-requirements/documents/</a></span></li>
+      <li id="src-19"><span class="num">[19]</span><span><span class="pub">Mozilla Root Store Policy</span><br>§6.1.3 delayed revocation and mass-revocation planning obligations. <a href="https://www.mozilla.org/en-US/about/governance/policies/security-group/certs/policy/" target="_blank" rel="noopener">mozilla.org/…/certs/policy/</a></span></li>
+      <li id="src-20"><span class="num">[20]</span><span><span class="pub">Chrome Root Program Policy</span><br><a href="https://googlechrome.github.io/chromerootprogram/" target="_blank" rel="noopener">googlechrome.github.io/chromerootprogram/</a></span></li>
+      <li id="src-21"><span class="num">[21]</span><span><span class="pub">CCADB — Incident Report guidelines</span><br><a href="https://www.ccadb.org/cas/incident-report" target="_blank" rel="noopener">ccadb.org/cas/incident-report</a></span></li>
+      <li id="src-22"><span class="num">[22]</span><span><span class="pub">NIST SP 800-57 Part 1 Rev. 5 — Recommendation for Key Management</span><br><a href="https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final" target="_blank" rel="noopener">csrc.nist.gov/pubs/sp/800/57/pt1/r5/final</a></span></li>
+      <li id="src-23"><span class="num">[23]</span><span><span class="pub">NIST FIPS 186-5 — Digital Signature Standard</span><br>ECDSA key-pair generation and validation. <a href="https://csrc.nist.gov/pubs/fips/186-5/final" target="_blank" rel="noopener">csrc.nist.gov/pubs/fips/186-5/final</a></span></li>
+      <li id="src-24"><span class="num">[24]</span><span><span class="pub">NIST SP 800-90A Rev. 1 and SP 800-90B — Random bit generation and entropy sources</span><br><a href="https://csrc.nist.gov/pubs/sp/800/90/a/r1/final" target="_blank" rel="noopener">SP 800-90A</a> · <a href="https://csrc.nist.gov/pubs/sp/800/90/b/final" target="_blank" rel="noopener">SP 800-90B</a></span></li>
+      <li id="src-25"><span class="num">[25]</span><span><span class="pub">IETF RFC 5280 — X.509 PKI Certificate and CRL Profile</span><br><a href="https://www.rfc-editor.org/rfc/rfc5280" target="_blank" rel="noopener">rfc-editor.org/rfc/rfc5280</a></span></li>
+      <li id="src-26"><span class="num">[26]</span><span><span class="pub">IETF RFC 6962 — Certificate Transparency</span><br><a href="https://www.rfc-editor.org/rfc/rfc6962" target="_blank" rel="noopener">rfc-editor.org/rfc/rfc6962</a></span></li>
+      <li id="src-27"><span class="num">[27]</span><span><span class="pub">IETF RFC 8659 — DNS Certification Authority Authorization (CAA)</span><br><a href="https://www.rfc-editor.org/rfc/rfc8659" target="_blank" rel="noopener">rfc-editor.org/rfc/rfc8659</a></span></li>
+      <li id="src-28"><span class="num">[28]</span><span><span class="pub">IETF RFC 9773 — ACME Renewal Information (ARI)</span><br><a href="https://www.rfc-editor.org/rfc/rfc9773" target="_blank" rel="noopener">rfc-editor.org/rfc/rfc9773</a></span></li>
+      <li id="src-29"><span class="num">[29]</span><span><span class="pub">OWASP Top 10:2025</span><br><a href="https://owasp.org/Top10/2025/" target="_blank" rel="noopener">owasp.org/Top10/2025/</a></span></li>
+      <li id="src-30"><span class="num">[30]</span><span><span class="pub">MITRE ATT&amp;CK Enterprise</span><br>T1596.003, T1588.004, T1588.003, T1587.003, T1557, T1553.002, T1195.002, T1110, T1608.003, T1565.002; mitigations M1045, M1054. <a href="https://attack.mitre.org/" target="_blank" rel="noopener">attack.mitre.org</a></span></li>
+      <li id="src-31"><span class="num">[31]</span><span><span class="pub">MITRE CWE</span><br>CWE-331, CWE-1240, CWE-657, CWE-654, CWE-636, CWE-392, CWE-295, CWE-299, CWE-778, CWE-693, CWE-1357, CWE-1329. <a href="https://cwe.mitre.org/" target="_blank" rel="noopener">cwe.mitre.org</a></span></li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">Built by <a href="https://www.linkedin.com/in/kahalewai/" target="_blank" rel="noopener">Kahalewai</a>, Claude did the heavy lifting</footer>
+
+<script>
+(function(){
+  document.documentElement.classList.add('js');
+  var root=document.documentElement, btn=document.getElementById('themeToggle');
+  function apply(t){root.setAttribute('data-theme',t);btn.textContent=(t==='dark'?'Light mode':'Dark mode');}
+  var saved=null;try{saved=localStorage.getItem('hs-theme');}catch(e){}
+  apply(saved==='light'?'light':'dark');
+  btn.addEventListener('click',function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';apply(t);try{localStorage.setItem('hs-theme',t);}catch(e){}});
+  // reveal
+  var els=document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){entries.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}});},{rootMargin:'0px 0px -8% 0px',threshold:.08});
+    els.forEach(function(el){io.observe(el);});
+  } else { els.forEach(function(el){el.classList.add('in');}); }
+  // expand all
+  document.querySelectorAll('.xall').forEach(function(b){
+    b.addEventListener('click',function(){
+      var sec=document.querySelector(b.getAttribute('data-target'));if(!sec)return;
+      var ds=sec.querySelectorAll('details.card');var open=b.getAttribute('data-open')==='1';
+      ds.forEach(function(d){d.open=!open;});
+      b.setAttribute('data-open',open?'0':'1');b.textContent=open?(b.getAttribute('data-expand')||'Expand all'):(b.getAttribute('data-collapse')||'Collapse all');
+    });
+  });
+  // chevron label
+  document.querySelectorAll('details.card').forEach(function(d){
+    d.addEventListener('toggle',function(){var c=d.querySelector(':scope > summary .chev');if(c){var base=c.getAttribute('data-base')||c.textContent;c.setAttribute('data-base',base);c.textContent=d.open?'Close':base;}});
+  });
+})();
+</script>
+</body>
+</html>
