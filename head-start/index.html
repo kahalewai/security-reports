@@ -257,9 +257,9 @@ html.js .reveal.in{opacity:1;transform:none}
     <p class="kicker">A security report · eMudhra intermediate CA compromise · October 2026</p>
     
     <h1>Head Start&nbsp;&nbsp;</h1>
-    <p class="deck">In October 2026, eight of eMudhra's publicly trusted CA keys turned out to be recoverable from their own certificates. Browsers contained it in hours. The rest of the internet is still working on it.</p>
+    <p class="deck">In October 2026, eight of eMudhra's publicly trusted CA keys proved recoverable from their own certificates. In an era when AI makes every hidden weakness findable, security is decided at design time. This is the head start.</p>
     <p class="meta"><span>For</span> security architects · application architects · CISOs &nbsp;·&nbsp; <span>Published</span> November 2026 &nbsp;·&nbsp; <span>Sources</span> 31, indexed below</p>
-    <div class="hero-svg-wrap"><svg class="hero-svg" viewBox="0 0 1000 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A circular maze with the source at its center. On the left half, built by good design decisions, every route dead-ends and the attacker stops. On the right half, built by poor design decisions, one route winds through every ring to the source.">
+    <div class="hero-svg-wrap"><svg class="hero-svg" viewBox="0 0 1000 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A circular maze whose walls are design decisions and whose center is a successful attack. On the left half, built with best practices in place, every route dead-ends and the attacker stops. On the right half, built with the same practices left out, one route winds through every ring to the center.">
       <defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
       <!-- half tints -->
       <path d="M500.0,405.0 A190,190 0 0 1 500.0,25.0 L500,215 Z" fill="var(--green-soft)" opacity=".7"/>
@@ -276,22 +276,22 @@ html.js .reveal.in{opacity:1;transform:none}
       <circle cx="694.5" cy="285.8" r="6" fill="var(--ember)" class="pulse"/>
       <!-- source -->
       <circle cx="500" cy="215" r="13" fill="var(--brass)" filter="url(#glow)" class="pulse"/>
-      <text x="500" y="419" text-anchor="middle" font-size="12" letter-spacing="2.5" fill="var(--brass)">THE SOURCE</text>
+      <text x="500" y="419" text-anchor="middle" font-size="12" letter-spacing="2.5" fill="var(--brass)">THE ATTACK</text>
       <!-- side captions -->
       <g font-size="12" letter-spacing="2.5">
-        <text x="20" y="52" fill="var(--green)">DESIGN THAT CLOSES THE PATH</text>
-        <text x="980" y="52" fill="var(--ember)" text-anchor="end">DESIGN THAT LEAVES ONE OPEN</text>
+        <text x="20" y="52" fill="var(--green)">BEST PRACTICES · BUILT IN</text>
+        <text x="980" y="52" fill="var(--ember)" text-anchor="end">BEST PRACTICES · LEFT OUT</text>
       </g>
       <g font-size="13.5" fill="var(--text2)">
-        <text x="20" y="92">The attacker gets in two rings</text><text x="20" y="114">and stops. No route reaches</text><text x="20" y="136">the attack.</text>
-        <text x="980" y="92" text-anchor="end">The attacker only needs one route.</text><text x="980" y="114" text-anchor="end">Every ring has a gap, and the</text><text x="980" y="136" text-anchor="end">gaps line up.</text>
+        <text x="20" y="92">The walls are design decisions.</text><text x="20" y="114">The attacker gets in two rings</text><text x="20" y="136">and stops. No route leads to</text><text x="20" y="158">an attack.</text>
+        <text x="980" y="92" text-anchor="end">The same walls, with gaps.</text><text x="980" y="114" text-anchor="end">The attacker only needs one route,</text><text x="980" y="136" text-anchor="end">and the gaps line up.</text>
       </g>
       <g font-size="12" fill="var(--muted)">
         <text x="20" y="330">key verified by hash, not label</text><text x="20" y="352">anchors chosen, not inherited</text><text x="20" y="374">anomalies explained before closed</text>
         <text x="980" y="330" text-anchor="end">key verified by label</text><text x="980" y="352" text-anchor="end">anchors inherited from the default bundle</text><text x="980" y="374" text-anchor="end">anomaly closed as a configuration error</text>
       </g>
     </svg></div>
-    <p class="hero-note">The maze is drawn before the attacker arrives. Whether a route to the attack exists at all is decided then — by design — and nothing added afterward redraws the walls.</p>
+    <p class="hero-note">The maze is drawn before the attacker arrives. Whether any route leads to an attack is decided then — by the practices built into the design — and nothing added afterward redraws the walls.</p>
   </div>
   <div class="scroll"><span>Scroll</span><i></i></div>
 </header>
@@ -683,12 +683,12 @@ html.js .reveal.in{opacity:1;transform:none}
       <div>
         <p class="eyebrow">What existed</p>
         <h2 class="title">Fourteen controls were available. Six would have stopped it on day one.</h2>
-        <p class="lede">None of them is exotic. The ones at the source are design properties of a ceremony; the ones at the edge are capabilities added later, and even the best of those protect only browsers.</p>
+        <p class="lede">None of them is exotic. The six at the CA are best practices for how a key ceremony is designed; the eight further out are capabilities added later, and even the best of those protect only browsers.</p>
       </div>
       <button class="xall" data-target="#existed">Expand all</button>
     </div>
 
-    <div class="tier first">At the CA · prevent or detect at the source</div>
+    <div class="tier first">At the CA · best practices, built in</div>
     <details class="card green"><summary><div><span class="tag green">Would have stopped it · Apr 30, 2025</span><h3>1 · Cryptographic verification of key identity across every import boundary</h3><p class="sum">Sign a test vector with each re-imported object and verify against the key captured at generation; compare key hashes before and after.</p></div><span class="chev">Detail</span></summary><div class="body">
       <h4>Grounding</h4><p>NIST SP 800-57 Part 1 Rev. 5 <a class="cite" href="#src-22">22</a> (assurance of public-key validity and private-key possession); FIPS 186-5 <a class="cite" href="#src-23">23</a> (key-pair validation); CA/B Forum BR §6.1.1.1 <a class="cite" href="#src-18">18</a> (prepare and follow a key generation script). FIPS 140-validated modules perform a pairwise consistency test at generation — but a wrap/unwrap/re-import is not a generation event, so that built-in test never fired on the objects that were certified.</p>
       <h4>What it would have done</h4><p>Disrupted the chain at its first link. A test signature per re-imported object, or a simple comparison of key hashes before and after the rehearsal, would have shown that the two objects did not match before any CSR was built.</p>
